@@ -60,7 +60,19 @@ func _validate_nodes() -> bool:
 			"UnitInfoPanel: ArmorValueLabel was not found"
 		)
 		is_valid = false
+		
+	if defenses_value_label == null:
+		push_error(
+			"UnitInfoPanel: DefensesValueLabel was not found"
+		)
+		is_valid = false
 
+	if immunities_value_label == null:
+		push_error(
+			"UnitInfoPanel: ImmunitiesValueLabel was not found"
+		)
+		is_valid = false
+		
 	if end_turn_button == null:
 		push_error(
 			"UnitInfoPanel: EndTurnButton was not found"
@@ -85,7 +97,19 @@ func _validate_nodes() -> bool:
 		+ "CoreStatsGrid/HPValueLabel"
 	) as Label
 )
+@onready var defenses_value_label: Label = (
+	get_node_or_null(
+		"UnitInfoMargin/UnitInfoRow/StatsSection/"
+		+ "DefensesRow/DefensesValueLabel"
+	) as Label
+)
 
+@onready var immunities_value_label: Label = (
+	get_node_or_null(
+		"UnitInfoMargin/UnitInfoRow/StatsSection/"
+		+ "ImmunitiesRow/ImmunitiesValueLabel"
+	) as Label
+)
 @onready var armor_value_label: Label = (
 	get_node_or_null(
 		"UnitInfoMargin/UnitInfoRow/StatsSection/"
@@ -134,7 +158,28 @@ func show_unit(unit: UnitRuntime) -> void:
 
 	armor_value_label.text = str(unit.armor)
 
+	defenses_value_label.text = _format_keywords(
+		unit.active_defenses
+	)
 
+	immunities_value_label.text = _format_keywords(
+		unit.active_immunities
+	)
+
+func _format_keywords(keywords: Variant) -> String:
+	if keywords == null:
+		return "—"
+
+	if keywords.size() == 0:
+		return "—"
+
+	var keyword_texts: PackedStringArray = []
+
+	for keyword in keywords:
+		keyword_texts.append(str(keyword))
+
+	return ", ".join(keyword_texts)
+	
 func clear_unit() -> void:
 	displayed_unit = null
 
@@ -146,3 +191,8 @@ func clear_unit() -> void:
 
 	if armor_value_label != null:
 		armor_value_label.text = "—"
+	if defenses_value_label != null:
+		defenses_value_label.text = "—"
+
+	if immunities_value_label != null:
+		immunities_value_label.text = "—"
