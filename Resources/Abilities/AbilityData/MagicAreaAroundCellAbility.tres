@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cmae4wn8c5wfs"]
+
+[ext_resource type="Script" uid="uid://c2afnonmp2k7u" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_bl5ij"]
+
+[resource]
+script = ExtResource("1_bl5ij")
+mechanism_name = "Magic Area Around Cell Ability"
+targeting_form = 2
+algorithm_id = "deal_damage"
+target_rule_id = "area_around_cell"
+metadata/_custom_type_script = "uid://c2afnonmp2k7u"

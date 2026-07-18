@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://qtb163n6suna"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_a3dwa"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_gjrf5"]
+
+[resource]
+script = ExtResource("2_gjrf5")
+unit_name = "Green Brute"
+description = "Test durable melee unit for armor, physical defense and future protective passive ability."
+initiative = 4
+max_hp = 16
+armor = 2
+movement = 2
+defenses = Array[String](["physical"])
+keywords = Array[String](["green_brotherhood", "human", "protector", "melle"])
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

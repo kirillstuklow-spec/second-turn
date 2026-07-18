@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://drgfowth8447a"]
+
+[ext_resource type="Script" uid="uid://54ymjhyxjavu" path="res://Scense/Battle/Prototype02Scene.gd" id="1_531y0"]
+[ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_5c78k"]
+[ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="2_v0dw8"]
+[ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_4a03g"]
+[ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_0q2hr"]
+[ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_4a03g"]
+
+[node name="Prototype02Scene" type="Control" unique_id=1097706766]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_531y0")
+archer_data = ExtResource("2_5c78k")
+defense_dummy_data = ExtResource("3_4a03g")
+armor_dummy_data = ExtResource("4_0q2hr")
+longbow_shot = ExtResource("5_4a03g")
+
+[node name="BattlefieldGrid" type="GridContainer" parent="." unique_id=809122550]
+layout_mode = 0
+offset_left = 243.0
+offset_top = 146.0
+offset_right = 283.0
+offset_bottom = 186.0
+columns = 7
+
+[node name="AbilityPipeline" type="Node" parent="." unique_id=339559290]
+script = ExtResource("2_v0dw8")
+
+[node name="AbilityButton" type="Button" parent="." unique_id=1446325985]
+layout_mode = 0
+offset_left = 457.0
+offset_top = 73.0
+offset_right = 601.0
+offset_bottom = 104.0
+text = "Хуй"

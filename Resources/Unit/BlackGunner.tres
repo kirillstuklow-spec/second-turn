@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://uopksfjku22"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_omryq"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_083s0"]
+
+[resource]
+script = ExtResource("2_083s0")
+unit_name = "Black Gunner"
+description = "Test ranged unit for future musket shot with cooldown and armor penetration."
+unit_class = "ranged"
+initiative = 65
+max_hp = 9
+armor = 1
+movement = 2
+keywords = Array[String](["black_brotherhood", "human", "ranged", "gunner"])
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

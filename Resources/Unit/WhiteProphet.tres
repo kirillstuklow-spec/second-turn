@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://do1a2ftpujhtw"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_vatoq"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_oir12"]
+
+[resource]
+script = ExtResource("2_oir12")
+unit_name = "White Prophet"
+description = "Test caster unit for future magic-like area attack and healing abilities"
+unit_class = "caster"
+initiative = 20
+max_hp = 10
+movement = 2
+keywords = Array[String](["human", "white_brotherhood", "caster", "prophet"])
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

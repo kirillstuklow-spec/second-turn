@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://cr32sdjo0ainc"]
+
+[ext_resource type="Script" uid="uid://bg0uh48u5s1sb" path="res://Scripts/Battle/BattleEngine.gd" id="1_rq7d2"]
+[ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="1_yn5lb"]
+[ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_7jnwi"]
+[ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_no0xc"]
+[ext_resource type="Script" uid="uid://2htr4lm8astu" path="res://Scripts/Battle/UI/AbilityPanel.gd" id="3_xlw65"]
+[ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_4pltt"]
+[ext_resource type="Script" uid="uid://bsjm7wxqxgiq6" path="res://Scripts/Battle/BattlefieldView.gd" id="4_xlw65"]
+[ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_r8nk0"]
+[ext_resource type="Script" uid="uid://bhwkcaokg5vn2" path="res://Scripts/Battle/BattleInitializer.gd" id="6_no0xc"]
+[ext_resource type="Script" uid="uid://dxtokkaaqm5ox" path="res://Scripts/Commands/CommandDispatcher.gd" id="7_4pltt"]
+[ext_resource type="Script" uid="uid://cyphkoe8h05u4" path="res://Scripts/Pipelines/PipelineRunner.gd" id="8_r8nk0"]
+[ext_resource type="Script" uid="uid://dj7kw67vp82ru" path="res://Scripts/Commands/EventQueue.gd.gd" id="9_iuo32"]
+[ext_resource type="Script" uid="uid://boh2yj3rxo48y" path="res://Scripts/Pipelines/MovementPipeline.gd" id="11_tmwdy"]
+[ext_resource type="Script" uid="uid://nc36c4k408o4" path="res://Scripts/Pipelines/TurnPipeline.gd" id="12_84a6n"]
+
+[node name="BattleScene" type="Node2D" unique_id=1100306930]
+
+[node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
+script = ExtResource("1_rq7d2")
+archer_data = ExtResource("2_7jnwi")
+defense_dummy_data = ExtResource("3_no0xc")
+armor_dummy_data = ExtResource("4_4pltt")
+longbow_shot = ExtResource("5_r8nk0")
+
+[node name="BattleInitializer" type="Node" parent="BattleEngine" unique_id=1595228986]
+script = ExtResource("6_no0xc")
+
+[node name="BattleState" type="Node" parent="BattleEngine" unique_id=871062208]
+
+[node name="CommandDispatcher" type="Node" parent="BattleEngine" unique_id=1155290939]
+script = ExtResource("7_4pltt")
+
+[node name="PipelineRunner" type="Node" parent="BattleEngine" unique_id=145221421]
+script = ExtResource("8_r8nk0")
+
+[node name="EventQueue" type="Node" parent="BattleEngine" unique_id=826572225]
+script = ExtResource("9_iuo32")
+
+[node name="Pipelines" type="Node" parent="BattleEngine" unique_id=1904595615]
+
+[node name="AbilityPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=669216668]
+script = ExtResource("1_yn5lb")
+
+[node name="MovementPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=1992182936]
+script = ExtResource("11_tmwdy")
+
+[node name="TurnPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=114056271]
+script = ExtResource("12_84a6n")
+
+[node name="EffectPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=239925756]
+
+[node name="VisualEffects" type="Node2D" parent="." unique_id=321068482]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1371794651]
+
+[node name="TopPanel" type="Control" parent="UI" unique_id=287426096]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BottomPanel" type="Control" parent="UI" unique_id=1855609726]
+layout_mode = 3
+anchors_preset = 0
+offset_top = 478.0
+offset_right = 1152.0
+offset_bottom = 648.0
+mouse_filter = 2
+
+[node name="AbilityPanel" type="Control" parent="UI" unique_id=1824017465]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("3_xlw65")
+
+[node name="TooltipLayer" type="Control" parent="UI" unique_id=900559784]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PopupLayer" type="Control" parent="UI" unique_id=1520542604]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="EndTurnButton" type="Button" parent="UI" unique_id=1196614045]
+offset_left = 147.0
+offset_top = 362.0
+offset_right = 289.0
+offset_bottom = 393.0
+text = "Завевршить ход"
+
+[node name="Battlefield" type="Node2D" parent="." unique_id=1879659030]
+script = ExtResource("4_xlw65")
+
+[node name="Cells" type="Node2D" parent="Battlefield" unique_id=1180742844]
+
+[node name="Units" type="Node2D" parent="Battlefield" unique_id=798308505]
+
+[node name="Obstacles" type="Node2D" parent="Battlefield" unique_id=1866223733]
+
+[node name="TemporaryObjects" type="Node2D" parent="Battlefield" unique_id=86311884]

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cjoa2tuveatkl"]
+
+[ext_resource type="Script" uid="uid://c2afnonmp2k7u" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_v7ba8"]
+
+[resource]
+script = ExtResource("1_v7ba8")
+mechanism_name = "Healing Ability"
+technical_description = "Universal mechanism for healing one allied target."
+action_type = 1
+targeting_form = 1
+algorithm_id = "heal_target"
+target_rule_id = "single_any_ally"
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_ally"])
+metadata/_custom_type_script = "uid://c2afnonmp2k7u"

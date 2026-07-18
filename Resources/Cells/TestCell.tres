@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CellData" format=3 uid="uid://cb85htrt2clv0"]
+
+[ext_resource type="Script" uid="uid://hdgkqcyqtdf2" path="res://Resources/Cells/CellData.gd" id="1_msd4e"]
+
+[resource]
+script = ExtResource("1_msd4e")
+cell_name = "клет-очка"
+description = "всякое интересное "
+metadata/_custom_type_script = "uid://hdgkqcyqtdf2"

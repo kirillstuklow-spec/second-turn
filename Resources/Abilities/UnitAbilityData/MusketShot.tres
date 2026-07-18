@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://cxxtui0hsykqi"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_b5dcp"]
+[ext_resource type="Resource" uid="uid://s4bcugqtmyot" path="res://Resources/Abilities/AbilityData/RangedAttack.tres" id="1_gc6x4"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_gc6x4"]
+
+[resource]
+script = ExtResource("2_gc6x4")
+ability_name = "Musket Shot"
+description = "Стрелок производит мощный выстрел по выбранной вражеской цели. Выстрел обладает бронебойностью."
+ability = ExtResource("1_gc6x4")
+parameters = {
+"armor_penetration": 3,
+"damage": 3,
+"keyword": "physical"
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

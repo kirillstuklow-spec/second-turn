@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ObstacleData" format=3 uid="uid://crnljqtvnl0d3"]
+
+[ext_resource type="Script" uid="uid://6bf1lob34i45" path="res://Resources/Obstacles/ObstacleData.gd" id="1_wkeq1"]
+
+[resource]
+script = ExtResource("1_wkeq1")
+obstacle_name = "тестовое препятствие "
+description = "препятствует"
+metadata/_custom_type_script = "uid://6bf1lob34i45"

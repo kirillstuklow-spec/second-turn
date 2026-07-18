@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dsckkoklejt27"]
+
+[ext_resource type="Script" uid="uid://c2afnonmp2k7u" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ey7k0"]
+
+[resource]
+script = ExtResource("1_ey7k0")
+mechanism_name = "Magic All Enemies Ability"
+technical_description = "Universal mechanism for damaging all enemy units."
+targeting_form = 2
+algorithm_id = "deal_damage"
+target_rule_id = "all_enemies"
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_alive"])
+metadata/_custom_type_script = "uid://c2afnonmp2k7u"

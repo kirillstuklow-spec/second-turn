@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://cr32sdjo0ainc"]
+
+[node name="BattleScene" type="Node2D" unique_id=1100306930]
+
+[node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
+
+[node name="BattleState" type="Node" parent="BattleEngine" unique_id=871062208]
+
+[node name="CommandDispatcher" type="Node" parent="BattleEngine" unique_id=1155290939]
+
+[node name="PipelineRunner" type="Node" parent="BattleEngine" unique_id=145221421]
+
+[node name="EventQueue" type="Node" parent="BattleEngine" unique_id=826572225]
+
+[node name="Pipelines" type="Node" parent="BattleEngine" unique_id=1904595615]
+
+[node name="AbilityPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=669216668]
+
+[node name="MovementPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=1992182936]
+
+[node name="TurnPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=114056271]
+
+[node name="EffectPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=239925756]
+
+[node name="VisualEffects" type="Node2D" parent="." unique_id=321068482]
+
+[node name="ui" type="CanvasLayer" parent="." unique_id=1371794651]
+
+[node name="TopPanel" type="Control" parent="ui" unique_id=287426096]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BottomPanel" type="Control" parent="ui" unique_id=1855609726]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="AbilityPanel" type="Control" parent="ui" unique_id=1824017465]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TooltipLayer" type="Control" parent="ui" unique_id=900559784]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PopupLayer" type="Control" parent="ui" unique_id=1520542604]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Battlefield" type="Node2D" parent="." unique_id=1879659030]
+
+[node name="Cells" type="Node2D" parent="Battlefield" unique_id=1180742844]
+
+[node name="Units" type="Node2D" parent="Battlefield" unique_id=798308505]
+
+[node name="Obstacles" type="Node2D" parent="Battlefield" unique_id=1866223733]
+
+[node name="TemporaryObjects" type="Node2D" parent="Battlefield" unique_id=86311884]
+
+[node name="Node2D5" type="Node2D" parent="Battlefield" unique_id=1923358932]

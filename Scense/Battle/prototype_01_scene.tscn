@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://c47u5yp1dvmv"]
+
+[ext_resource type="Script" uid="uid://o7hw21gonc1p" path="res://Scense/Battle/Prototype01Scene.gd" id="1_dytun"]
+[ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="1_ygtod"]
+[ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_1a31o"]
+[ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_3dpy3"]
+[ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_3omn5"]
+[ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_smfjt"]
+
+[node name="Prototype01Scene" type="Control" unique_id=1933318754]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dytun")
+archer_data = ExtResource("2_1a31o")
+defense_dummy_data = ExtResource("3_3dpy3")
+armor_dummy_data = ExtResource("4_3omn5")
+longbow_shot = ExtResource("5_smfjt")
+
+[node name="UnitsRow" type="HBoxContainer" parent="." unique_id=1105440048]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="ArcherSquare" type="ColorRect" parent="UnitsRow" unique_id=449610450]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+color = Color(9.62615e-08, 0.7581237, 0.12510106, 1)
+
+[node name="Label" type="Label" parent="UnitsRow/ArcherSquare" unique_id=919255237]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "лучник"
+
+[node name="DefenseDummySquare" type="ColorRect" parent="UnitsRow" unique_id=2081821313]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+color = Color(0.76383525, 0.024108283, 2.8878452e-07, 1)
+
+[node name="Label" type="Label" parent="UnitsRow/DefenseDummySquare" unique_id=2012516264]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "защитная губка"
+
+[node name="ArmorDummySquare" type="ColorRect" parent="UnitsRow" unique_id=921286525]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+color = Color(1.6364455e-06, 0.6503075, 0.79186785, 1)
+
+[node name="Label" type="Label" parent="UnitsRow/ArmorDummySquare" unique_id=36316843]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "бронированная губка"
+
+[node name="AbilityButton" type="Button" parent="." unique_id=43494665]
+layout_mode = 0
+offset_left = 503.0
+offset_top = 171.0
+offset_right = 644.0
+offset_bottom = 202.0
+text = "пизда"
+
+[node name="AbilityPipeline" type="Node" parent="." unique_id=1076251110]
+script = ExtResource("1_ygtod")

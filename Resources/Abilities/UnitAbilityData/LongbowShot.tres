@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://cvi6jxknr8wh2"]
+
+[ext_resource type="Resource" uid="uid://s4bcugqtmyot" path="res://Resources/Abilities/AbilityData/RangedAttack.tres" id="1_18gn8"]
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_svct3"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_18gn8"]
+
+[resource]
+script = ExtResource("2_18gn8")
+ability_name = "Выстрел из лука"
+description = "Лучник выпускает стрелу в выбранную вражескую цель."
+ability = ExtResource("1_18gn8")
+parameters = {
+"armor_penetration ": 0,
+"damage": 3,
+"keyword": "physical"
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

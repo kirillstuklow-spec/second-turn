@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://dai6yem20udk"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_agv4e"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_bw0mk"]
+
+[resource]
+script = ExtResource("2_bw0mk")
+unit_name = "ArmorDummy"
+faction = "test"
+initiative = 20
+max_hp = 10
+armor = 3
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

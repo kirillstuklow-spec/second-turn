@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://7y3wfr34h16v"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_f0ti3"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_jc7sv"]
+[ext_resource type="Resource" uid="uid://cm02moukvopmt" path="res://Resources/Abilities/UnitAbilityData/Healing.tres" id="4_uedbw"]
+[ext_resource type="Resource" uid="uid://bculuacu1xhmy" path="res://Resources/Abilities/UnitAbilityData/MagicAttackAll.tres" id="5_fkiro"]
+[ext_resource type="Resource" uid="uid://tj7s1eadjxes" path="res://Resources/Abilities/UnitAbilityData/MeleeStrike.tres" id="5_hpni7"]
+[ext_resource type="Resource" uid="uid://b2ql1i0tk5gbr" path="res://Resources/Abilities/UnitAbilityData/MagicAreaAroundUnit.tres" id="6_hpni7"]
+[ext_resource type="Resource" uid="uid://c526a8kck4woy" path="res://Resources/Abilities/UnitAbilityData/MagicAreaAroundCell.tres" id="6_uedbw"]
+
+[resource]
+script = ExtResource("2_jc7sv")
+unit_name = "Archer"
+faction = "test"
+unit_class = "Ranged"
+initiative = 20
+max_hp = 10
+active_abilities = Array[ExtResource("1_f0ti3")]([ExtResource("4_uedbw"), ExtResource("5_fkiro"), ExtResource("5_hpni7"), ExtResource("6_hpni7"), ExtResource("6_uedbw")])
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

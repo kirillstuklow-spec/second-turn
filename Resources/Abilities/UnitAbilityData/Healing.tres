@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://cm02moukvopmt"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_62n8i"]
+[ext_resource type="Resource" uid="uid://cjoa2tuveatkl" path="res://Resources/Abilities/AbilityData/HealingAbility.tres" id="1_lihi4"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_lihi4"]
+
+[resource]
+script = ExtResource("2_lihi4")
+ability_name = "Лечение"
+description = "Пророк восстанавливает здоровье выбранному союзнику"
+ability = ExtResource("1_lihi4")
+parameters = {
+"heal": 4
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://b2ql1i0tk5gbr"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_e48q3"]
+[ext_resource type="Resource" uid="uid://brs6thy5tpbik" path="res://Resources/Abilities/AbilityData/MagicAreaAroundUnitAbility.tres" id="1_ojtsp"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_ojtsp"]
+
+[resource]
+script = ExtResource("2_ojtsp")
+ability_name = "Атака по площади "
+ability = ExtResource("1_ojtsp")
+parameters = {
+"armor_penetration": 2,
+"damage": 3,
+"keyword": "magic",
+"radius": 1
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://knueyihs8u6p"]
+
+[ext_resource type="Script" uid="uid://c2afnonmp2k7u" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_1wvxy"]
+
+[resource]
+script = ExtResource("1_1wvxy")
+mechanism_name = "Melee Attack Ability"
+technical_description = "Universal mechanism for melee attack against one adjacent enemy."
+algorithm_id = "deal_damage"
+target_rule_id = "single_adjacent_enemy"
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_enemy"])
+metadata/_custom_type_script = "uid://c2afnonmp2k7u"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://bvhppfypo4fdi"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_qluqp"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_3suif"]
+
+[resource]
+script = ExtResource("2_3suif")
+unit_name = "DefenseDummy"
+faction = "test"
+unit_class = "dummy"
+initiative = 10
+max_hp = 10
+defenses = Array[String](["physical"])
+metadata/_custom_type_script = "uid://s6md7hs2lnl6"

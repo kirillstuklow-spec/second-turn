@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://bculuacu1xhmy"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_6jo7j"]
+[ext_resource type="Resource" uid="uid://dsckkoklejt27" path="res://Resources/Abilities/AbilityData/MagicAllEnemiesAbility.tres" id="1_ahmx2"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_ahmx2"]
+
+[resource]
+script = ExtResource("2_ahmx2")
+ability_name = "Magic Attack All"
+description = "Пророк поражает всех вражеских юнитов на поле"
+ability = ExtResource("1_ahmx2")
+parameters = {
+"armor_penetration": 1,
+"damage": 3,
+"keyword": "magic"
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://tj7s1eadjxes"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_863ld"]
+[ext_resource type="Resource" uid="uid://knueyihs8u6p" path="res://Resources/Abilities/AbilityData/MeleeAttackAbility.tres" id="1_hex3t"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_hex3t"]
+
+[resource]
+script = ExtResource("2_hex3t")
+ability_name = "Melee Strike"
+description = "Юнит атакует соседнего врага в ближнем бою."
+ability = ExtResource("1_hex3t")
+parameters = {
+"armor_penetration": 1,
+"damage": 5,
+"keyword": "physical"
+}
+metadata/_custom_type_script = "uid://ckeuu0agsm1r5"

@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://fwxfc3mhvpj5"]
+
+[node name="UnitInfoPanel" type="PanelContainer" unique_id=1622976336]
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.25
+
+[node name="UnitInfoMargin" type="MarginContainer" parent="." unique_id=1173743985]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="UnitInfoRow" type="HBoxContainer" parent="UnitInfoMargin" unique_id=864805392]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PortraitSection" type="Control" parent="UnitInfoMargin/UnitInfoRow" unique_id=761966859]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 2
+
+[node name="PortraitTexture" type="TextureRect" parent="UnitInfoMargin/UnitInfoRow/PortraitSection" unique_id=1106106419]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="EndTurnButton" type="Button" parent="UnitInfoMargin/UnitInfoRow/PortraitSection" unique_id=1522228536]
+layout_mode = 1
+offset_right = 44.0
+offset_bottom = 44.0
+text = "галочка"
+
+[node name="StatsSection" type="VBoxContainer" parent="UnitInfoMargin/UnitInfoRow" unique_id=40926761]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+
+[node name="UnitNameLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection" unique_id=1975668560]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CoreStatsGrid" type="GridContainer" parent="UnitInfoMargin/UnitInfoRow/StatsSection" unique_id=252188354]
+layout_mode = 2
+columns = 2
+
+[node name="HPTitleLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/CoreStatsGrid" unique_id=1626012041]
+layout_mode = 2
+text = "хп"
+
+[node name="HPValueLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/CoreStatsGrid" unique_id=1475992467]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 2
+
+[node name="ArmorTitleLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/CoreStatsGrid" unique_id=1905280273]
+layout_mode = 2
+text = "броня"
+
+[node name="ArmorValueLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/CoreStatsGrid" unique_id=2138201467]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DefensesRow" type="HBoxContainer" parent="UnitInfoMargin/UnitInfoRow/StatsSection" unique_id=1452857821]
+layout_mode = 2
+
+[node name="DefensesTitleLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/DefensesRow" unique_id=1362414941]
+layout_mode = 2
+text = "защиты "
+
+[node name="DefensesValueLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/DefensesRow" unique_id=326437757]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ImmunitiesRow" type="HBoxContainer" parent="UnitInfoMargin/UnitInfoRow/StatsSection" unique_id=384288551]
+layout_mode = 2
+
+[node name="ImmunitiesTitleLabelImmunitiesValueLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/ImmunitiesRow" unique_id=1007163230]
+layout_mode = 2
+text = "иммунитеты "
+
+[node name="ImmunitiesValueLabel" type="Label" parent="UnitInfoMargin/UnitInfoRow/StatsSection/ImmunitiesRow" unique_id=2011514688]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EffectsIconsRow" type="HBoxContainer" parent="UnitInfoMargin/UnitInfoRow/StatsSection" unique_id=208692572]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AbilityGrid" type="GridContainer" parent="UnitInfoMargin/UnitInfoRow" unique_id=2062990342]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 3
