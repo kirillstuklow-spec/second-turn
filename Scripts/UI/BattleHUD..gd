@@ -1,14 +1,31 @@
 extends Control
 
+class_name BattleHUD
 
 signal end_turn_requested
 
 
-@onready var unit_info_panel: Control = (
-	get_node_or_null("%UnitInfoPanel") as Control
+# ============================================================
+# ДОЧЕРНИЕ ПАНЕЛИ
+# ============================================================
+
+@onready var unit_info_panel: UnitInfoPanel = (
+	get_node_or_null("%UnitInfoPanel") as UnitInfoPanel
 )
+# ============================================================
+# ОБНОВЛЕНИЕ HUD
+# ============================================================
 
+func show_unit(unit: UnitRuntime) -> void:
+	if unit_info_panel == null:
+		push_error(
+			"BattleHUD: UnitInfoPanel is missing"
+		)
+		return
 
+	unit_info_panel.show_unit(unit)
+	
+	
 func _ready() -> void:
 	if not _validate_hud():
 		return
