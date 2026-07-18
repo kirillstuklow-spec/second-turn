@@ -146,16 +146,25 @@ func _on_presentation_refresh_requested(
 ) -> void:
 	if active_unit == null:
 		print(
-			"BattleScene: presentation refresh without active unit"
+			"BattleScene: presentation refresh "
+			+ "without active unit"
 		)
-		battle_hud.show_unit(null)
+
+		battle_hud.show_unit(
+			null,
+			false
+		)
 		return
 
 	if active_unit.data == null:
 		push_error(
 			"BattleScene: active UnitRuntime has no UnitData"
 		)
-		battle_hud.show_unit(null)
+
+		battle_hud.show_unit(
+			null,
+			false
+		)
 		return
 
 	print(
@@ -163,4 +172,8 @@ func _on_presentation_refresh_requested(
 		active_unit.data.unit_name
 	)
 
-	battle_hud.show_unit(active_unit)
+	battle_hud.show_unit(
+		active_unit,
+		true
+	)
+	
