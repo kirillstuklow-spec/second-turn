@@ -1,17 +1,16 @@
 extends Node2D
 
 
-@onready var battle_engine: Node = get_node_or_null("BattleEngine")
-@onready var battlefield_view: Node = get_node_or_null("Battlefield")
+@onready var battle_engine: BattleEngine = (
+	get_node_or_null("BattleEngine") as BattleEngine
+)
+
+@onready var battlefield_view: BattlefieldView = (
+	get_node_or_null("Battlefield") as BattlefieldView
+)
 
 @onready var battle_hud: Control = (
 	get_node_or_null("UI/BattleHUD") as Control
-)
-
-# Временный миграционный мост.
-# После создания публичного входа BattleEngine эта ссылка будет удалена.
-@onready var legacy_end_turn_button: Button = (
-	get_node_or_null("UI/EndTurnButton") as Button
 )
 
 
@@ -49,13 +48,6 @@ func _validate_composition() -> bool:
 		)
 		composition_is_valid = false
 
-	if legacy_end_turn_button == null:
-		push_error(
-			"BattleScene: the temporary legacy EndTurnButton "
-			+ "was not found at 'BattleScene/UI/EndTurnButton'."
-		)
-		composition_is_valid = false
-
 	return composition_is_valid
 
 
@@ -81,25 +73,13 @@ func _connect_components() -> bool:
 			end_turn_callback
 		)
 
-	print("BattleScene: BattleHUD intent signals connected")
+	print(
+		"BattleScene: BattleHUD intent signals connected"
+	)
 
 	return true
 
 
 func _on_end_turn_requested() -> void:
 	print("BattleScene: end turn intent received")
-
-	if legacy_end_turn_button == null:
-		push_error(
-			"BattleScene: cannot forward the end-turn intent "
-			+ "because the legacy EndTurnButton is missing."
-		)
-		return
-
-	print("BattleScene: forwarding intent to existing turn flow")
-
-	# Испускаем тот же сигнал, который возникает при обычном
-	# нажатии старой кнопки. Дальнейшую работу выполняет
-	# уже существующая цепочка BattleEngine и TurnPipeline.
-	legacy_end_turn_button.pressed.emit()
-	
+	battle_engine.request_end_turn()
