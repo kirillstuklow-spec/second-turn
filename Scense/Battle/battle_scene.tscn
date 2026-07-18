@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://dj7kw67vp82ru" path="res://Scripts/Commands/EventQueue.gd" id="9_iuo32"]
 [ext_resource type="Script" uid="uid://boh2yj3rxo48y" path="res://Scripts/Pipelines/MovementPipeline.gd" id="11_tmwdy"]
 [ext_resource type="Script" uid="uid://nc36c4k408o4" path="res://Scripts/Pipelines/TurnPipeline.gd" id="12_84a6n"]
+[ext_resource type="PackedScene" uid="uid://b6ivyyflbw7jm" path="res://Scense/UI/battle_hud.tscn" id="14_u4a4q"]
 
 [node name="BattleScene" type="Node2D" unique_id=1100306930]
 
@@ -55,20 +56,6 @@ script = ExtResource("12_84a6n")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1371794651]
 
-[node name="TopPanel" type="Control" parent="UI" unique_id=287426096]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="BottomPanel" type="Control" parent="UI" unique_id=1855609726]
-layout_mode = 3
-anchors_preset = 0
-offset_top = 478.0
-offset_right = 1152.0
-offset_bottom = 648.0
-mouse_filter = 2
-
 [node name="AbilityPanel" type="Control" parent="UI" unique_id=1824017465]
 layout_mode = 3
 anchors_preset = 0
@@ -76,24 +63,14 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("3_xlw65")
 
-[node name="TooltipLayer" type="Control" parent="UI" unique_id=900559784]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="PopupLayer" type="Control" parent="UI" unique_id=1520542604]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
 [node name="EndTurnButton" type="Button" parent="UI" unique_id=1196614045]
 offset_left = 147.0
 offset_top = 362.0
 offset_right = 289.0
 offset_bottom = 393.0
 text = "Завевршить ход"
+
+[node name="BattleHUD" parent="UI" unique_id=192216766 instance=ExtResource("14_u4a4q")]
 
 [node name="Battlefield" type="Node2D" parent="." unique_id=1879659030]
 script = ExtResource("4_xlw65")
