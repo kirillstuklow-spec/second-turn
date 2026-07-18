@@ -1,6 +1,13 @@
 extends Node
 class_name BattleEngine
 
+# ============================================================
+# СИГНАЛЫ ПРЕДСТАВЛЕНИЯ
+# ============================================================
+
+signal presentation_refresh_requested(
+	active_unit: UnitRuntime
+)
 
 # ============================================================
 # КОНСТАНТЫ TARGET RULES
@@ -323,7 +330,10 @@ func _refresh_views() -> void:
 			battle_state.active_unit
 		)
 
-
+	presentation_refresh_requested.emit(
+		battle_state.active_unit
+	)
+	
 # ============================================================
 # ПРАВЫЙ КЛИК И КЛАВИАТУРА
 # ============================================================
