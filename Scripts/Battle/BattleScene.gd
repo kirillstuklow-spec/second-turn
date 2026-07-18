@@ -13,9 +13,24 @@ extends Node2D
 	get_node_or_null("UI/BattleHUD") as Control
 )
 
+# Временная панель остаётся, пока её функции
+# не перенесены в AbilityGrid нового HUD.
+@onready var legacy_ability_panel: AbilityPanel = (
+	get_node_or_null("UI/AbilityPanel") as AbilityPanel
+)
+
 
 func _ready() -> void:
 	if not _validate_composition():
+		return
+
+	if not battle_engine.initialize(
+		battlefield_view,
+		legacy_ability_panel
+	):
+		push_error(
+			"BattleScene: BattleEngine initialization failed"
+		)
 		return
 
 	if not _connect_components():
@@ -45,6 +60,13 @@ func _validate_composition() -> bool:
 		push_error(
 			"BattleScene: BattleHUD was not found at "
 			+ "'BattleScene/UI/BattleHUD'."
+		)
+		composition_is_valid = false
+
+	if legacy_ability_panel == null:
+		push_error(
+			"BattleScene: temporary AbilityPanel was not found "
+			+ "at 'BattleScene/UI/AbilityPanel'."
 		)
 		composition_is_valid = false
 
