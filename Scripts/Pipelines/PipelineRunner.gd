@@ -1,20 +1,22 @@
 extends Node
-
 class_name PipelineRunner
 
 
 var ability_pipeline: AbilityPipeline = null
 var movement_pipeline: MovementPipeline = null
+var turn_pipeline: TurnPipeline = null
 var event_queue: EventQueue = null
 
 
 func configure(
 	new_ability_pipeline: AbilityPipeline,
 	new_movement_pipeline: MovementPipeline,
+	new_turn_pipeline: TurnPipeline,
 	new_event_queue: EventQueue
 ) -> void:
 	ability_pipeline = new_ability_pipeline
 	movement_pipeline = new_movement_pipeline
+	turn_pipeline = new_turn_pipeline
 	event_queue = new_event_queue
 
 	print("PipelineRunner configured")
@@ -41,11 +43,18 @@ func run_command(command: Dictionary) -> void:
 	match command_type:
 		"use_ability":
 			_run_use_ability(command)
+
 		"move_unit":
 			_run_move_unit(command)
 
+		"end_turn":
+			_run_end_turn()
+
 		_:
-			push_error("PipelineRunner: unknown command type: " + command_type)
+			push_error(
+				"PipelineRunner: unknown command type: "
+				+ command_type
+			)
 
 	_push_event({
 		"type": "CommandFinished",
@@ -53,15 +62,30 @@ func run_command(command: Dictionary) -> void:
 	})
 
 
-func _run_use_ability(command : Dictionary) -> void:
+func _run_use_ability(command: Dictionary) -> void:
 	if ability_pipeline == null:
 		push_error("PipelineRunner: ability_pipeline is null")
 		return
 
-	var source_unit : UnitRuntime = command.get("source_unit", null)
-	var target_unit : UnitRuntime = command.get("target_unit", null)
-	var target_cell : CellRuntime = command.get("target_cell", null)
-	var unit_ability : UnitAbilityData = command.get("unit_ability", null)
+	var source_unit: UnitRuntime = command.get(
+		"source_unit",
+		null
+	)
+
+	var target_unit: UnitRuntime = command.get(
+		"target_unit",
+		null
+	)
+
+	var target_cell: CellRuntime = command.get(
+		"target_cell",
+		null
+	)
+
+	var unit_ability: UnitAbilityData = command.get(
+		"unit_ability",
+		null
+	)
 
 	if source_unit == null:
 		push_error("PipelineRunner: source_unit is null")
@@ -78,17 +102,22 @@ func _run_use_ability(command : Dictionary) -> void:
 		target_cell
 	)
 
+
 func _run_move_unit(command: Dictionary) -> void:
 	if movement_pipeline == null:
 		push_error("PipelineRunner: movement_pipeline is null")
 		return
 
 	if not command.has("unit"):
-		push_error("PipelineRunner: move_unit command has no unit")
+		push_error(
+			"PipelineRunner: move_unit command has no unit"
+		)
 		return
 
 	if not command.has("target_cell"):
-		push_error("PipelineRunner: move_unit command has no target_cell")
+		push_error(
+			"PipelineRunner: move_unit command has no target_cell"
+		)
 		return
 
 	var unit: UnitRuntime = command["unit"]
@@ -98,6 +127,15 @@ func _run_move_unit(command: Dictionary) -> void:
 		unit,
 		target_cell
 	)
+
+
+func _run_end_turn() -> void:
+	if turn_pipeline == null:
+		push_error("PipelineRunner: turn_pipeline is null")
+		return
+
+	turn_pipeline.end_current_activation()
+
 
 func _push_event(event: Dictionary) -> void:
 	if event_queue == null:
