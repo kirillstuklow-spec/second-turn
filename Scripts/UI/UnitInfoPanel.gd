@@ -2,7 +2,16 @@ extends Control
 
 class_name UnitInfoPanel
 
+# ============================================================
+# СИГНАЛЫ
+# ============================================================
+
 signal end_turn_requested
+
+signal ability_selected(
+	unit_ability: UnitAbilityData
+)
+
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ
 # ============================================================
@@ -60,7 +69,7 @@ func _validate_nodes() -> bool:
 			"UnitInfoPanel: ArmorValueLabel was not found"
 		)
 		is_valid = false
-		
+
 	if defenses_value_label == null:
 		push_error(
 			"UnitInfoPanel: DefensesValueLabel was not found"
@@ -72,14 +81,21 @@ func _validate_nodes() -> bool:
 			"UnitInfoPanel: ImmunitiesValueLabel was not found"
 		)
 		is_valid = false
-		
+
 	if end_turn_button == null:
 		push_error(
 			"UnitInfoPanel: EndTurnButton was not found"
 		)
 		is_valid = false
 
+	if ability_grid == null:
+		push_error(
+			"UnitInfoPanel: AbilityGrid was not found"
+		)
+		is_valid = false
+
 	return is_valid
+	
 	
 # ============================================================
 # УЗЛЫ ИНТЕРФЕЙСА
@@ -122,6 +138,11 @@ func _validate_nodes() -> bool:
 		"UnitInfoMargin/UnitInfoRow/"
 		+ "PortraitSection/EndTurnButton"
 	) as Button
+)
+@onready var ability_grid: GridContainer = (
+	get_node_or_null(
+		"UnitInfoMargin/UnitInfoRow/AbilityGrid"
+	) as GridContainer
 )
 
 # ============================================================
@@ -194,8 +215,112 @@ func _set_action_controls(is_active: bool) -> void:
 
 	end_turn_button.visible = is_active
 	end_turn_button.disabled = not is_active
-	
+
 # ============================================================
+# ОТОБРАЖЕНИЕ СПОСОБНОСТЕЙ
+# ============================================================
+
+func _show_unit_abilities(
+	unit: UnitRuntime,
+	is_active: bool
+) -> void:
+	_clear_ability_buttons()
+
+	if ability_grid == null:
+		return
+
+	if unit == null:
+		return
+
+	if unit.data == null:
+		return
+
+	var abilities: Array = unit.data.active_abilities
+
+	var visible_ability_count: int = min(
+		abilities.size(),
+		6
+	)
+
+	for ability_index in range(
+		visible_ability_count
+	):
+		var unit_ability: UnitAbilityData = (
+			abilities[ability_index] as UnitAbilityData
+		)
+
+		_create_ability_button(
+			unit_ability,
+			is_active
+		)
+
+	if abilities.size() > 6:
+		push_warning(
+			"UnitInfoPanel: unit has more than "
+			+ "6 active abilities"
+		)
+
+
+func _create_ability_button(
+	unit_ability: UnitAbilityData,
+	is_active: bool
+) -> void:
+	if unit_ability == null:
+		return
+
+	var ability_button := Button.new()
+
+	ability_button.text = (
+		unit_ability.ability_name
+	)
+
+	ability_button.custom_minimum_size = Vector2(
+		110,
+		44
+	)
+
+	ability_button.disabled = not is_active
+
+	ability_button.pressed.connect(
+		_on_ability_button_pressed.bind(
+			unit_ability
+		)
+	)
+
+	ability_grid.add_child(
+		ability_button
+	)
+
+
+func _clear_ability_buttons() -> void:
+	if ability_grid == null:
+		return
+
+	for child in ability_grid.get_children():
+		ability_grid.remove_child(child)
+		child.queue_free()
+
+
+# ============================================================
+# ВЫБОР СПОСОБНОСТИ
+# ============================================================
+
+func _on_ability_button_pressed(
+	unit_ability: UnitAbilityData
+) -> void:
+	if unit_ability == null:
+		return
+
+	print(
+		"UnitInfoPanel: ability pressed: ",
+		unit_ability.ability_name
+	)
+
+	ability_selected.emit(
+		unit_ability
+	)
+	
+# # ============================================================
 # ОЧИСТКА ПАНЕЛИ
 # ============================================================
 
@@ -203,6 +328,7 @@ func clear_unit() -> void:
 	displayed_unit = null
 
 	_set_action_controls(false)
+	_clear_ability_buttons()
 
 	if unit_name_label != null:
 		unit_name_label.text = ""
