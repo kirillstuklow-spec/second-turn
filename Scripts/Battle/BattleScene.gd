@@ -1,6 +1,10 @@
 extends Node2D
 
 
+# ============================================================
+# КОМПОНЕНТЫ БОЕВОЙ СЦЕНЫ
+# ============================================================
+
 @onready var battle_engine: BattleEngine = (
 	get_node_or_null("BattleEngine") as BattleEngine
 )
@@ -9,8 +13,8 @@ extends Node2D
 	get_node_or_null("Battlefield") as BattlefieldView
 )
 
-@onready var battle_hud: Control = (
-	get_node_or_null("UI/BattleHUD") as Control
+@onready var battle_hud: BattleHUD = (
+	get_node_or_null("UI/BattleHUD") as BattleHUD
 )
 
 # Временная панель остаётся, пока её функции
@@ -18,10 +22,6 @@ extends Node2D
 @onready var legacy_ability_panel: AbilityPanel = (
 	get_node_or_null("UI/AbilityPanel") as AbilityPanel
 )
-@onready var battle_hud: BattleHUD = (
-	get_node_or_null("UI/BattleHUD") as BattleHUD
-)
-
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ КОМПОЗИЦИИ
 # ============================================================
