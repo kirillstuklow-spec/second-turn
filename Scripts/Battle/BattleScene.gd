@@ -30,9 +30,12 @@ func _ready() -> void:
 	if not _validate_composition():
 		return
 
+	# Сначала подключаем сигналы.
 	if not _connect_components():
 		return
 
+	# Только потом BattleEngine создаёт BattleState
+	# и выполняет первое обновление представления.
 	if not battle_engine.initialize(
 		battlefield_view,
 		legacy_ability_panel
@@ -43,7 +46,7 @@ func _ready() -> void:
 		return
 
 	print("BattleScene: composition root is ready")
-
+	
 func _validate_composition() -> bool:
 	var composition_is_valid := true
 
@@ -77,6 +80,9 @@ func _validate_composition() -> bool:
 
 	return composition_is_valid
 
+# ============================================================
+# СОЕДИНЕНИЕ КОМПОНЕНТОВ
+# ============================================================
 
 func _connect_components() -> bool:
 	if not battle_hud.has_signal("end_turn_requested"):
@@ -91,17 +97,27 @@ func _connect_components() -> bool:
 		"_on_end_turn_requested"
 	)
 
-	if not battle_hud.is_connected(
-		"end_turn_requested",
+	if not battle_hud.end_turn_requested.is_connected(
 		end_turn_callback
 	):
-		battle_hud.connect(
-			"end_turn_requested",
+		battle_hud.end_turn_requested.connect(
 			end_turn_callback
 		)
 
+	var presentation_callback := Callable(
+		self,
+		"_on_presentation_refresh_requested"
+	)
+
+	if not battle_engine.presentation_refresh_requested.is_connected(
+		presentation_callback
+	):
+		battle_engine.presentation_refresh_requested.connect(
+			presentation_callback
+		)
+
 	print(
-		"BattleScene: BattleHUD intent signals connected"
+		"BattleScene: engine and HUD signals connected"
 	)
 
 	return true
@@ -128,5 +144,23 @@ func _on_end_turn_requested() -> void:
 func _on_presentation_refresh_requested(
 	active_unit: UnitRuntime
 ) -> void:
+	if active_unit == null:
+		print(
+			"BattleScene: presentation refresh without active unit"
+		)
+		battle_hud.show_unit(null)
+		return
+
+	if active_unit.data == null:
+		push_error(
+			"BattleScene: active UnitRuntime has no UnitData"
+		)
+		battle_hud.show_unit(null)
+		return
+
+	print(
+		"BattleScene: refreshing HUD for ",
+		active_unit.data.unit_name
+	)
+
 	battle_hud.show_unit(active_unit)
-	
