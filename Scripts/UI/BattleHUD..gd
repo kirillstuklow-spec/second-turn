@@ -16,15 +16,20 @@ signal end_turn_requested
 # ОБНОВЛЕНИЕ HUD
 # ============================================================
 
-func show_unit(unit: UnitRuntime) -> void:
+func show_unit(
+	unit: UnitRuntime,
+	is_active: bool
+) -> void:
 	if unit_info_panel == null:
 		push_error(
 			"BattleHUD: UnitInfoPanel is missing"
 		)
 		return
 
-	unit_info_panel.show_unit(unit)
-	
+	unit_info_panel.show_unit(
+		unit,
+		is_active
+	)
 	
 func _ready() -> void:
 	if not _validate_hud():
