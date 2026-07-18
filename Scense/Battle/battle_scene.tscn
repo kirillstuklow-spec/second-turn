@@ -11,7 +11,7 @@
 [ext_resource type="Script" uid="uid://bhwkcaokg5vn2" path="res://Scripts/Battle/BattleInitializer.gd" id="6_no0xc"]
 [ext_resource type="Script" uid="uid://dxtokkaaqm5ox" path="res://Scripts/Commands/CommandDispatcher.gd" id="7_4pltt"]
 [ext_resource type="Script" uid="uid://cyphkoe8h05u4" path="res://Scripts/Pipelines/PipelineRunner.gd" id="8_r8nk0"]
-[ext_resource type="Script" uid="uid://dj7kw67vp82ru" path="res://Scripts/Commands/EventQueue.gd.gd" id="9_iuo32"]
+[ext_resource type="Script" uid="uid://dj7kw67vp82ru" path="res://Scripts/Commands/EventQueue.gd" id="9_iuo32"]
 [ext_resource type="Script" uid="uid://boh2yj3rxo48y" path="res://Scripts/Pipelines/MovementPipeline.gd" id="11_tmwdy"]
 [ext_resource type="Script" uid="uid://nc36c4k408o4" path="res://Scripts/Pipelines/TurnPipeline.gd" id="12_84a6n"]
 
