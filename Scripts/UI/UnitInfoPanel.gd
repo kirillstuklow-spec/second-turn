@@ -135,7 +135,10 @@ var displayed_unit: UnitRuntime = null
 # ОТОБРАЖЕНИЕ ЮНИТА
 # ============================================================
 
-func show_unit(unit: UnitRuntime) -> void:
+func show_unit(
+	unit: UnitRuntime,
+	is_active: bool
+) -> void:
 	if unit == null:
 		clear_unit()
 		return
@@ -148,7 +151,9 @@ func show_unit(unit: UnitRuntime) -> void:
 		return
 
 	displayed_unit = unit
+
 	_set_action_controls(is_active)
+
 	unit_name_label.text = unit.data.unit_name
 
 	hp_value_label.text = "%d / %d" % [
@@ -165,7 +170,6 @@ func show_unit(unit: UnitRuntime) -> void:
 	immunities_value_label.text = _format_keywords(
 		unit.active_immunities
 	)
-
 func _format_keywords(keywords: Variant) -> String:
 	if keywords == null:
 		return "—"
@@ -191,10 +195,15 @@ func _set_action_controls(is_active: bool) -> void:
 	end_turn_button.visible = is_active
 	end_turn_button.disabled = not is_active
 	
+# ============================================================
+# ОЧИСТКА ПАНЕЛИ
+# ============================================================
+
 func clear_unit() -> void:
 	displayed_unit = null
+
 	_set_action_controls(false)
-	
+
 	if unit_name_label != null:
 		unit_name_label.text = ""
 
@@ -203,6 +212,7 @@ func clear_unit() -> void:
 
 	if armor_value_label != null:
 		armor_value_label.text = "—"
+
 	if defenses_value_label != null:
 		defenses_value_label.text = "—"
 
