@@ -18,10 +18,19 @@ extends Node2D
 @onready var legacy_ability_panel: AbilityPanel = (
 	get_node_or_null("UI/AbilityPanel") as AbilityPanel
 )
+@onready var battle_hud: BattleHUD = (
+	get_node_or_null("UI/BattleHUD") as BattleHUD
+)
 
+# ============================================================
+# ИНИЦИАЛИЗАЦИЯ КОМПОЗИЦИИ
+# ============================================================
 
 func _ready() -> void:
 	if not _validate_composition():
+		return
+
+	if not _connect_components():
 		return
 
 	if not battle_engine.initialize(
@@ -33,11 +42,7 @@ func _ready() -> void:
 		)
 		return
 
-	if not _connect_components():
-		return
-
 	print("BattleScene: composition root is ready")
-
 
 func _validate_composition() -> bool:
 	var composition_is_valid := true
@@ -105,3 +110,23 @@ func _connect_components() -> bool:
 func _on_end_turn_requested() -> void:
 	print("BattleScene: end turn intent received")
 	battle_engine.request_end_turn()
+	var presentation_callback := Callable(
+		self,
+		"_on_presentation_refresh_requested"
+	)
+
+	if not battle_engine.presentation_refresh_requested.is_connected(
+		presentation_callback
+	):
+		battle_engine.presentation_refresh_requested.connect(
+			presentation_callback
+		)
+# ============================================================
+# ОБНОВЛЕНИЕ ПРЕДСТАВЛЕНИЯ
+# ============================================================
+
+func _on_presentation_refresh_requested(
+	active_unit: UnitRuntime
+) -> void:
+	battle_hud.show_unit(active_unit)
+	
