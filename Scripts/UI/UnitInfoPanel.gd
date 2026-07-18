@@ -148,7 +148,7 @@ func show_unit(unit: UnitRuntime) -> void:
 		return
 
 	displayed_unit = unit
-
+	_set_action_controls(is_active)
 	unit_name_label.text = unit.data.unit_name
 
 	hp_value_label.text = "%d / %d" % [
@@ -179,10 +179,22 @@ func _format_keywords(keywords: Variant) -> String:
 		keyword_texts.append(str(keyword))
 
 	return ", ".join(keyword_texts)
+
+# ============================================================
+# ДОСТУПНОСТЬ УПРАВЛЕНИЯ
+# ============================================================
+
+func _set_action_controls(is_active: bool) -> void:
+	if end_turn_button == null:
+		return
+
+	end_turn_button.visible = is_active
+	end_turn_button.disabled = not is_active
 	
 func clear_unit() -> void:
 	displayed_unit = null
-
+	_set_action_controls(false)
+	
 	if unit_name_label != null:
 		unit_name_label.text = ""
 
