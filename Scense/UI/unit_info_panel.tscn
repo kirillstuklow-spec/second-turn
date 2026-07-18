@@ -1,8 +1,11 @@
 [gd_scene format=3 uid="uid://fwxfc3mhvpj5"]
 
+[ext_resource type="Script" uid="uid://h4b3k40bk4ox" path="res://Scripts/UI/UnitInfoPanel.gd" id="1_dq825"]
+
 [node name="UnitInfoPanel" type="PanelContainer" unique_id=1622976336]
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.25
+script = ExtResource("1_dq825")
 
 [node name="UnitInfoMargin" type="MarginContainer" parent="." unique_id=1173743985]
 layout_mode = 2
@@ -31,6 +34,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="EndTurnButton" type="Button" parent="UnitInfoMargin/UnitInfoRow/PortraitSection" unique_id=1522228536]
+unique_name_in_owner = true
 layout_mode = 1
 offset_right = 44.0
 offset_bottom = 44.0
