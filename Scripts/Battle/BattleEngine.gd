@@ -109,9 +109,9 @@ func initialize(
 
 	turn_pipeline.start_battle_flow()
 
-	_refresh_views()
-
 	_is_initialized = true
+
+	_refresh_views()
 
 	print("")
 	print("BattleEngine ready")
