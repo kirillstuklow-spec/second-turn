@@ -191,6 +191,11 @@ func show_unit(
 	immunities_value_label.text = _format_keywords(
 		unit.active_immunities
 	)
+
+	_show_unit_abilities(
+		unit,
+		is_active
+	)
 func _format_keywords(keywords: Variant) -> String:
 	if keywords == null:
 		return "—"
