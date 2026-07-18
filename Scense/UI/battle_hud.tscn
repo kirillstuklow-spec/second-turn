@@ -37,6 +37,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="UnitInfoPanel" parent="MainLayout/BottomPanel/BottomColumn/MainRow" unique_id=1622976336 instance=ExtResource("1_w1472")]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="HoverInfoPanel" type="PanelContainer" parent="MainLayout/BottomPanel/BottomColumn/MainRow" unique_id=720888624]
