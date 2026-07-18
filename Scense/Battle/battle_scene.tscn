@@ -31,8 +31,6 @@ longbow_shot = ExtResource("5_r8nk0")
 [node name="BattleInitializer" type="Node" parent="BattleEngine" unique_id=1595228986]
 script = ExtResource("6_no0xc")
 
-[node name="BattleState" type="Node" parent="BattleEngine" unique_id=871062208]
-
 [node name="CommandDispatcher" type="Node" parent="BattleEngine" unique_id=1155290939]
 script = ExtResource("7_4pltt")
 
@@ -65,13 +63,6 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("3_xlw65")
-
-[node name="EndTurnButton" type="Button" parent="UI" unique_id=1196614045]
-offset_left = 147.0
-offset_top = 362.0
-offset_right = 289.0
-offset_bottom = 393.0
-text = "Завевршить ход"
 
 [node name="BattleHUD" parent="UI" unique_id=192216766 instance=ExtResource("14_u4a4q")]
 script = ExtResource("16_mwncx")
