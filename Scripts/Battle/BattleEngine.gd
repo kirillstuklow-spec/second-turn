@@ -20,7 +20,7 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 
 # ============================================================
-# УЗЛЫ BATTLE ENGINE
+# ВНУТРЕННИЕ УЗЛЫ BATTLE ENGINE
 # ============================================================
 
 @onready var battle_initializer: BattleInitializer = (
@@ -53,18 +53,17 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 
 # ============================================================
-# УЗЛЫ СЦЕНЫ
+# ВНЕШНИЕ ЗАВИСИМОСТИ
 # ============================================================
 
-@onready var battlefield_view: BattlefieldView = (
-	$"../Battlefield"
-)
+# Эти ссылки передаёт BattleScene.
+# BattleEngine больше не ищет соседние узлы самостоятельно.
+
+var battlefield_view: BattlefieldView = null
 
 # Временная старая панель способностей.
-# Будет удалена после интеграции AbilityGrid нового HUD.
-@onready var ability_panel: AbilityPanel = (
-	$"../UI/AbilityPanel"
-)
+# Будет удалена после подключения AbilityGrid нового HUD.
+var ability_panel: AbilityPanel = null
 
 
 # ============================================================
@@ -73,23 +72,39 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 var battle_state: BattleState = null
 
+var _is_initialized: bool = false
+
 
 # ============================================================
-# ИНИЦИАЛИЗАЦИЯ
+# ПУБЛИЧНАЯ ИНИЦИАЛИЗАЦИЯ
 # ============================================================
 
-func _ready() -> void:
-	if not _validate_resources():
-		return
+func initialize(
+	new_battlefield_view: BattlefieldView,
+	new_ability_panel: AbilityPanel
+) -> bool:
+	if _is_initialized:
+		push_warning(
+			"BattleEngine: initialize() was called more than once"
+		)
+		return true
+
+	battlefield_view = new_battlefield_view
+	ability_panel = new_ability_panel
+
+	if not _validate_configuration():
+		return false
 
 	_create_battle_state()
 	_configure_pipelines()
 	_initialize_test_battle()
+	_connect_view_and_ui()
 
 	turn_pipeline.start_battle_flow()
 
-	_connect_view_and_ui()
 	_refresh_views()
+
+	_is_initialized = true
 
 	print("")
 	print("BattleEngine ready")
@@ -101,6 +116,8 @@ func _ready() -> void:
 		"BattleState units count: ",
 		battle_state.units.size()
 	)
+
+	return true
 
 
 func _configure_pipelines() -> void:
@@ -141,10 +158,10 @@ func _initialize_test_battle() -> void:
 
 
 # ============================================================
-# ПРОВЕРКА РЕСУРСОВ И УЗЛОВ
+# ПРОВЕРКА КОНФИГУРАЦИИ
 # ============================================================
 
-func _validate_resources() -> bool:
+func _validate_configuration() -> bool:
 	var is_valid: bool = true
 
 	if archer_data == null:
@@ -222,15 +239,15 @@ func _validate_resources() -> bool:
 
 	if battlefield_view == null:
 		push_error(
-			"BattleEngine: Battlefield node is missing "
-			+ "or has no BattlefieldView script"
+			"BattleEngine: BattlefieldView was not provided "
+			+ "by BattleScene"
 		)
 		is_valid = false
 
 	if ability_panel == null:
 		push_error(
-			"BattleEngine: AbilityPanel node is missing "
-			+ "or has no AbilityPanel script"
+			"BattleEngine: temporary AbilityPanel was not "
+			+ "provided by BattleScene"
 		)
 		is_valid = false
 
@@ -252,13 +269,29 @@ func _create_battle_state() -> void:
 # ============================================================
 
 func _connect_view_and_ui() -> void:
-	ability_panel.ability_selected.connect(
-		_on_ability_selected
+	var ability_callback := Callable(
+		self,
+		"_on_ability_selected"
 	)
 
-	battlefield_view.cell_clicked.connect(
-		_on_cell_clicked
+	if not ability_panel.ability_selected.is_connected(
+		ability_callback
+	):
+		ability_panel.ability_selected.connect(
+			ability_callback
+		)
+
+	var cell_callback := Callable(
+		self,
+		"_on_cell_clicked"
 	)
+
+	if not battlefield_view.cell_clicked.is_connected(
+		cell_callback
+	):
+		battlefield_view.cell_clicked.connect(
+			cell_callback
+		)
 
 
 # ============================================================
@@ -266,6 +299,12 @@ func _connect_view_and_ui() -> void:
 # ============================================================
 
 func request_end_turn() -> void:
+	if not _is_initialized:
+		push_error(
+			"BattleEngine: cannot end turn before initialization"
+		)
+		return
+
 	_end_current_activation()
 
 
@@ -274,13 +313,15 @@ func request_end_turn() -> void:
 # ============================================================
 
 func _refresh_views() -> void:
-	battlefield_view.draw_battlefield(
-		battle_state
-	)
+	if battlefield_view != null:
+		battlefield_view.draw_battlefield(
+			battle_state
+		)
 
-	ability_panel.show_unit_abilities(
-		battle_state.active_unit
-	)
+	if ability_panel != null:
+		ability_panel.show_unit_abilities(
+			battle_state.active_unit
+		)
 
 
 # ============================================================
@@ -288,6 +329,9 @@ func _refresh_views() -> void:
 # ============================================================
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not _is_initialized:
+		return
+
 	if event is InputEventMouseButton:
 		if (
 			event.button_index == MOUSE_BUTTON_RIGHT
