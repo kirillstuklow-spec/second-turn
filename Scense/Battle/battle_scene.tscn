@@ -5,7 +5,6 @@
 [ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="1_yn5lb"]
 [ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_7jnwi"]
 [ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_no0xc"]
-[ext_resource type="Script" uid="uid://2htr4lm8astu" path="res://Scripts/Battle/UI/AbilityPanel.gd" id="3_xlw65"]
 [ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_4pltt"]
 [ext_resource type="Script" uid="uid://bsjm7wxqxgiq6" path="res://Scripts/Battle/BattlefieldView.gd" id="4_xlw65"]
 [ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_r8nk0"]
@@ -56,13 +55,6 @@ script = ExtResource("12_84a6n")
 [node name="VisualEffects" type="Node2D" parent="." unique_id=321068482]
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1371794651]
-
-[node name="AbilityPanel" type="Control" parent="UI" unique_id=1824017465]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("3_xlw65")
 
 [node name="BattleHUD" parent="UI" unique_id=192216766 instance=ExtResource("14_u4a4q")]
 script = ExtResource("16_mwncx")
