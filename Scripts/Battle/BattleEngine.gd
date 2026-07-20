@@ -21,10 +21,12 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 # ============================================================
 
 @export var archer_data: UnitData
+@export var second_player_unit_data: UnitData
+
 @export var defense_dummy_data: UnitData
 @export var armor_dummy_data: UnitData
-@export var longbow_shot: UnitAbilityData
 
+@export var longbow_shot: UnitAbilityData
 
 # ============================================================
 # ВНУТРЕННИЕ УЗЛЫ BATTLE ENGINE
@@ -147,16 +149,20 @@ func _configure_pipelines() -> void:
 	)
 
 
+# ============================================================
+# ИНИЦИАЛИЗАЦИЯ ТЕСТОВОГО БОЯ
+# ============================================================
+
 func _initialize_test_battle() -> void:
 	battle_initializer.initialize_test_battle(
 		battle_state,
 		archer_data,
+		second_player_unit_data,
 		defense_dummy_data,
 		armor_dummy_data
 	)
-
-
-## ============================================================
+	
+# ============================================================
 # ПРОВЕРКА КОНФИГУРАЦИИ
 # ============================================================
 
@@ -166,6 +172,13 @@ func _validate_configuration() -> bool:
 	if archer_data == null:
 		push_error(
 			"BattleEngine: archer_data is not assigned"
+		)
+		is_valid = false
+
+	if second_player_unit_data == null:
+		push_error(
+			"BattleEngine: second_player_unit_data "
+			+ "is not assigned"
 		)
 		is_valid = false
 
@@ -244,6 +257,7 @@ func _validate_configuration() -> bool:
 		is_valid = false
 
 	return is_valid
+	
 
 # ============================================================
 # СОЗДАНИЕ СОСТОЯНИЯ БОЯ
