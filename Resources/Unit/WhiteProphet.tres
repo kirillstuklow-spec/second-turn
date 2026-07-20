@@ -1,7 +1,10 @@
 [gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://do1a2ftpujhtw"]
 
 [ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_vatoq"]
+[ext_resource type="Resource" uid="uid://bculuacu1xhmy" path="res://Resources/Abilities/UnitAbilityData/MagicAttackAll.tres" id="2_j43kn"]
 [ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_oir12"]
+[ext_resource type="Resource" uid="uid://cm02moukvopmt" path="res://Resources/Abilities/UnitAbilityData/Healing.tres" id="3_k0j4u"]
+[ext_resource type="Resource" uid="uid://c526a8kck4woy" path="res://Resources/Abilities/UnitAbilityData/MagicAreaAroundCell.tres" id="4_snkyx"]
 
 [resource]
 script = ExtResource("2_oir12")
@@ -12,4 +15,5 @@ initiative = 20
 max_hp = 10
 movement = 2
 keywords = Array[String](["human", "white_brotherhood", "caster", "prophet"])
+active_abilities = Array[ExtResource("1_vatoq")]([ExtResource("2_j43kn"), ExtResource("3_k0j4u"), ExtResource("4_snkyx")])
 metadata/_custom_type_script = "uid://s6md7hs2lnl6"
