@@ -68,10 +68,6 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 var battlefield_view: BattlefieldView = null
 
-# Временная старая панель способностей.
-# Будет удалена после подключения AbilityGrid нового HUD.
-var ability_panel: AbilityPanel = null
-
 
 # ============================================================
 # RUNTIME-СОСТОЯНИЕ БОЯ
@@ -81,14 +77,12 @@ var battle_state: BattleState = null
 
 var _is_initialized: bool = false
 
-
 # ============================================================
 # ПУБЛИЧНАЯ ИНИЦИАЛИЗАЦИЯ
 # ============================================================
 
 func initialize(
-	new_battlefield_view: BattlefieldView,
-	new_ability_panel: AbilityPanel
+	new_battlefield_view: BattlefieldView
 ) -> bool:
 	if _is_initialized:
 		push_warning(
@@ -97,7 +91,6 @@ func initialize(
 		return true
 
 	battlefield_view = new_battlefield_view
-	ability_panel = new_ability_panel
 
 	if not _validate_configuration():
 		return false
@@ -125,7 +118,6 @@ func initialize(
 	)
 
 	return true
-
 
 func _configure_pipelines() -> void:
 	ability_pipeline.configure(
@@ -164,7 +156,7 @@ func _initialize_test_battle() -> void:
 	)
 
 
-# ============================================================
+## ============================================================
 # ПРОВЕРКА КОНФИГУРАЦИИ
 # ============================================================
 
@@ -251,15 +243,7 @@ func _validate_configuration() -> bool:
 		)
 		is_valid = false
 
-	if ability_panel == null:
-		push_error(
-			"BattleEngine: temporary AbilityPanel was not "
-			+ "provided by BattleScene"
-		)
-		is_valid = false
-
 	return is_valid
-
 
 # ============================================================
 # СОЗДАНИЕ СОСТОЯНИЯ БОЯ
@@ -272,22 +256,10 @@ func _create_battle_state() -> void:
 
 
 # ============================================================
-# СВЯЗЬ VIEW И ВРЕМЕННОГО UI
+# СВЯЗЬ С ПРЕДСТАВЛЕНИЕМ
 # ============================================================
 
 func _connect_view_and_ui() -> void:
-	var ability_callback := Callable(
-		self,
-		"_on_ability_selected"
-	)
-
-	if not ability_panel.ability_selected.is_connected(
-		ability_callback
-	):
-		ability_panel.ability_selected.connect(
-			ability_callback
-		)
-
 	var cell_callback := Callable(
 		self,
 		"_on_cell_clicked"
@@ -299,7 +271,6 @@ func _connect_view_and_ui() -> void:
 		battlefield_view.cell_clicked.connect(
 			cell_callback
 		)
-
 
 # ============================================================
 # ПУБЛИЧНЫЕ НАМЕРЕНИЯ
@@ -338,7 +309,7 @@ func request_ability_selection(
 		unit_ability
 	)
 	
-# ============================================================
+## ============================================================
 # ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ
 # ============================================================
 
@@ -346,11 +317,6 @@ func _refresh_views() -> void:
 	if battlefield_view != null:
 		battlefield_view.draw_battlefield(
 			battle_state
-		)
-
-	if ability_panel != null:
-		ability_panel.show_unit_abilities(
-			battle_state.active_unit
 		)
 
 	presentation_refresh_requested.emit(
