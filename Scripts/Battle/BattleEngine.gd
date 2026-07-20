@@ -314,7 +314,30 @@ func request_end_turn() -> void:
 
 	_end_current_activation()
 
+# ============================================================
+# ПУБЛИЧНЫЙ ЗАПРОС ВЫБОРА СПОСОБНОСТИ
+# ============================================================
 
+func request_ability_selection(
+	unit_ability: UnitAbilityData
+) -> void:
+	if not _is_initialized:
+		push_error(
+			"BattleEngine: cannot select ability "
+			+ "before initialization"
+		)
+		return
+
+	if unit_ability == null:
+		push_error(
+			"BattleEngine: selected ability is null"
+		)
+		return
+
+	_on_ability_selected(
+		unit_ability
+	)
+	
 # ============================================================
 # ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ
 # ============================================================
