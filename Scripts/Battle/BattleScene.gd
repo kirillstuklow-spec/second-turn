@@ -85,10 +85,21 @@ func _validate_composition() -> bool:
 # ============================================================
 
 func _connect_components() -> bool:
-	if not battle_hud.has_signal("end_turn_requested"):
+	if not battle_hud.has_signal(
+		"end_turn_requested"
+	):
 		push_error(
 			"BattleScene: BattleHUD does not provide "
 			+ "the 'end_turn_requested' signal."
+		)
+		return false
+
+	if not battle_hud.has_signal(
+		"ability_selected"
+	):
+		push_error(
+			"BattleScene: BattleHUD does not provide "
+			+ "the 'ability_selected' signal."
 		)
 		return false
 
@@ -102,6 +113,18 @@ func _connect_components() -> bool:
 	):
 		battle_hud.end_turn_requested.connect(
 			end_turn_callback
+		)
+
+	var ability_callback := Callable(
+		self,
+		"_on_ability_selected"
+	)
+
+	if not battle_hud.ability_selected.is_connected(
+		ability_callback
+	):
+		battle_hud.ability_selected.connect(
+			ability_callback
 		)
 
 	var presentation_callback := Callable(
@@ -121,7 +144,6 @@ func _connect_components() -> bool:
 	)
 
 	return true
-
 
 func _on_end_turn_requested() -> void:
 	print("BattleScene: end turn intent received")
@@ -177,3 +199,24 @@ func _on_presentation_refresh_requested(
 		true
 	)
 	
+# ============================================================
+# НАМЕРЕНИЕ ВЫБОРА СПОСОБНОСТИ
+# ============================================================
+
+func _on_ability_selected(
+	unit_ability: UnitAbilityData
+) -> void:
+	if unit_ability == null:
+		push_error(
+			"BattleScene: selected ability is null"
+		)
+		return
+
+	print(
+		"BattleScene: ability selection intent received: ",
+		unit_ability.ability_name
+	)
+
+	battle_engine.request_ability_selection(
+		unit_ability
+	)
