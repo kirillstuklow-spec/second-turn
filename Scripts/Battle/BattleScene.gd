@@ -117,16 +117,28 @@ func _connect_components() -> bool:
 			ability_callback
 		)
 
-	var presentation_callback := Callable(
+	var unit_presentation_callback := Callable(
 		self,
 		"_on_presentation_refresh_requested"
 	)
 
 	if not battle_engine.presentation_refresh_requested.is_connected(
-		presentation_callback
+		unit_presentation_callback
 	):
 		battle_engine.presentation_refresh_requested.connect(
-			presentation_callback
+			unit_presentation_callback
+		)
+
+	var turn_state_callback := Callable(
+		self,
+		"_on_turn_state_refresh_requested"
+	)
+
+	if not battle_engine.turn_state_refresh_requested.is_connected(
+		turn_state_callback
+	):
+		battle_engine.turn_state_refresh_requested.connect(
+			turn_state_callback
 		)
 
 	print(
@@ -134,21 +146,19 @@ func _connect_components() -> bool:
 	)
 
 	return true
+	
+# ============================================================
+# НАМЕРЕНИЕ ЗАВЕРШЕНИЯ ХОДА
+# ============================================================
 
 func _on_end_turn_requested() -> void:
-	print("BattleScene: end turn intent received")
-	battle_engine.request_end_turn()
-	var presentation_callback := Callable(
-		self,
-		"_on_presentation_refresh_requested"
+	print(
+		"BattleScene: end turn intent received"
 	)
 
-	if not battle_engine.presentation_refresh_requested.is_connected(
-		presentation_callback
-	):
-		battle_engine.presentation_refresh_requested.connect(
-			presentation_callback
-		)
+	battle_engine.request_end_turn()
+	
+	
 # ============================================================
 # ОБНОВЛЕНИЕ ПРЕДСТАВЛЕНИЯ
 # ============================================================
@@ -187,6 +197,33 @@ func _on_presentation_refresh_requested(
 	battle_hud.show_unit(
 		active_unit,
 		true
+	)
+# ============================================================
+# ОБНОВЛЕНИЕ СОСТОЯНИЯ ХОДОВ В HUD
+# ============================================================
+
+func _on_turn_state_refresh_requested(
+	turn_state: TurnState
+) -> void:
+	if turn_state == null:
+		push_error(
+			"BattleScene: received null TurnState"
+		)
+
+		battle_hud.show_turn_state(
+			null
+		)
+
+		return
+
+	print(
+		"BattleScene: refreshing initiative queue "
+		+ "for round ",
+		turn_state.round_number
+	)
+
+	battle_hud.show_turn_state(
+		turn_state
 	)
 	
 # ============================================================
