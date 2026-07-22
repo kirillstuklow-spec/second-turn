@@ -17,7 +17,15 @@ signal ability_selected(
 # ============================================================
 
 @onready var unit_info_panel: UnitInfoPanel = (
-	get_node_or_null("%UnitInfoPanel") as UnitInfoPanel
+	get_node_or_null(
+		"%UnitInfoPanel"
+	) as UnitInfoPanel
+)
+
+@onready var initiative_queue_panel: InitiativeQueuePanel = (
+	get_node_or_null(
+		"%InitiativeQueuePanel"
+	) as InitiativeQueuePanel
 )
 # ============================================================
 # ОБНОВЛЕНИЕ HUD
@@ -46,7 +54,27 @@ func _ready() -> void:
 		return
 
 	print("BattleHUD: panels connected")
+	
+# ============================================================
+# ОБНОВЛЕНИЕ ЛЕНТЫ ИНИЦИАТИВЫ
+# ============================================================
 
+func show_turn_state(
+	turn_state: TurnState
+) -> void:
+	if initiative_queue_panel == null:
+		push_error(
+			"BattleHUD: InitiativeQueuePanel is missing"
+		)
+		return
+
+	if turn_state == null:
+		initiative_queue_panel.clear_panel()
+		return
+
+	initiative_queue_panel.show_turn_state(
+		turn_state
+	)
 # ============================================================
 # ПРОВЕРКА HUD
 # ============================================================
@@ -55,6 +83,14 @@ func _validate_hud() -> bool:
 	if unit_info_panel == null:
 		push_error(
 			"BattleHUD: UnitInfoPanel was not found. "
+			+ "Make sure the panel instance is marked "
+			+ "as a unique node."
+		)
+		return false
+
+	if initiative_queue_panel == null:
+		push_error(
+			"BattleHUD: InitiativeQueuePanel was not found. "
 			+ "Make sure the panel instance is marked "
 			+ "as a unique node."
 		)
@@ -80,7 +116,6 @@ func _validate_hud() -> bool:
 
 	return true
 	
-
 # ============================================================
 # СОЕДИНЕНИЕ ДОЧЕРНИХ ПАНЕЛЕЙ
 # ============================================================
