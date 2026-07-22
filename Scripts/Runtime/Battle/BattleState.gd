@@ -15,10 +15,26 @@ const FIELD_HEIGHT : int = 5
 # СОСТОЯНИЕ БОЯ
 # ============================================================
 
-var is_battle_over : bool = false
-var winner_team_id : int = 0
-var round_number : int = 0
+var is_battle_over: bool = false
 
+var winner_team_id: int = 0
+
+
+# ============================================================
+# СОСТОЯНИЕ СИСТЕМЫ ХОДОВ
+# ============================================================
+
+var turn_state: TurnState = TurnState.new()
+
+
+# Временный совместимый доступ.
+# Настоящее значение хранится в TurnState.
+var round_number: int:
+	get:
+		return turn_state.round_number
+
+	set(value):
+		turn_state.round_number = value
 # ============================================================
 # КЛЕТКИ ПОЛЯ БОЯ
 # ============================================================
@@ -37,9 +53,14 @@ var units : Array[UnitRuntime] = []
 # ТЕКУЩИЙ АКТИВНЫЙ ЮНИТ
 # ============================================================
 
-var active_unit : UnitRuntime = null
+# Временный совместимый доступ.
+# Настоящая ссылка хранится в TurnState.
+var active_unit: UnitRuntime:
+	get:
+		return turn_state.active_unit
 
-
+	set(value):
+		turn_state.active_unit = value
 # ============================================================
 # ВЫБРАННАЯ СПОСОБНОСТЬ
 # ============================================================
@@ -48,19 +69,19 @@ var pending_ability : UnitAbilityData = null
 
 
 # ============================================================
-# УПРАВЛЕНИЕ СОСТОЯНИЕМ
+# ОЧИСТКА СОСТОЯНИЯ
 # ============================================================
 
 func clear() -> void:
 	cells.clear()
 	units.clear()
 
-	active_unit = null
+	turn_state.clear()
+
 	pending_ability = null
 
 	is_battle_over = false
 	winner_team_id = 0
-	round_number = 0
 
 
 func add_cell(cell : CellRuntime) -> void:
