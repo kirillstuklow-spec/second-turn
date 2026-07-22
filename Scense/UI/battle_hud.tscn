@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b6ivyyflbw7jm"]
 
 [ext_resource type="PackedScene" uid="uid://fwxfc3mhvpj5" path="res://Scense/UI/unit_info_panel.tscn" id="1_w1472"]
+[ext_resource type="PackedScene" uid="uid://b8amdour5q4vy" path="res://Scense/UI/initiative_queue_panel.tscn" id="2_sxbss"]
 
 [node name="BattleHUD" type="Control" unique_id=192216766]
 layout_mode = 3
@@ -19,6 +20,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="InitiativeQueuePanel" parent="MainLayout" unique_id=1956450364 instance=ExtResource("2_sxbss")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="BattlefieldSpace" type="Control" parent="MainLayout" unique_id=1528218566]
 layout_mode = 2
