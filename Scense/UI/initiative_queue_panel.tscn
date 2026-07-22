@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://b8amdour5q4vy"]
+
+[ext_resource type="Script" uid="uid://cpvhsjx3c4jyj" path="res://Scripts/Battle/UI/InitiativeQueuePanel.gd" id="1_q4e74"]
+
+[node name="InitiativeQueuePanel" type="PanelContainer" unique_id=1956450364]
+custom_minimum_size = Vector2(0, 100)
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_q4e74")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=482289112]
+layout_mode = 2
+
+[node name="ContentColumn" type="VBoxContainer" parent="MarginContainer" unique_id=645841927]
+layout_mode = 2
+
+[node name="RoundLabel" type="Label" parent="MarginContainer/ContentColumn" unique_id=849379811]
+layout_mode = 2
+text = "раунд - "
+horizontal_alignment = 1
+
+[node name="QueueScroll" type="ScrollContainer" parent="MarginContainer/ContentColumn" unique_id=1425363075]
+layout_mode = 2
+size_flags_vertical = 3
+vertical_scroll_mode = 0
+
+[node name="QueueRow" type="HBoxContainer" parent="MarginContainer/ContentColumn/QueueScroll" unique_id=2062994514]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
