@@ -9,6 +9,10 @@ signal presentation_refresh_requested(
 	active_unit: UnitRuntime
 )
 
+signal turn_state_refresh_requested(
+	turn_state: TurnState
+)
+
 # ============================================================
 # КОНСТАНТЫ TARGET RULES
 # ============================================================
@@ -323,11 +327,18 @@ func request_ability_selection(
 		unit_ability
 	)
 	
-## ============================================================
+# ============================================================
 # ОБНОВЛЕНИЕ ОТОБРАЖЕНИЯ
 # ============================================================
 
 func _refresh_views() -> void:
+	if battle_state == null:
+		push_error(
+			"BattleEngine: cannot refresh views "
+			+ "because battle_state is null"
+		)
+		return
+
 	if battlefield_view != null:
 		battlefield_view.draw_battlefield(
 			battle_state
@@ -335,6 +346,10 @@ func _refresh_views() -> void:
 
 	presentation_refresh_requested.emit(
 		battle_state.active_unit
+	)
+
+	turn_state_refresh_requested.emit(
+		battle_state.turn_state
 	)
 	
 # ============================================================
