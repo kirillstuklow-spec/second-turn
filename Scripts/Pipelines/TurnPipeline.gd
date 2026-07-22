@@ -17,15 +17,6 @@ var event_queue : EventQueue = null
 
 var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 
-
-# ============================================================
-# ОЧЕРЕДЬ АКТИВАЦИЙ
-# ============================================================
-
-var activation_queue : Array[UnitRuntime] = []
-var current_activation_index : int = -1
-
-
 # ============================================================
 # НАСТРОЙКА PIPELINE
 # ============================================================
@@ -50,18 +41,20 @@ func configure(
 
 func start_battle_flow() -> void:
 	if battle_state == null:
-		push_error("TurnPipeline: battle_state is null")
+		push_error(
+			"TurnPipeline: battle_state is null"
+		)
 		return
 
 	if battle_state.is_battle_over:
-		print("TurnPipeline: battle is already over")
+		print(
+			"TurnPipeline: battle is already over"
+		)
 		return
 
-	battle_state.round_number = 0
+	battle_state.turn_state.clear()
 
 	_start_new_round()
-
-
 # ============================================================
 # ЗАВЕРШЕНИЕ АКТИВАЦИИ
 # ============================================================
@@ -94,29 +87,48 @@ func _start_new_round() -> void:
 	if battle_state == null:
 		return
 
-	battle_state.round_number += 1
+	var turn_state: TurnState = (
+		battle_state.turn_state
+	)
+
+	turn_state.phase = TurnState.Phase.ROUND_START
+	turn_state.round_number += 1
 
 	_build_activation_queue()
 
-	current_activation_index = -1
+	turn_state.current_activation_index = -1
 
 	print("")
 	print("========================================")
-	print("Round ", battle_state.round_number, " started")
+	print(
+		"Round ",
+		turn_state.round_number,
+		" started"
+	)
 	print("========================================")
 
 	_print_activation_queue()
 
 	_push_event({
 		"type": "RoundStarted",
-		"round_number": battle_state.round_number
+		"round_number": turn_state.round_number
 	})
 
 	_advance_to_next_living_unit()
 
+# ============================================================
+# ФОРМИРОВАНИЕ ОЧЕРЕДИ АКТИВАЦИЙ
+# ============================================================
 
 func _build_activation_queue() -> void:
-	activation_queue.clear()
+	if battle_state == null:
+		return
+
+	var turn_state: TurnState = (
+		battle_state.turn_state
+	)
+
+	turn_state.activation_queue.clear()
 
 	for unit in battle_state.units:
 		if unit == null:
@@ -126,11 +138,15 @@ func _build_activation_queue() -> void:
 			continue
 
 		_roll_initiative_for_unit(unit)
-		activation_queue.append(unit)
 
-	activation_queue.sort_custom(_compare_units_by_initiative_roll)
+		turn_state.activation_queue.append(
+			unit
+		)
 
-
+	turn_state.activation_queue.sort_custom(
+		_compare_units_by_initiative_roll
+	)
+	
 func _roll_initiative_for_unit(unit : UnitRuntime) -> void:
 	if unit == null:
 		return
@@ -175,20 +191,32 @@ func _advance_to_next_living_unit() -> void:
 	if battle_state.is_battle_over:
 		return
 
-	current_activation_index += 1
+	var turn_state: TurnState = (
+		battle_state.turn_state
+	)
 
-	while current_activation_index < activation_queue.size():
-		var next_unit : UnitRuntime = activation_queue[current_activation_index]
+	turn_state.current_activation_index += 1
+
+	while (
+		turn_state.current_activation_index
+		< turn_state.activation_queue.size()
+	):
+		var next_unit: UnitRuntime = (
+			turn_state.activation_queue[
+				turn_state.current_activation_index
+			]
+		)
 
 		if _can_unit_activate(next_unit):
 			_activate_unit(next_unit)
 			return
 
-		current_activation_index += 1
+		turn_state.current_activation_index += 1
+
+	turn_state.phase = TurnState.Phase.ROUND_END
 
 	_start_new_round()
-
-
+	
 func _can_unit_activate(unit : UnitRuntime) -> bool:
 	if unit == null:
 		return false
@@ -202,9 +230,21 @@ func _can_unit_activate(unit : UnitRuntime) -> bool:
 	return true
 
 
-func _activate_unit(unit : UnitRuntime) -> void:
+# ============================================================
+# АКТИВАЦИЯ ЮНИТА
+# ============================================================
+
+func _activate_unit(
+	unit: UnitRuntime
+) -> void:
 	if unit == null:
 		return
+
+	var turn_state: TurnState = (
+		battle_state.turn_state
+	)
+
+	turn_state.phase = TurnState.Phase.ACTIVATION
 
 	battle_state.set_active_unit(unit)
 	battle_state.clear_pending_ability()
@@ -213,13 +253,34 @@ func _activate_unit(unit : UnitRuntime) -> void:
 
 	print("")
 	print("----------------------------------------")
-	print("Active unit: ", unit.data.unit_name)
-	print("Team: ", unit.team_id)
-	print("Base initiative: ", unit.data.initiative)
-	print("Initiative modifier: ", unit.initiative_modifier_this_round)
-	print("Initiative total: ", unit.initiative_roll_this_round)
-	print("AP: ", unit.action_points_remaining)
-	print("MP: ", unit.movement_points_remaining)
+	print(
+		"Active unit: ",
+		unit.data.unit_name
+	)
+	print(
+		"Team: ",
+		unit.team_id
+	)
+	print(
+		"Base initiative: ",
+		unit.data.initiative
+	)
+	print(
+		"Initiative modifier: ",
+		unit.initiative_modifier_this_round
+	)
+	print(
+		"Initiative total: ",
+		unit.initiative_roll_this_round
+	)
+	print(
+		"AP: ",
+		unit.action_points_remaining
+	)
+	print(
+		"MP: ",
+		unit.movement_points_remaining
+	)
 	print("----------------------------------------")
 
 	_push_event({
@@ -227,22 +288,32 @@ func _activate_unit(unit : UnitRuntime) -> void:
 		"unit_name": unit.data.unit_name,
 		"team_id": unit.team_id,
 		"base_initiative": unit.data.initiative,
-		"initiative_modifier": unit.initiative_modifier_this_round,
-		"initiative_total": unit.initiative_roll_this_round,
-		"round_number": battle_state.round_number,
-		"action_points": unit.action_points_remaining,
-		"movement_points": unit.movement_points_remaining
+		"initiative_modifier":
+			unit.initiative_modifier_this_round,
+		"initiative_total":
+			unit.initiative_roll_this_round,
+		"round_number": turn_state.round_number,
+		"action_points":
+			unit.action_points_remaining,
+		"movement_points":
+			unit.movement_points_remaining
 	})
-
-
+	
 # ============================================================
 # ОТЛАДКА ОЧЕРЕДИ
 # ============================================================
 
 func _print_activation_queue() -> void:
+	if battle_state == null:
+		return
+
+	var turn_state: TurnState = (
+		battle_state.turn_state
+	)
+
 	print("Activation queue:")
 
-	for unit in activation_queue:
+	for unit in turn_state.activation_queue:
 		if unit == null:
 			continue
 
@@ -257,8 +328,6 @@ func _print_activation_queue() -> void:
 			" | total: ",
 			unit.initiative_roll_this_round
 		)
-
-
 # ============================================================
 # EVENT QUEUE
 # ============================================================
