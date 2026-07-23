@@ -352,9 +352,19 @@ func count_alive_units_for_team(team_id : int) -> int:
 	return alive_count
 
 
-func _finish_battle(winning_team_id : int) -> void:
+# ============================================================
+# ЗАВЕРШЕНИЕ БОЯ
+# ============================================================
+
+func _finish_battle(
+	winning_team_id: int
+) -> void:
 	is_battle_over = true
 	winner_team_id = winning_team_id
+
+	turn_state.phase = TurnState.Phase.BATTLE_END
+
+	clear_pending_ability()
 
 	print("")
 	print("========================================")
@@ -362,11 +372,14 @@ func _finish_battle(winning_team_id : int) -> void:
 	if winner_team_id == 0:
 		print("Battle finished: draw")
 	else:
-		print("Battle finished: team ", winner_team_id, " wins")
+		print(
+			"Battle finished: team ",
+			winner_team_id,
+			" wins"
+		)
 
 	print("========================================")
-
-
+	
 # ============================================================
 # ОТЛАДКА: ВЫВОД ЗОН ПОЛЯ
 # ============================================================
