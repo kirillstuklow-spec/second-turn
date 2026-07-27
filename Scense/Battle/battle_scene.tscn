@@ -3,9 +3,9 @@
 [ext_resource type="Script" uid="uid://drwnkrknlpxa2" path="res://Scripts/Battle/BattleScene.gd" id="1_moh7n"]
 [ext_resource type="Script" uid="uid://bg0uh48u5s1sb" path="res://Scripts/Battle/BattleEngine.gd" id="1_rq7d2"]
 [ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="1_yn5lb"]
-[ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_7jnwi"]
 [ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_no0xc"]
 [ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_4pltt"]
+[ext_resource type="Resource" uid="uid://b7m1kgo7sacgy" path="res://Resources/Unit/Created/knit.tres" id="4_cfoai"]
 [ext_resource type="Resource" uid="uid://do1a2ftpujhtw" path="res://Resources/Unit/WhiteProphet.tres" id="4_mwncx"]
 [ext_resource type="Script" uid="uid://bsjm7wxqxgiq6" path="res://Scripts/Battle/BattlefieldView.gd" id="4_xlw65"]
 [ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_r8nk0"]
@@ -25,7 +25,7 @@ script = ExtResource("1_moh7n")
 [node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
 script = ExtResource("1_rq7d2")
 arena_data = ExtResource("5_test_arena")
-archer_data = ExtResource("2_7jnwi")
+archer_data = ExtResource("4_cfoai")
 second_player_unit_data = ExtResource("4_mwncx")
 defense_dummy_data = ExtResource("3_no0xc")
 armor_dummy_data = ExtResource("4_4pltt")
