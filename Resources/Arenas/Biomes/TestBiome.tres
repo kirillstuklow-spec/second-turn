@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BiomeVisualData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Resources/Arenas/BiomeVisualData.gd" id="1_biome"]
+[ext_resource type="Script" path="res://Resources/Arenas/CellVisualData.gd" id="2_cell"]
+[ext_resource type="Resource" path="res://Resources/Arenas/CellVisuals/TestStoneCell.tres" id="3_stone"]
+[ext_resource type="Resource" path="res://Resources/Arenas/CellVisuals/TestAccentCell.tres" id="4_accent"]
+
+[resource]
+script = ExtResource("1_biome")
+biome_id = "test_biome"
+biome_name = "Тестовый биом"
+description = "Минимальный пул визуальных клеток для проверки Runtime арены."
+default_cell_visual = ExtResource("3_stone")
+available_cell_visuals = Array[ExtResource("2_cell")]([ExtResource("3_stone"), ExtResource("4_accent")])
+metadata/_custom_type_script = "res://Resources/Arenas/BiomeVisualData.gd"
