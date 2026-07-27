@@ -73,6 +73,13 @@ var pending_ability : UnitAbilityData = null
 # ============================================================
 
 func clear() -> void:
+	for cell in cells:
+		if cell == null:
+			continue
+
+		if cell.occupying_unit != null:
+			cell.remove_unit()
+
 	cells.clear()
 	units.clear()
 
