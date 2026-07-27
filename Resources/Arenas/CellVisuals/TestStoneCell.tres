@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CellVisualData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/Arenas/CellVisualData.gd" id="1_cell"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_texture"]
+
+[resource]
+script = ExtResource("1_cell")
+cell_visual_id = "test_stone"
+display_name = "Тестовый камень"
+description = "Временная клетка для проверки загрузки визуала арены."
+base_texture = ExtResource("2_texture")
+modulate = Color(0.42, 0.48, 0.58, 1)
+metadata/_custom_type_script = "res://Resources/Arenas/CellVisualData.gd"
