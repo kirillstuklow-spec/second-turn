@@ -12,6 +12,13 @@ enum CellZone {
 }
 
 
+# ============================================================
+# НЕИЗМЕНЯЕМЫЕ ДАННЫЕ КЛЕТКИ
+# ============================================================
+
+var visual_data: CellVisualData = null
+
+
 # -----------------------
 # Координаты клетки
 # -----------------------
@@ -25,7 +32,7 @@ var y : int = 0
 # Зона поля боя
 # -----------------------
 
-var zone : CellZone = CellZone.NEUTRAL
+var zone: int = CellZone.NEUTRAL
 
 
 # -----------------------
@@ -39,10 +46,16 @@ var occupying_unit : UnitRuntime = null
 # Инициализация
 # -----------------------
 
-func setup(cell_x : int, cell_y : int, cell_zone : CellZone) -> void:
+func setup(
+	cell_x: int,
+	cell_y: int,
+	cell_zone: int,
+	cell_visual_data: CellVisualData = null
+) -> void:
 	x = cell_x
 	y = cell_y
 	zone = cell_zone
+	visual_data = cell_visual_data
 	occupying_unit = null
 
 
