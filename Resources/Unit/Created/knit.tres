@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://b7m1kgo7sacgy"]
+
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_laqpx"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_juxtg"]
+[ext_resource type="Script" uid="uid://dwxtjpe1p2iw8" path="res://Resources/Unit/UnitVisualData.gd" id="3_efihr"]
+[ext_resource type="Texture2D" uid="uid://b8h7h87meydfo" path="res://Resources/Unit/тестовые картинки/png-clipart-anime-manga-female-anime-black-hair-manga.png" id="3_juxtg"]
+
+[sub_resource type="Resource" id="Resource_juxtg"]
+script = ExtResource("3_efihr")
+portrait = ExtResource("3_juxtg")
+battlefield_texture = ExtResource("3_juxtg")
+
+[resource]
+resource_name = "рыцарь"
+script = ExtResource("2_juxtg")
+unit_id = "knit"
+unit_name = "рыцарь"
+faction = "0"
+unit_class = "0"
+initiative = 15
+max_hp = 10
+movement = 2
+size = 2
+defenses = Array[String](["физика"])
+keywords = Array[String](["пехота"])
+visual_data = SubResource("Resource_juxtg")
