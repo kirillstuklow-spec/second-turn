@@ -1,15 +1,14 @@
-[gd_resource type="Resource" script_class="ArenaData" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="ArenaData" format=3 uid="uid://bcucbjlpvfags"]
 
-[ext_resource type="Script" path="res://Resources/Arenas/ArenaData.gd" id="1_arena"]
-[ext_resource type="Script" path="res://Resources/Arenas/ArenaCellVisualPlacementData.gd" id="2_visual_placement"]
-[ext_resource type="Script" path="res://Resources/Arenas/ArenaZonePlacementData.gd" id="3_zone_placement"]
+[ext_resource type="Script" uid="uid://bh56c3een7l1p" path="res://Resources/Arenas/ArenaData.gd" id="1_arena"]
+[ext_resource type="Script" uid="uid://ddvtgb6n5ypog" path="res://Resources/Arenas/ArenaCellVisualPlacementData.gd" id="2_visual_placement"]
+[ext_resource type="Script" uid="uid://cvuj5hoekm75e" path="res://Resources/Arenas/ArenaZonePlacementData.gd" id="3_zone_placement"]
 [ext_resource type="Resource" path="res://Resources/Arenas/Biomes/TestBiome.tres" id="4_biome"]
 [ext_resource type="Resource" path="res://Resources/Arenas/CellVisuals/TestAccentCell.tres" id="5_accent"]
 
 [sub_resource type="Resource" id="Visual_1"]
 script = ExtResource("2_visual_placement")
 x = 3
-y = 0
 cell_visual = ExtResource("5_accent")
 
 [sub_resource type="Resource" id="Visual_2"]
@@ -38,13 +37,11 @@ cell_visual = ExtResource("5_accent")
 
 [sub_resource type="Resource" id="Zone_1"]
 script = ExtResource("3_zone_placement")
-x = 0
 y = 2
 zone = 0
 
 [sub_resource type="Resource" id="Zone_2"]
 script = ExtResource("3_zone_placement")
-x = 0
 y = 3
 zone = 0
 
@@ -67,6 +64,5 @@ arena_name = "Тестовая текстурная арена"
 description = "Арена 7×5 для проверки независимых визуального слоя и слоя зон."
 biome = ExtResource("4_biome")
 visual_placements = Array[ExtResource("2_visual_placement")]([SubResource("Visual_1"), SubResource("Visual_2"), SubResource("Visual_3"), SubResource("Visual_4"), SubResource("Visual_5")])
-zone_placements = Array[ExtResource("3_zone_placement")]([SubResource("Zone_1"), SubResource("Zone_2"), SubResource("Zone_3"), SubResource("Zone_4")])
 background_color = Color(0.055, 0.06, 0.075, 1)
-metadata/_custom_type_script = "res://Resources/Arenas/ArenaData.gd"
+zone_placements = Array[ExtResource("3_zone_placement")]([SubResource("Zone_1"), SubResource("Zone_2"), SubResource("Zone_3"), SubResource("Zone_4")])
