@@ -63,3 +63,11 @@ enum UnitSize {
 @export var active_abilities : Array[UnitAbilityData] = []
 
 @export var passive_abilities : Array[UnitAbilityData] = []
+
+
+
+# -----------------------
+# Визуальные данные
+# -----------------------
+
+@export var visual_data : UnitVisualData = null
