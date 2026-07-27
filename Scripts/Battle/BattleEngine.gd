@@ -24,6 +24,8 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 # ТЕСТОВЫЕ DATA-РЕСУРСЫ
 # ============================================================
 
+@export var arena_data: ArenaData
+
 @export var archer_data: UnitData
 @export var second_player_unit_data: UnitData
 
@@ -186,6 +188,22 @@ func _initialize_test_battle() -> void:
 func _validate_configuration() -> bool:
 	var is_valid: bool = true
 
+	if arena_data != null:
+		var arena_validation := ArenaValidator.validate(
+			arena_data
+		)
+
+		for warning in arena_validation["warnings"]:
+			push_warning(
+				"BattleEngine: ArenaData: " + str(warning)
+			)
+
+		for error in arena_validation["errors"]:
+			push_error(
+				"BattleEngine: ArenaData: " + str(error)
+			)
+			is_valid = false
+
 	if archer_data == null:
 		push_error(
 			"BattleEngine: archer_data is not assigned"
@@ -282,7 +300,9 @@ func _validate_configuration() -> bool:
 
 func _create_battle_state() -> void:
 	battle_state = BattleState.new()
-	battle_state.generate_battlefield()
+	battle_state.generate_battlefield(
+		arena_data
+	)
 	battle_state.print_battlefield_zones()
 
 
