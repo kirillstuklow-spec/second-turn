@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CellVisualData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/Arenas/CellVisualData.gd" id="1_cell"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_texture"]
+
+[resource]
+script = ExtResource("1_cell")
+cell_visual_id = "test_accent"
+display_name = "Тестовый акцент"
+description = "Временная вариация клетки для проверки ручного размещения."
+base_texture = ExtResource("2_texture")
+modulate = Color(0.62, 0.34, 0.3, 1)
+quarter_turns = 1
+flip_h = true
+metadata/_custom_type_script = "res://Resources/Arenas/CellVisualData.gd"
