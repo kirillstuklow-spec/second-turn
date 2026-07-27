@@ -7,9 +7,15 @@ signal cell_clicked(cell : CellRuntime)
 
 
 const CELL_SIZE : Vector2 = Vector2(80, 80)
+const UNIT_VIEW_SCENE: PackedScene = preload(
+	"res://Scense/Unit/unit.tscn"
+)
 
 
 var cells_root : Node2D = null
+var units_root : Node2D = null
+
+var _unit_views_by_id: Dictionary = {}
 
 
 var is_targeting : bool = false
@@ -24,6 +30,21 @@ func _ensure_cells_root() -> bool:
 
 	if cells_root == null:
 		push_error("BattlefieldView: child node 'Cells' not found. BattlefieldView.gd must be attached to Battlefield, and Battlefield must have direct child named Cells.")
+		return false
+
+	return true
+
+
+func _ensure_units_root() -> bool:
+	if units_root != null:
+		return true
+
+	units_root = get_node_or_null("Units") as Node2D
+
+	if units_root == null:
+		push_error(
+			"BattlefieldView: child node 'Units' not found."
+		)
 		return false
 
 	return true
@@ -54,6 +75,8 @@ func draw_battlefield(battle_state : BattleState) -> void:
 
 	for cell in battle_state.cells:
 		_create_cell_view(cell)
+
+	_sync_unit_views(battle_state)
 		
 func _clear_cells() -> void:
 	if not _ensure_cells_root():
@@ -98,11 +121,88 @@ func _create_cell_view(cell : CellRuntime) -> void:
 func _get_cell_label(cell : CellRuntime) -> String:
 	var text : String = str(cell.x) + "," + str(cell.y) + "\n" + _get_zone_label(cell.zone)
 
-	if cell.occupying_unit != null:
-		text += "\n" + cell.occupying_unit.data.unit_name
-		text += "\nHP: " + str(cell.occupying_unit.current_hp)
-
 	return text
+
+
+# -----------------------
+# Представления юнитов
+# -----------------------
+
+func _sync_unit_views(battle_state: BattleState) -> void:
+	if not _ensure_units_root():
+		return
+
+	var visible_unit_ids: Dictionary = {}
+
+	for unit in battle_state.units:
+		if unit == null:
+			continue
+
+		var unit_id := unit.get_instance_id()
+
+		if not unit.is_alive or unit.cell == null:
+			_remove_unit_view(unit_id, true)
+			continue
+
+		visible_unit_ids[unit_id] = true
+
+		var unit_view := _get_or_create_unit_view(
+			unit_id
+		)
+
+		if unit_view == null:
+			continue
+
+		var animate_movement := unit_view.displayed_unit != null
+
+		unit_view.show_runtime(
+			unit,
+			CELL_SIZE,
+			animate_movement
+		)
+
+	for stored_id in _unit_views_by_id.keys():
+		if not visible_unit_ids.has(stored_id):
+			_remove_unit_view(stored_id, false)
+
+
+func _get_or_create_unit_view(
+	unit_id: int
+) -> UnitView:
+	if _unit_views_by_id.has(unit_id):
+		return _unit_views_by_id[unit_id] as UnitView
+
+	var unit_view := UNIT_VIEW_SCENE.instantiate() as UnitView
+
+	if unit_view == null:
+		push_error(
+			"BattlefieldView: UnitView scene could not be instantiated"
+		)
+		return null
+
+	units_root.add_child(unit_view)
+	_unit_views_by_id[unit_id] = unit_view
+
+	return unit_view
+
+
+func _remove_unit_view(
+	unit_id: int,
+	play_death: bool
+) -> void:
+	if not _unit_views_by_id.has(unit_id):
+		return
+
+	var unit_view := _unit_views_by_id[unit_id] as UnitView
+	_unit_views_by_id.erase(unit_id)
+
+	if unit_view == null or not is_instance_valid(unit_view):
+		return
+
+	if play_death:
+		unit_view.play_death_and_remove()
+	else:
+		unit_view.queue_free()
 
 
 # -----------------------
