@@ -1,0 +1,684 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tools/UnitBuilder/UnitBuilder.gd" id="1_builder"]
+[ext_resource type="PackedScene" path="res://Scense/Unit/unit.tscn" id="2_unit_view"]
+
+[node name="UnitBuilder" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_builder")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.063, 0.082, 1)
+
+[node name="PageMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="PageColumn" type="VBoxContainer" parent="PageMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleRow" type="HBoxContainer" parent="PageMargin/PageColumn"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PageMargin/PageColumn/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "Unit Builder — версия 0.6"
+
+[node name="NewButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Новый"
+
+[node name="OpenButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Открыть"
+
+[node name="ValidateButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Проверить"
+
+[node name="SaveButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Сохранить"
+
+[node name="SaveAsButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Сохранить как…"
+
+[node name="CurrentPathLabel" type="Label" parent="PageMargin/PageColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "Новый ресурс — ещё не сохранён"
+text_overrun_behavior = 3
+
+[node name="Separator" type="HSeparator" parent="PageMargin/PageColumn"]
+layout_mode = 2
+
+[node name="Workspace" type="HSplitContainer" parent="PageMargin/PageColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 760
+
+[node name="EditorTabs" type="TabContainer" parent="PageMargin/PageColumn/Workspace"]
+custom_minimum_size = Vector2(650, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Основное" type="ScrollContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="MainMargin" type="MarginContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="MainColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="IdentityTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Описание юнита"
+
+[node name="IdentityGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="UnitIdLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+layout_mode = 2
+text = "Технический ID *"
+
+[node name="UnitIdEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "white_prophet"
+
+[node name="UnitNameLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+layout_mode = 2
+text = "Имя *"
+
+[node name="UnitNameEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Белый пророк"
+
+[node name="FactionLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+layout_mode = 2
+text = "Фракция"
+
+[node name="FactionEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ClassLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+layout_mode = 2
+text = "Класс"
+
+[node name="UnitClassEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ExperienceLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+layout_mode = 2
+text = "Опыт до уровня"
+
+[node name="ExperienceSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 999999.0
+
+[node name="DescriptionLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+text = "Описание"
+
+[node name="DescriptionEdit" type="TextEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+placeholder_text = "Короткое описание роли и особенностей юнита."
+wrap_mode = 1
+
+[node name="StatsSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+
+[node name="StatsTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Боевые характеристики"
+
+[node name="StatsGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+columns = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="InitiativeLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+text = "Инициатива"
+
+[node name="InitiativeSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = -999.0
+max_value = 999.0
+
+[node name="MaxHPLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+text = "Max HP *"
+
+[node name="MaxHPSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 9999.0
+value = 1.0
+
+[node name="ArmorLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+text = "Броня"
+
+[node name="ArmorSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 5.0
+
+[node name="MovementLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+text = "Скорость"
+
+[node name="MovementSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 99.0
+value = 3.0
+
+[node name="SizeLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+text = "Размер"
+
+[node name="SizeOption" type="OptionButton" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpacerLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+
+[node name="SpacerValue" type="Control" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/StatsGrid"]
+layout_mode = 2
+
+[node name="KeywordsSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+
+[node name="KeywordsTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Постоянные свойства"
+
+[node name="KeywordsHint" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "Разделяй значения запятыми. Пример: human, caster, physical"
+autowrap_mode = 2
+
+[node name="KeywordsGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="DefensesLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+layout_mode = 2
+text = "Защиты"
+
+[node name="DefensesEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ImmunitiesLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+layout_mode = 2
+text = "Иммунитеты"
+
+[node name="ImmunitiesEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="KeywordsLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+layout_mode = 2
+text = "Ключевые слова"
+
+[node name="KeywordsEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Основное/MainMargin/MainColumn/KeywordsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Способности" type="MarginContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="AbilitiesColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AbilitiesHint" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "UnitBuilder подключает существующие UnitAbilityData. Создание новых способностей появится в отдельном инструменте."
+autowrap_mode = 2
+
+[node name="ActiveTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Активные способности"
+
+[node name="ActiveAbilityList" type="ItemList" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+select_mode = 1
+
+[node name="ActiveButtons" type="HBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+
+[node name="AddActiveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn/ActiveButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Добавить ресурс…"
+
+[node name="RemoveActiveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn/ActiveButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Удалить выбранные"
+
+[node name="PassiveSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+
+[node name="PassiveTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Пассивные способности"
+
+[node name="PassiveWarning" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.75, 0.4, 1)
+text = "Ссылки сохраняются, но текущий Runtime пока не исполняет пассивные способности."
+autowrap_mode = 2
+
+[node name="PassiveAbilityList" type="ItemList" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+select_mode = 1
+
+[node name="PassiveButtons" type="HBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn"]
+layout_mode = 2
+
+[node name="AddPassiveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn/PassiveButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Добавить ресурс…"
+
+[node name="RemovePassiveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Способности/AbilitiesColumn/PassiveButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Удалить выбранные"
+
+[node name="Визуал" type="ScrollContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VisualMargin" type="MarginContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VisualColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="VisualHint" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "Сначала положи PNG/JPG в проект и дождись импорта Godot. Idle-анимация имеет приоритет над простой картинкой. Все SpriteFrames должны содержать анимацию «default»."
+autowrap_mode = 2
+
+[node name="VisualGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn"]
+layout_mode = 2
+columns = 4
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="PortraitLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Портрет"
+
+[node name="PortraitPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChoosePortraitButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearPortraitButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="BattlefieldLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Картинка на поле"
+
+[node name="BattlefieldPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseBattlefieldButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearBattlefieldButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="IdleLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Idle SpriteFrames"
+
+[node name="IdleFramesPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseIdleButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearIdleButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="MoveLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Move SpriteFrames"
+
+[node name="MoveFramesPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseMoveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearMoveButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="BlockLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Block SpriteFrames"
+
+[node name="BlockFramesPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseBlockButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearBlockButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="HitLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Hit SpriteFrames"
+
+[node name="HitFramesPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseHitButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearHitButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="DeathLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+layout_mode = 2
+text = "Death SpriteFrames"
+
+[node name="DeathFramesPath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseDeathButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearDeathButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/VisualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+
+[node name="TransformSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn"]
+layout_mode = 2
+
+[node name="TransformTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Размещение на клетке"
+
+[node name="TransformGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn"]
+layout_mode = 2
+columns = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="ScaleXLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+layout_mode = 2
+text = "Масштаб X"
+
+[node name="ScaleXSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.05
+max_value = 10.0
+step = 0.05
+value = 1.0
+
+[node name="ScaleYLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+layout_mode = 2
+text = "Масштаб Y"
+
+[node name="ScaleYSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.05
+max_value = 10.0
+step = 0.05
+value = 1.0
+
+[node name="OffsetXLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+layout_mode = 2
+text = "Смещение X"
+
+[node name="OffsetXSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = -200.0
+max_value = 200.0
+suffix = " px"
+
+[node name="OffsetYLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+layout_mode = 2
+text = "Смещение Y"
+
+[node name="OffsetYSpin" type="SpinBox" parent="PageMargin/PageColumn/Workspace/EditorTabs/Визуал/VisualMargin/VisualColumn/TransformGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = -200.0
+max_value = 200.0
+suffix = " px"
+
+[node name="PreviewPanel" type="PanelContainer" parent="PageMargin/PageColumn/Workspace"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="PreviewMargin" type="MarginContainer" parent="PageMargin/PageColumn/Workspace/PreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="PreviewColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PreviewTitle" type="Label" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Предпросмотр клетки 80×80"
+horizontal_alignment = 1
+
+[node name="PreviewCenter" type="CenterContainer" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+
+[node name="PreviewCanvas" type="Control" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn/PreviewCenter"]
+custom_minimum_size = Vector2(220, 220)
+layout_mode = 2
+
+[node name="CellBackground" type="ColorRect" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn/PreviewCenter/PreviewCanvas"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 70.0
+offset_right = 150.0
+offset_bottom = 150.0
+mouse_filter = 2
+color = Color(0.25, 0.29, 0.36, 1)
+
+[node name="CellBorder" type="ReferenceRect" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn/PreviewCenter/PreviewCanvas"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 70.0
+offset_right = 150.0
+offset_bottom = 150.0
+mouse_filter = 2
+border_color = Color(0.7, 0.75, 0.84, 1)
+border_width = 2.0
+
+[node name="PreviewUnit" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn/PreviewCenter/PreviewCanvas" instance=ExtResource("2_unit_view")]
+unique_name_in_owner = true
+position = Vector2(110, 110)
+
+[node name="StatusTitle" type="Label" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Проверка"
+
+[node name="StatusOutput" type="RichTextLabel" parent="PageMargin/PageColumn/Workspace/PreviewPanel/PreviewMargin/PreviewColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 210)
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+text = "Здесь появятся ошибки и предупреждения."
+
+[node name="FileDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Выбрать ресурс"
+initial_position = 2
+size = Vector2i(900, 620)
+ok_button_text = "Выбрать"
+file_mode = 0
+access = 2
