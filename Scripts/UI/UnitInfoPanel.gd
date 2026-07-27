@@ -82,6 +82,12 @@ func _validate_nodes() -> bool:
 		)
 		is_valid = false
 
+	if portrait_texture == null:
+		push_error(
+			"UnitInfoPanel: PortraitTexture was not found"
+		)
+		is_valid = false
+
 	if end_turn_button == null:
 		push_error(
 			"UnitInfoPanel: EndTurnButton was not found"
@@ -139,6 +145,14 @@ func _validate_nodes() -> bool:
 		+ "PortraitSection/EndTurnButton"
 	) as Button
 )
+
+@onready var portrait_texture: TextureRect = (
+	get_node_or_null(
+		"UnitInfoMargin/UnitInfoRow/"
+		+ "PortraitSection/PortraitTexture"
+	) as TextureRect
+)
+
 @onready var ability_grid: GridContainer = (
 	get_node_or_null(
 		"UnitInfoMargin/UnitInfoRow/AbilityGrid"
@@ -192,10 +206,26 @@ func show_unit(
 		unit.active_immunities
 	)
 
+	_show_portrait(unit.data)
+
 	_show_unit_abilities(
 		unit,
 		is_active
 	)
+
+
+func _show_portrait(unit_data: UnitData) -> void:
+	if portrait_texture == null:
+		return
+
+	portrait_texture.texture = null
+
+	if unit_data == null or unit_data.visual_data == null:
+		return
+
+	portrait_texture.texture = unit_data.visual_data.portrait
+
+
 func _format_keywords(keywords: Variant) -> String:
 	if keywords == null:
 		return "—"
@@ -349,3 +379,6 @@ func clear_unit() -> void:
 
 	if immunities_value_label != null:
 		immunities_value_label.text = "—"
+
+	if portrait_texture != null:
+		portrait_texture.texture = null
