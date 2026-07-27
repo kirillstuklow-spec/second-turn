@@ -7,8 +7,12 @@ class_name BattleState
 # КОНСТАНТЫ ПОЛЯ БОЯ
 # ============================================================
 
-const FIELD_WIDTH : int = 7
-const FIELD_HEIGHT : int = 5
+const DEFAULT_FIELD_WIDTH: int = 7
+const DEFAULT_FIELD_HEIGHT: int = 5
+
+# Временные совместимые имена для старых тестовых сцен.
+const FIELD_WIDTH: int = DEFAULT_FIELD_WIDTH
+const FIELD_HEIGHT: int = DEFAULT_FIELD_HEIGHT
 
 
 # ============================================================
@@ -18,6 +22,17 @@ const FIELD_HEIGHT : int = 5
 var is_battle_over: bool = false
 
 var winner_team_id: int = 0
+
+
+# ============================================================
+# ДАННЫЕ ТЕКУЩЕЙ АРЕНЫ
+# ============================================================
+
+var arena_data: ArenaData = null
+
+var field_width: int = DEFAULT_FIELD_WIDTH
+
+var field_height: int = DEFAULT_FIELD_HEIGHT
 
 
 # ============================================================
@@ -90,6 +105,10 @@ func clear() -> void:
 	is_battle_over = false
 	winner_team_id = 0
 
+	arena_data = null
+	field_width = DEFAULT_FIELD_WIDTH
+	field_height = DEFAULT_FIELD_HEIGHT
+
 
 func add_cell(cell : CellRuntime) -> void:
 	if cell == null:
@@ -131,24 +150,54 @@ func clear_pending_ability() -> void:
 # ГЕНЕРАЦИЯ ПОЛЯ БОЯ
 # ============================================================
 
-func generate_battlefield() -> void:
+func generate_battlefield(
+	new_arena_data: ArenaData = null
+) -> void:
 	cells.clear()
 
-	for y in range(FIELD_HEIGHT):
-		for x in range(FIELD_WIDTH):
-			var cell : CellRuntime = CellRuntime.new()
-			var zone : CellRuntime.CellZone = _get_zone_for_position(x, y)
+	arena_data = new_arena_data
 
-			cell.setup(x, y, zone)
+	if arena_data == null:
+		field_width = DEFAULT_FIELD_WIDTH
+		field_height = DEFAULT_FIELD_HEIGHT
+	else:
+		field_width = arena_data.width
+		field_height = arena_data.height
+
+	for y in range(field_height):
+		for x in range(field_width):
+			var cell : CellRuntime = CellRuntime.new()
+			var zone: int = _get_zone_for_position(x, y)
+			var visual_data: CellVisualData = null
+
+			if arena_data != null:
+				zone = arena_data.get_zone_at(x, y)
+				visual_data = arena_data.get_cell_visual_at(x, y)
+
+			cell.setup(
+				x,
+				y,
+				zone,
+				visual_data
+			)
 			add_cell(cell)
 
 	print("BattleState: battlefield generated")
+	print(
+		"Battlefield size: ",
+		field_width,
+		"x",
+		field_height
+	)
 	print("Cells count: ", cells.size())
 
 
-func _get_zone_for_position(x : int, y : int) -> CellRuntime.CellZone:
+func _get_zone_for_position(
+	x: int,
+	y: int
+) -> int:
 	# Верхняя и нижняя строки.
-	if y == 0 or y == 4:
+	if y == 0 or y == DEFAULT_FIELD_HEIGHT - 1:
 		if x >= 0 and x <= 2:
 			return CellRuntime.CellZone.PLAYER_1_MAIN
 
@@ -395,10 +444,10 @@ func print_battlefield_zones() -> void:
 	print("")
 	print("Battlefield zones:")
 
-	for y in range(FIELD_HEIGHT):
+	for y in range(field_height):
 		var row_text : String = ""
 
-		for x in range(FIELD_WIDTH):
+		for x in range(field_width):
 			var cell : CellRuntime = get_cell_at(x, y)
 
 			if cell == null:
@@ -409,7 +458,7 @@ func print_battlefield_zones() -> void:
 		print(row_text)
 
 
-func _get_zone_short_name(zone : CellRuntime.CellZone) -> String:
+func _get_zone_short_name(zone: int) -> String:
 	if zone == CellRuntime.CellZone.PLAYER_1_DEPLOYMENT:
 		return "[D1]"
 
