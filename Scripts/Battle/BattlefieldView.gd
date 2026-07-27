@@ -88,7 +88,7 @@ func _clear_cells() -> void:
 func _create_cell_view(cell : CellRuntime) -> void:
 	if not _ensure_cells_root():
 		return
-	var cell_view : ColorRect = ColorRect.new()
+	var cell_view := Control.new()
 
 	cell_view.position = Vector2(
 		cell.x * CELL_SIZE.x,
@@ -96,12 +96,112 @@ func _create_cell_view(cell : CellRuntime) -> void:
 	)
 
 	cell_view.size = CELL_SIZE
-	cell_view.color = _get_cell_color(cell)
 	cell_view.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	cell_view.gui_input.connect(_on_cell_gui_input.bind(cell))
 
-	var label : Label = Label.new()
+	if cell.visual_data == null:
+		_add_fallback_background(
+			cell_view,
+			cell
+		)
+		_add_debug_label(
+			cell_view,
+			cell
+		)
+	else:
+		_add_visual_background(
+			cell_view,
+			cell.visual_data
+		)
+
+	_add_interaction_overlay(
+		cell_view,
+		cell
+	)
+
+	cells_root.add_child(cell_view)
+
+
+# ============================================================
+# ВИЗУАЛЬНЫЙ СЛОЙ КЛЕТКИ
+# ============================================================
+
+func _add_visual_background(
+	cell_view: Control,
+	visual_data: CellVisualData
+) -> void:
+	_add_texture_layer(
+		cell_view,
+		visual_data.base_texture,
+		visual_data
+	)
+
+	_add_texture_layer(
+		cell_view,
+		visual_data.decoration_texture,
+		visual_data
+	)
+
+
+func _add_texture_layer(
+	cell_view: Control,
+	texture: Texture2D,
+	visual_data: CellVisualData
+) -> void:
+	if texture == null:
+		return
+
+	var texture_rect := TextureRect.new()
+	texture_rect.position = Vector2.ZERO
+	texture_rect.size = CELL_SIZE
+	texture_rect.texture = texture
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_rect.modulate = visual_data.modulate
+	texture_rect.flip_h = visual_data.flip_h
+	texture_rect.flip_v = visual_data.flip_v
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_rect.pivot_offset = CELL_SIZE * 0.5
+	texture_rect.rotation = deg_to_rad(
+		float(visual_data.quarter_turns * 90)
+	)
+
+	cell_view.add_child(texture_rect)
+
+
+func _add_fallback_background(
+	cell_view: Control,
+	cell: CellRuntime
+) -> void:
+	var background := ColorRect.new()
+	background.position = Vector2.ZERO
+	background.size = CELL_SIZE
+	background.color = _get_color_for_zone(cell.zone)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	cell_view.add_child(background)
+
+
+func _add_interaction_overlay(
+	cell_view: Control,
+	cell: CellRuntime
+) -> void:
+	var overlay := ColorRect.new()
+	overlay.position = Vector2.ZERO
+	overlay.size = CELL_SIZE
+	overlay.color = _get_cell_overlay_color(cell)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	cell_view.add_child(overlay)
+
+
+func _add_debug_label(
+	cell_view: Control,
+	cell: CellRuntime
+) -> void:
+	var label := Label.new()
 
 	label.position = Vector2.ZERO
 	label.size = CELL_SIZE
@@ -111,7 +211,6 @@ func _create_cell_view(cell : CellRuntime) -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	cell_view.add_child(label)
-	cells_root.add_child(cell_view)
 
 
 # -----------------------
@@ -209,14 +308,16 @@ func _remove_unit_view(
 # Цвет клетки
 # -----------------------
 
-func _get_cell_color(cell : CellRuntime) -> Color:
+func _get_cell_overlay_color(
+	cell: CellRuntime
+) -> Color:
 	if is_targeting and _is_enemy_occupied_cell(cell):
-		return Color(1.0, 1.0, 0.3, 1.0)
+		return Color(1.0, 1.0, 0.15, 0.46)
 
-	return _get_color_for_zone(cell.zone)
+	return Color.TRANSPARENT
 
 
-func _get_color_for_zone(zone : CellRuntime.CellZone) -> Color:
+func _get_color_for_zone(zone: int) -> Color:
 	if zone == CellRuntime.CellZone.PLAYER_1_DEPLOYMENT:
 		return Color(0.2, 0.8, 0.2, 1.0)
 
@@ -235,7 +336,7 @@ func _get_color_for_zone(zone : CellRuntime.CellZone) -> Color:
 	return Color(1.0, 1.0, 1.0, 1.0)
 
 
-func _get_zone_label(zone : CellRuntime.CellZone) -> String:
+func _get_zone_label(zone: int) -> String:
 	if zone == CellRuntime.CellZone.PLAYER_1_DEPLOYMENT:
 		return "D1"
 
