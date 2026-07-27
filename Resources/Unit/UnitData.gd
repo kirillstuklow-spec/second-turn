@@ -14,6 +14,8 @@ enum UnitSize {
 # Основная информация
 # -----------------------
 
+@export var unit_id : String = ""
+
 @export var unit_name : String = ""
 
 @export_multiline var description : String = ""
