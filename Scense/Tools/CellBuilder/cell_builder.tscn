@@ -1,0 +1,346 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tools/CellBuilder/CellBuilder.gd" id="1_builder"]
+
+[node name="CellBuilder" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_builder")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.063, 0.082, 1)
+
+[node name="PageMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="PageColumn" type="VBoxContainer" parent="PageMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleRow" type="HBoxContainer" parent="PageMargin/PageColumn"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PageMargin/PageColumn/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "Cell Builder — версия 0.6.5.2"
+
+[node name="NewButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Новая"
+
+[node name="OpenButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Открыть"
+
+[node name="ValidateButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Проверить"
+
+[node name="SaveButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Сохранить"
+
+[node name="SaveAsButton" type="Button" parent="PageMargin/PageColumn/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Сохранить как…"
+
+[node name="CurrentPathLabel" type="Label" parent="PageMargin/PageColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "Новый ресурс — ещё не сохранён"
+text_overrun_behavior = 3
+
+[node name="Separator" type="HSeparator" parent="PageMargin/PageColumn"]
+layout_mode = 2
+
+[node name="Workspace" type="HSplitContainer" parent="PageMargin/PageColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 690
+
+[node name="EditorScroll" type="ScrollContainer" parent="PageMargin/PageColumn/Workspace"]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="EditorMargin" type="MarginContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="EditorColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="IdentityTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Описание визуальной клетки"
+
+[node name="IdentityGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="CellVisualIdLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/IdentityGrid"]
+layout_mode = 2
+text = "Технический ID *"
+
+[node name="CellVisualIdEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "stone_floor"
+
+[node name="DisplayNameLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/IdentityGrid"]
+layout_mode = 2
+text = "Название *"
+
+[node name="DisplayNameEdit" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/IdentityGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Каменный пол"
+
+[node name="DescriptionLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+text = "Описание"
+
+[node name="DescriptionEdit" type="TextEdit" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+placeholder_text = "Для какого биома и визуальной роли предназначена клетка."
+wrap_mode = 1
+
+[node name="TextureSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+
+[node name="TextureTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Текстуры"
+
+[node name="TextureHint" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "Базовая текстура заполняет клетку. Необязательная декорация рисуется поверх неё. Сначала импортируй изображения в проект."
+autowrap_mode = 2
+
+[node name="BaseTextureLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+text = "Базовая текстура"
+
+[node name="BaseTextureRow" type="HBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BaseTexturePath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/BaseTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseBaseButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/BaseTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearBaseButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/BaseTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Очистить"
+
+[node name="DecorationTextureLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+text = "Декоративная текстура"
+
+[node name="DecorationTextureRow" type="HBoxContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DecorationTexturePath" type="LineEdit" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/DecorationTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+editable = false
+text = "Не назначено"
+
+[node name="ChooseDecorationButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/DecorationTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Выбрать…"
+
+[node name="ClearDecorationButton" type="Button" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/DecorationTextureRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Очистить"
+
+[node name="VariationSeparator" type="HSeparator" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+
+[node name="VariationTitle" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Вариация"
+
+[node name="VariationGrid" type="GridContainer" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="ModulateLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+layout_mode = 2
+text = "Оттенок"
+
+[node name="ModulatePicker" type="ColorPickerButton" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+color = Color(1, 1, 1, 1)
+edit_alpha = true
+
+[node name="RotationLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+layout_mode = 2
+text = "Поворот"
+
+[node name="RotationOption" type="OptionButton" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FlipHLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+layout_mode = 2
+text = "Отразить по горизонтали"
+
+[node name="FlipHCheck" type="CheckBox" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FlipVLabel" type="Label" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+layout_mode = 2
+text = "Отразить по вертикали"
+
+[node name="FlipVCheck" type="CheckBox" parent="PageMargin/PageColumn/Workspace/EditorScroll/EditorMargin/EditorColumn/VariationGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PreviewColumn" type="VBoxContainer" parent="PageMargin/PageColumn/Workspace"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PreviewTitle" type="Label" parent="PageMargin/PageColumn/Workspace/PreviewColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Предпросмотр"
+horizontal_alignment = 1
+
+[node name="PreviewFrame" type="Control" parent="PageMargin/PageColumn/Workspace/PreviewColumn"]
+custom_minimum_size = Vector2(320, 300)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="PreviewBackground" type="ColorRect" parent="PageMargin/PageColumn/Workspace/PreviewColumn/PreviewFrame"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 280.0
+offset_bottom = 260.0
+mouse_filter = 2
+color = Color(0.12, 0.135, 0.165, 1)
+
+[node name="PreviewBase" type="TextureRect" parent="PageMargin/PageColumn/Workspace/PreviewColumn/PreviewFrame"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 280.0
+offset_bottom = 260.0
+pivot_offset = Vector2(120, 120)
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
+[node name="PreviewDecoration" type="TextureRect" parent="PageMargin/PageColumn/Workspace/PreviewColumn/PreviewFrame"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 280.0
+offset_bottom = 260.0
+pivot_offset = Vector2(120, 120)
+mouse_filter = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
+[node name="PreviewCaption" type="Label" parent="PageMargin/PageColumn/Workspace/PreviewColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Предпросмотр клетки"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="PreviewHint" type="Label" parent="PageMargin/PageColumn/Workspace/PreviewColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.63, 0.68, 0.76, 1)
+text = "В бою изображение будет растянуто на клетку 80×80. Предпросмотр увеличен в три раза."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="StatusOutput" type="RichTextLabel" parent="PageMargin/PageColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 118)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+text = "CellBuilder готов."
+
+[node name="FileDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Выбрать ресурс"
+size = Vector2i(900, 620)
+ok_button_text = "Выбрать"
+file_mode = 0
+access = 2
