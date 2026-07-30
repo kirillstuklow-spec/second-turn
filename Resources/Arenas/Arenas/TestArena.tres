@@ -66,3 +66,5 @@ biome = ExtResource("4_biome")
 visual_placements = Array[ExtResource("2_visual_placement")]([SubResource("Visual_1"), SubResource("Visual_2"), SubResource("Visual_3"), SubResource("Visual_4"), SubResource("Visual_5")])
 background_color = Color(0.055, 0.06, 0.075, 1)
 zone_placements = Array[ExtResource("3_zone_placement")]([SubResource("Zone_1"), SubResource("Zone_2"), SubResource("Zone_3"), SubResource("Zone_4")])
+player_1_deployment_capacity = 2
+player_2_deployment_capacity = 2
