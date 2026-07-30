@@ -14,6 +14,7 @@ const UNIT_VIEW_SCENE: PackedScene = preload(
 
 var cells_root : Node2D = null
 var units_root : Node2D = null
+var arena_background_root: Control = null
 
 var _unit_views_by_id: Dictionary = {}
 
@@ -71,12 +72,70 @@ func draw_battlefield(battle_state : BattleState) -> void:
 	if not _ensure_cells_root():
 		return
 
+	_sync_arena_background(battle_state)
 	_clear_cells()
 
 	for cell in battle_state.cells:
 		_create_cell_view(cell)
 
 	_sync_unit_views(battle_state)
+
+
+# ============================================================
+# ЗАДНИК АРЕНЫ
+# ============================================================
+
+func _sync_arena_background(
+	battle_state: BattleState
+) -> void:
+	if (
+		arena_background_root != null
+		and is_instance_valid(arena_background_root)
+	):
+		arena_background_root.free()
+
+	arena_background_root = null
+
+	if battle_state.arena_data == null:
+		return
+
+	var arena_data := battle_state.arena_data
+	var field_size := Vector2(
+		battle_state.field_width * CELL_SIZE.x,
+		battle_state.field_height * CELL_SIZE.y
+	)
+
+	arena_background_root = Control.new()
+	arena_background_root.name = "ArenaBackground"
+	arena_background_root.position = Vector2.ZERO
+	arena_background_root.size = field_size
+	arena_background_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_background_root.z_index = -100
+	add_child(arena_background_root)
+
+	var color_layer := ColorRect.new()
+	color_layer.position = Vector2.ZERO
+	color_layer.size = field_size
+	color_layer.color = arena_data.background_color
+	color_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_background_root.add_child(color_layer)
+
+	if arena_data.background_texture == null:
+		return
+
+	var texture_layer := TextureRect.new()
+	texture_layer.position = arena_data.background_offset
+	texture_layer.size = field_size
+	texture_layer.pivot_offset = field_size * 0.5
+	texture_layer.scale = arena_data.background_scale
+	texture_layer.texture = arena_data.background_texture
+	texture_layer.modulate = arena_data.background_modulate
+	texture_layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_layer.stretch_mode = (
+		TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	)
+	texture_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_background_root.add_child(texture_layer)
 		
 func _clear_cells() -> void:
 	if not _ensure_cells_root():
