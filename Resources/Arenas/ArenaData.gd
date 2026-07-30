@@ -35,6 +35,14 @@ class_name ArenaData
 
 @export var background_color: Color = Color(0.08, 0.08, 0.1, 1.0)
 
+@export var background_texture: Texture2D = null
+
+@export var background_modulate: Color = Color.WHITE
+
+@export var background_scale: Vector2 = Vector2.ONE
+
+@export var background_offset: Vector2 = Vector2.ZERO
+
 
 # ============================================================
 # ЛОГИЧЕСКИЙ СЛОЙ ЗОН
@@ -45,6 +53,17 @@ class_name ArenaData
 )
 
 @export var zone_placements: Array[ArenaZonePlacementData] = []
+
+@export_range(1, 6, 1) var player_1_deployment_capacity: int = 6
+
+@export_range(1, 6, 1) var player_2_deployment_capacity: int = 6
+
+
+# ============================================================
+# ОБЪЕКТЫ АРЕНЫ
+# ============================================================
+
+@export var object_placements: Array[ArenaObjectPlacementData] = []
 
 
 # ============================================================
