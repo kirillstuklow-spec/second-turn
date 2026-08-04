@@ -24,6 +24,12 @@ enum TargetingForm {
 }
 
 
+enum ImpactPlanType {
+	TREE,
+	QUEUE
+}
+
+
 # -----------------------
 # Основная информация механизма
 # -----------------------
@@ -42,6 +48,10 @@ enum TargetingForm {
 @export var action_type : ActionType = ActionType.ATTACK
 
 @export var targeting_form : TargetingForm = TargetingForm.MELEE
+
+# Дерево продолжает независимые ветви, но не потомков
+# неприменённого Impact. Очередь прерывает все следующие Impact.
+@export var impact_plan_type : ImpactPlanType = ImpactPlanType.TREE
 
 
 # -----------------------
