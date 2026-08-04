@@ -7,19 +7,25 @@ class_name AbilityPipeline
 # АЛГОРИТМЫ СПОСОБНОСТЕЙ
 # ============================================================
 
-const ALGORITHM_DEAL_DAMAGE : String = "deal_damage"
-const ALGORITHM_HEAL_TARGET : String = "heal_target"
+const ALGORITHM_DEAL_DAMAGE : StringName = (
+	AbilityAlgorithmRegistry.ALGORITHM_DEAL_DAMAGE
+)
+const ALGORITHM_HEAL_TARGET : StringName = (
+	AbilityAlgorithmRegistry.ALGORITHM_HEAL_TARGET
+)
 
 
 # ============================================================
 # ПАРАМЕТРЫ СПОСОБНОСТЕЙ
 # ============================================================
 
-const PARAM_DAMAGE : String = "damage"
-const PARAM_HEAL : String = "heal"
-const PARAM_ARMOR_PENETRATION : String = "armor_penetration"
-const PARAM_KEYWORD : String = "keyword"
-const PARAM_RADIUS : String = "radius"
+const PARAM_DAMAGE : StringName = AbilityAlgorithmRegistry.PARAM_DAMAGE
+const PARAM_HEAL : StringName = AbilityAlgorithmRegistry.PARAM_HEAL
+const PARAM_ARMOR_PENETRATION : StringName = (
+	AbilityAlgorithmRegistry.PARAM_ARMOR_PENETRATION
+)
+const PARAM_KEYWORD : StringName = AbilityAlgorithmRegistry.PARAM_KEYWORD
+const PARAM_RADIUS : StringName = AbilityAlgorithmRegistry.PARAM_RADIUS
 
 
 # ============================================================
@@ -40,6 +46,8 @@ const TARGET_RULE_SINGLE_ADJACENT_ENEMY : String = "single_adjacent_enemy"
 const TARGET_RULE_AREA_AROUND_UNIT : String = "area_around_unit"
 const TARGET_RULE_AREA_AROUND_CELL : String = "area_around_cell"
 
+const RNG_PURPOSE_ARMOR_BLOCK : StringName = &"armor_block"
+
 
 # ============================================================
 # ССЫЛКИ НА СОСТОЯНИЕ БОЯ
@@ -48,6 +56,8 @@ const TARGET_RULE_AREA_AROUND_CELL : String = "area_around_cell"
 var battle_state : BattleState = null
 
 var availability_service : AbilityAvailabilityService = null
+
+var algorithm_registry : AbilityAlgorithmRegistry = null
 
 
 # ============================================================
@@ -58,26 +68,26 @@ var _next_execution_sequence : int = 1
 
 
 # ============================================================
-# СЛУЧАЙНОСТЬ
-# ============================================================
-
-var rng : RandomNumberGenerator = RandomNumberGenerator.new()
-
-
-func _ready() -> void:
-	rng.randomize()
-
-
-# ============================================================
 # НАСТРОЙКА PIPELINE
 # ============================================================
 
 func configure(
 	new_battle_state : BattleState,
-	new_availability_service : AbilityAvailabilityService
+	new_availability_service : AbilityAvailabilityService,
+	new_algorithm_registry : AbilityAlgorithmRegistry = null
 ) -> void:
 	battle_state = new_battle_state
 	availability_service = new_availability_service
+	algorithm_registry = new_algorithm_registry
+
+	if algorithm_registry == null:
+		algorithm_registry = AbilityAlgorithmRegistry.new()
+
+	if availability_service != null:
+		availability_service.set_algorithm_registry(
+			algorithm_registry
+		)
+
 	_next_execution_sequence = 1
 
 	print("AbilityPipeline configured")
@@ -132,29 +142,56 @@ func execute_ability(
 
 	var unit_ability : UnitAbilityData = ability_runtime.data
 	var ability_data : AbilityData = unit_ability.ability
-	# Недопустимая цель не должна расходовать AP, заряд,
-	# запускать кулдаун или увеличивать счётчики применений.
+	var schema_result := algorithm_registry.validate_unit_ability(
+		unit_ability
+	)
+
+	if not schema_result.is_valid:
+		push_error(
+			"AbilityPipeline failed: invalid ability schema:\n"
+			+ schema_result.get_summary()
+		)
+		return
+
+	var resolved_parameters := schema_result.resolved_parameters
+
+	# Target eligibility belongs before the commit boundary. A rejected
+	# target must not consume AP, charges, cooldowns, or usage limits.
 	if not _validate_target_request(
-			source_unit,
-			target_unit,
-			target_cell,
-			ability_data,
-			unit_ability
-		):
+		source_unit,
+		target_unit,
+		target_cell,
+		ability_data,
+		unit_ability
+	):
 		print("Ability cancelled before commit: invalid target")
 		return
+
 	print("")
 	print("========================================")
 	print(source_unit.data.unit_name, " uses ", unit_ability.ability_name, " on ", _get_target_description(target_unit, target_cell))
 
 	var ability_was_executed : bool = true
 
-	match ability_data.algorithm_id:
+	match StringName(ability_data.algorithm_id):
 		ALGORITHM_DEAL_DAMAGE:
-			_execute_damage_algorithm(source_unit, target_unit, target_cell, ability_data, unit_ability)
+			_execute_damage_algorithm(
+				source_unit,
+				target_unit,
+				target_cell,
+				ability_data,
+				unit_ability,
+				resolved_parameters
+			)
 
 		ALGORITHM_HEAL_TARGET:
-			_execute_heal_target(source_unit, target_unit, ability_data, unit_ability)
+			_execute_heal_target(
+				source_unit,
+				target_unit,
+				ability_data,
+				unit_ability,
+				resolved_parameters
+			)
 
 		_:
 			ability_was_executed = false
@@ -195,6 +232,7 @@ func _get_target_description(target_unit : UnitRuntime, target_cell : CellRuntim
 		return "cell " + str(target_cell.x) + "," + str(target_cell.y)
 
 	return "unknown target"
+
 
 # ============================================================
 # ПРОВЕРКА ЦЕЛИ ДО COMMIT
@@ -248,7 +286,8 @@ func _validate_target_request(
 		return false
 
 	return true
-	
+
+
 # ============================================================
 # МАРШРУТИЗАЦИЯ УРОНА
 # ============================================================
@@ -258,21 +297,45 @@ func _execute_damage_algorithm(
 	target_unit : UnitRuntime,
 	target_cell : CellRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if ability_data.target_rule_id == TARGET_RULE_ALL_ENEMIES:
-		_execute_deal_damage_all_enemies(source_unit, ability_data, unit_ability)
+		_execute_deal_damage_all_enemies(
+			source_unit,
+			ability_data,
+			unit_ability,
+			parameters
+		)
 		return
 
 	if ability_data.target_rule_id == TARGET_RULE_AREA_AROUND_UNIT:
-		_execute_deal_damage_area_around_unit(source_unit, target_unit, ability_data, unit_ability)
+		_execute_deal_damage_area_around_unit(
+			source_unit,
+			target_unit,
+			ability_data,
+			unit_ability,
+			parameters
+		)
 		return
 
 	if ability_data.target_rule_id == TARGET_RULE_AREA_AROUND_CELL:
-		_execute_deal_damage_area_around_cell(source_unit, target_cell, ability_data, unit_ability)
+		_execute_deal_damage_area_around_cell(
+			source_unit,
+			target_cell,
+			ability_data,
+			unit_ability,
+			parameters
+		)
 		return
 
-	_execute_deal_damage(source_unit, target_unit, ability_data, unit_ability)
+	_execute_deal_damage(
+		source_unit,
+		target_unit,
+		ability_data,
+		unit_ability,
+		parameters
+	)
 
 
 # ============================================================
@@ -283,14 +346,13 @@ func _execute_deal_damage(
 	source_unit : UnitRuntime,
 	target_unit : UnitRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if target_unit == null:
 		push_error("AbilityPipeline failed: target_unit is null for deal_damage")
 		print("========================================")
 		return
-
-	var parameters : Dictionary = unit_ability.parameters
 
 	var damage : int = int(parameters.get(PARAM_DAMAGE, 0))
 	var armor_penetration : int = int(parameters.get(PARAM_ARMOR_PENETRATION, 0))
@@ -362,7 +424,8 @@ func _cleanup_after_damage(target_unit : UnitRuntime) -> void:
 func _execute_deal_damage_all_enemies(
 	source_unit : UnitRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if battle_state == null:
 		push_error("AbilityPipeline failed: battle_state is null")
@@ -390,7 +453,8 @@ func _execute_deal_damage_all_enemies(
 			source_unit,
 			possible_target,
 			ability_data,
-			unit_ability
+			unit_ability,
+			parameters
 		)
 
 		targets_processed += 1
@@ -408,7 +472,8 @@ func _execute_deal_damage_area_around_unit(
 	source_unit : UnitRuntime,
 	center_unit : UnitRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if battle_state == null:
 		push_error("AbilityPipeline failed: battle_state is null")
@@ -425,7 +490,6 @@ func _execute_deal_damage_area_around_unit(
 		print("========================================")
 		return
 
-	var parameters : Dictionary = unit_ability.parameters
 	var radius : int = int(parameters.get(PARAM_RADIUS, 1))
 
 	print("Target rule: area_around_unit")
@@ -460,7 +524,8 @@ func _execute_deal_damage_area_around_unit(
 			source_unit,
 			possible_target,
 			ability_data,
-			unit_ability
+			unit_ability,
+			parameters
 		)
 
 		targets_processed += 1
@@ -478,7 +543,8 @@ func _execute_deal_damage_area_around_cell(
 	source_unit : UnitRuntime,
 	center_cell : CellRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if battle_state == null:
 		push_error("AbilityPipeline failed: battle_state is null")
@@ -490,7 +556,6 @@ func _execute_deal_damage_area_around_cell(
 		print("========================================")
 		return
 
-	var parameters : Dictionary = unit_ability.parameters
 	var radius : int = int(parameters.get(PARAM_RADIUS, 1))
 
 	print("Target rule: area_around_cell")
@@ -522,7 +587,8 @@ func _execute_deal_damage_area_around_cell(
 			source_unit,
 			possible_target,
 			ability_data,
-			unit_ability
+			unit_ability,
+			parameters
 		)
 
 		targets_processed += 1
@@ -540,14 +606,14 @@ func _execute_heal_target(
 	source_unit : UnitRuntime,
 	target_unit : UnitRuntime,
 	ability_data : AbilityData,
-	unit_ability : UnitAbilityData
+	unit_ability : UnitAbilityData,
+	parameters : Dictionary
 ) -> void:
 	if target_unit == null:
 		push_error("AbilityPipeline failed: target_unit is null for heal_target")
 		print("========================================")
 		return
 
-	var parameters : Dictionary = unit_ability.parameters
 	var heal_amount : int = int(parameters.get(PARAM_HEAL, 0))
 
 	print("Heal amount: ", heal_amount)
@@ -634,7 +700,11 @@ func _check_conditions(
 				return false
 
 		else:
-			print("Unknown condition ignored: ", condition_id)
+			push_error(
+				"AbilityPipeline: unknown condition reached runtime: "
+				+ condition_id
+			)
+			return false
 
 	return true
 
@@ -699,7 +769,31 @@ func _check_armor(target_unit : UnitRuntime, armor_penetration : int) -> bool:
 		print("Armor did not block")
 		return false
 
-	var roll : int = rng.randi_range(1, 100)
+	if battle_state == null or battle_state.battle_rng == null:
+		push_error(
+			"AbilityPipeline: BattleRng is unavailable for armor roll"
+		)
+		return true
+
+	var roll_result := battle_state.battle_rng.roll_int(
+		RNG_PURPOSE_ARMOR_BLOCK,
+		1,
+		100,
+		{
+			"target_name": target_unit.data.unit_name,
+			"target_team_id": target_unit.team_id,
+			"round_number": battle_state.round_number,
+			"armor": target_unit.armor,
+			"armor_penetration": armor_penetration,
+			"effective_armor": effective_armor
+		}
+	)
+
+	if roll_result == null:
+		push_error("AbilityPipeline: BattleRng armor roll failed")
+		return true
+
+	var roll : int = roll_result.value
 
 	print("Armor roll: ", roll)
 
