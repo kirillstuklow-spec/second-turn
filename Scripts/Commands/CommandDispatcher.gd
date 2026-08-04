@@ -17,22 +17,22 @@ func configure(
 	print("CommandDispatcher configured")
 
 
-func dispatch_command(command: Dictionary) -> void:
+func dispatch_command(command: Dictionary) -> Variant:
 	if command.is_empty():
 		push_error("CommandDispatcher: empty command")
-		return
+		return null
 
 	if not command.has("type"):
 		push_error("CommandDispatcher: command has no type")
-		return
+		return null
 
 	if pipeline_runner == null:
 		push_error("CommandDispatcher: pipeline_runner is null")
-		return
+		return null
 
 	var command_type: String = command["type"]
 
 	print("CommandDispatcher received command: ", command_type)
 
-	pipeline_runner.run_command(command)
+	return pipeline_runner.run_command(command)
 	
