@@ -9,5 +9,5 @@ technical_description = "Universal mechanism for damaging all enemy units."
 targeting_form = 2
 algorithm_id = "deal_damage"
 target_rule_id = "all_enemies"
-default_conditions = Array[String](["target_must_be_alive", "target_must_be_alive"])
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_enemy"])
 metadata/_custom_type_script = "uid://c2afnonmp2k7u"
