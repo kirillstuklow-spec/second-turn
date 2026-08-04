@@ -82,8 +82,8 @@ func _run_use_ability(command: Dictionary) -> void:
 		null
 	)
 
-	var unit_ability: UnitAbilityData = command.get(
-		"unit_ability",
+	var ability_runtime: UnitAbilityRuntime = command.get(
+		"ability_runtime",
 		null
 	)
 
@@ -91,14 +91,14 @@ func _run_use_ability(command: Dictionary) -> void:
 		push_error("PipelineRunner: source_unit is null")
 		return
 
-	if unit_ability == null:
-		push_error("PipelineRunner: unit_ability is null")
+	if ability_runtime == null:
+		push_error("PipelineRunner: ability_runtime is null")
 		return
 
 	ability_pipeline.execute_ability(
 		source_unit,
 		target_unit,
-		unit_ability,
+		ability_runtime,
 		target_cell
 	)
 
