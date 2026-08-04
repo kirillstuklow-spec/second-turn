@@ -80,7 +80,7 @@ var active_unit: UnitRuntime:
 # ВЫБРАННАЯ СПОСОБНОСТЬ
 # ============================================================
 
-var pending_ability : UnitAbilityData = null
+var pending_ability : UnitAbilityRuntime = null
 
 
 # ============================================================
@@ -134,12 +134,14 @@ func set_active_unit(unit : UnitRuntime) -> void:
 	active_unit = unit
 
 
-func set_pending_ability(unit_ability : UnitAbilityData) -> void:
-	if unit_ability == null:
+func set_pending_ability(
+	ability_runtime : UnitAbilityRuntime
+) -> void:
+	if ability_runtime == null:
 		push_error("BattleState: cannot set pending_ability to null")
 		return
 
-	pending_ability = unit_ability
+	pending_ability = ability_runtime
 
 
 func clear_pending_ability() -> void:
