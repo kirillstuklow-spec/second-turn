@@ -3,6 +3,24 @@ extends RefCounted
 class_name AbilityAvailabilityService
 
 
+var algorithm_registry : AbilityAlgorithmRegistry = null
+
+
+func _init(
+	new_algorithm_registry : AbilityAlgorithmRegistry = null
+) -> void:
+	set_algorithm_registry(new_algorithm_registry)
+
+
+func set_algorithm_registry(
+	new_algorithm_registry : AbilityAlgorithmRegistry
+) -> void:
+	algorithm_registry = new_algorithm_registry
+
+	if algorithm_registry == null:
+		algorithm_registry = AbilityAlgorithmRegistry.new()
+
+
 # ============================================================
 # ПУБЛИЧНАЯ ПРОВЕРКА ДОСТУПНОСТИ
 # ============================================================
@@ -31,6 +49,8 @@ func evaluate(
 		result.add_reason(
 			AbilityAvailabilityReason.Code.ABILITY_MECHANISM_MISSING
 		)
+	else:
+		_evaluate_ability_schema(result, ability_runtime)
 
 	var owner := ability_runtime.owner
 
@@ -71,6 +91,28 @@ func evaluate(
 	_evaluate_external_blockers(result, external_blockers)
 
 	return result
+
+
+func _evaluate_ability_schema(
+	result : AbilityAvailabilityResult,
+	ability_runtime : UnitAbilityRuntime
+) -> void:
+	if algorithm_registry == null:
+		algorithm_registry = AbilityAlgorithmRegistry.new()
+
+	var schema_result := algorithm_registry.validate_unit_ability(
+		ability_runtime.data
+	)
+
+	if schema_result.is_valid:
+		return
+
+	result.add_reason(
+		AbilityAvailabilityReason.Code.ABILITY_SCHEMA_INVALID,
+		{
+			"summary": schema_result.get_summary()
+		}
+	)
 
 
 # ============================================================
