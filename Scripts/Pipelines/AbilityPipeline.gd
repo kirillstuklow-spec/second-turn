@@ -47,6 +47,15 @@ const TARGET_RULE_AREA_AROUND_CELL : String = "area_around_cell"
 
 var battle_state : BattleState = null
 
+var availability_service : AbilityAvailabilityService = null
+
+
+# ============================================================
+# ИДЕНТИФИКАТОРЫ ИСПОЛНЕНИЙ
+# ============================================================
+
+var _next_execution_sequence : int = 1
+
 
 # ============================================================
 # СЛУЧАЙНОСТЬ
@@ -63,8 +72,13 @@ func _ready() -> void:
 # НАСТРОЙКА PIPELINE
 # ============================================================
 
-func configure(new_battle_state : BattleState) -> void:
+func configure(
+	new_battle_state : BattleState,
+	new_availability_service : AbilityAvailabilityService
+) -> void:
 	battle_state = new_battle_state
+	availability_service = new_availability_service
+	_next_execution_sequence = 1
 
 	print("AbilityPipeline configured")
 
@@ -76,33 +90,47 @@ func configure(new_battle_state : BattleState) -> void:
 func execute_ability(
 	source_unit : UnitRuntime,
 	target_unit : UnitRuntime,
-	unit_ability : UnitAbilityData,
+	ability_runtime : UnitAbilityRuntime,
 	target_cell : CellRuntime = null
 ) -> void:
 	if source_unit == null:
 		push_error("AbilityPipeline failed: source_unit is null")
 		return
 
-	if not source_unit.is_alive:
-		print("AbilityPipeline failed: source_unit is dead")
-		return
-
-	if not source_unit.can_spend_action_points(1):
-		print("AbilityPipeline failed: source_unit has no action points")
-		return
-	
 	if target_unit == null and target_cell == null:
 		push_error("AbilityPipeline failed: both target_unit and target_cell are null")
 		return
 
-	if unit_ability == null:
-		push_error("AbilityPipeline failed: unit_ability is null")
+	if ability_runtime == null:
+		push_error("AbilityPipeline failed: ability_runtime is null")
 		return
 
-	if unit_ability.ability == null:
-		push_error("AbilityPipeline failed: unit_ability has no AbilityData")
+	if ability_runtime.owner != source_unit:
+		push_error(
+			"AbilityPipeline failed: source_unit is not "
+			+ "the ability runtime owner"
+		)
 		return
 
+	if availability_service == null:
+		push_error(
+			"AbilityPipeline failed: availability_service is null"
+		)
+		return
+
+	var availability := availability_service.evaluate(
+		battle_state,
+		ability_runtime
+	)
+
+	if not availability.is_available:
+		print(
+			"AbilityPipeline failed: ",
+			availability.get_summary()
+		)
+		return
+
+	var unit_ability : UnitAbilityData = ability_runtime.data
 	var ability_data : AbilityData = unit_ability.ability
 
 	print("")
@@ -124,7 +152,29 @@ func execute_ability(
 			print("========================================")
 
 	if ability_was_executed:
-		source_unit.spend_action_points(1)
+		var action_point_cost := unit_ability.action_point_cost
+
+		if not source_unit.spend_action_points(action_point_cost):
+			push_error(
+				"AbilityPipeline failed: AP spending failed "
+				+ "after availability check"
+			)
+			return
+
+		ability_runtime.record_use(
+			_allocate_execution_id(),
+			ability_runtime.current_round_number,
+			ability_runtime.current_activation_index
+		)
+
+
+func _allocate_execution_id() -> StringName:
+	var execution_id := StringName(
+		"ability_execution_%06d" % _next_execution_sequence
+	)
+
+	_next_execution_sequence += 1
+	return execution_id
 
 
 func _get_target_description(target_unit : UnitRuntime, target_cell : CellRuntime) -> String:
