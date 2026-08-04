@@ -23,6 +23,8 @@ var is_targeting : bool = false
 
 var active_unit : UnitRuntime = null
 
+var targetable_cells : Array[CellRuntime] = []
+
 func _ensure_cells_root() -> bool:
 	if cells_root != null:
 		return true
@@ -55,9 +57,17 @@ func _ensure_units_root() -> bool:
 # Управление режимом выбора цели
 # -----------------------
 
-func set_targeting(value : bool, unit : UnitRuntime) -> void:
+func set_targeting(
+	value : bool,
+	unit : UnitRuntime,
+	new_targetable_cells : Array[CellRuntime] = []
+) -> void:
 	is_targeting = value
 	active_unit = unit
+	targetable_cells.clear()
+
+	if value:
+		targetable_cells.append_array(new_targetable_cells)
 
 
 # -----------------------
@@ -296,7 +306,7 @@ func _sync_unit_views(battle_state: BattleState) -> void:
 		if unit == null:
 			continue
 
-		var unit_id := unit.get_instance_id()
+		var unit_id : int = unit.get_instance_id()
 
 		if not unit.is_alive or unit.cell == null:
 			_remove_unit_view(unit_id, true)
@@ -370,7 +380,7 @@ func _remove_unit_view(
 func _get_cell_overlay_color(
 	cell: CellRuntime
 ) -> Color:
-	if is_targeting and _is_enemy_occupied_cell(cell):
+	if is_targeting and targetable_cells.has(cell):
 		return Color(1.0, 1.0, 0.15, 0.46)
 
 	return Color.TRANSPARENT
