@@ -8,6 +8,7 @@ enum Code {
 	ABILITY_RUNTIME_MISSING,
 	ABILITY_DATA_MISSING,
 	ABILITY_MECHANISM_MISSING,
+	ABILITY_SCHEMA_INVALID,
 	OWNER_MISSING,
 	BATTLE_OVER,
 	OWNER_DEAD,
@@ -51,6 +52,11 @@ func get_message() -> String:
 
 		Code.ABILITY_MECHANISM_MISSING:
 			return "Для способности не назначен игровой механизм."
+
+		Code.ABILITY_SCHEMA_INVALID:
+			return "Некорректная схема способности:\n%s" % (
+				str(context.get("summary", "Неизвестная ошибка схемы."))
+			)
 
 		Code.OWNER_MISSING:
 			return "У способности отсутствует владелец."
