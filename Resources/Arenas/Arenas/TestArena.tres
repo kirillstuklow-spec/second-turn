@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ArenaData" format=3 uid="uid://bcucbjlpvfags"]
 
 [ext_resource type="Script" uid="uid://bh56c3een7l1p" path="res://Resources/Arenas/ArenaData.gd" id="1_arena"]
+[ext_resource type="Script" uid="uid://bbr5olfpml3a5" path="res://Resources/Arenas/ArenaObjectPlacementData.gd" id="2_3xhs5"]
 [ext_resource type="Script" uid="uid://ddvtgb6n5ypog" path="res://Resources/Arenas/ArenaCellVisualPlacementData.gd" id="2_visual_placement"]
 [ext_resource type="Script" uid="uid://cvuj5hoekm75e" path="res://Resources/Arenas/ArenaZonePlacementData.gd" id="3_zone_placement"]
 [ext_resource type="Resource" path="res://Resources/Arenas/Biomes/TestBiome.tres" id="4_biome"]
