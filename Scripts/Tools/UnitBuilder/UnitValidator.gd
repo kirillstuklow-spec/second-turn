@@ -157,25 +157,47 @@ static func _validate_abilities(
 	errors: PackedStringArray,
 	warnings: PackedStringArray
 ) -> void:
+	var algorithm_registry := AbilityAlgorithmRegistry.new()
+
 	for ability_index in range(
 		unit_data.active_abilities.size()
 	):
-		if unit_data.active_abilities[ability_index] == null:
+		var active_ability := unit_data.active_abilities[ability_index]
+
+		if active_ability == null:
 			errors.append(
 				"Активная способность №%d не назначена." % (
 					ability_index + 1
 				)
 			)
+			continue
+
+		_validate_ability_schema(
+			active_ability,
+			"Активная способность №%d" % (ability_index + 1),
+			algorithm_registry,
+			errors
+		)
 
 	for ability_index in range(
 		unit_data.passive_abilities.size()
 	):
-		if unit_data.passive_abilities[ability_index] == null:
+		var passive_ability := unit_data.passive_abilities[ability_index]
+
+		if passive_ability == null:
 			errors.append(
 				"Пассивная способность №%d не назначена." % (
 					ability_index + 1
 				)
 			)
+			continue
+
+		_validate_ability_schema(
+			passive_ability,
+			"Пассивная способность №%d" % (ability_index + 1),
+			algorithm_registry,
+			errors
+		)
 
 	if unit_data.active_abilities.size() > 6:
 		warnings.append(
@@ -188,6 +210,27 @@ static func _validate_abilities(
 			"Пассивные способности сохранены в UnitData, "
 			+ "но текущий Runtime ещё не исполняет их."
 		)
+
+
+static func _validate_ability_schema(
+	unit_ability: UnitAbilityData,
+	ability_label: String,
+	algorithm_registry: AbilityAlgorithmRegistry,
+	errors: PackedStringArray
+) -> void:
+	var schema_result := algorithm_registry.validate_unit_ability(
+		unit_ability
+	)
+
+	if schema_result.is_valid:
+		return
+
+	errors.append(
+		"%s содержит ошибку схемы:\n%s" % [
+			ability_label,
+			schema_result.get_summary()
+		]
+	)
 
 
 # ============================================================
