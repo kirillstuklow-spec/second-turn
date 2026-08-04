@@ -94,6 +94,10 @@ func _start_new_round() -> void:
 	turn_state.phase = TurnState.Phase.ROUND_START
 	turn_state.round_number += 1
 
+	_start_runtime_round(
+		turn_state.round_number
+	)
+
 	_build_activation_queue()
 
 	turn_state.current_activation_index = -1
@@ -213,6 +217,10 @@ func _advance_to_next_living_unit() -> void:
 
 		turn_state.current_activation_index += 1
 
+	_finish_runtime_round(
+		turn_state.round_number
+	)
+
 	turn_state.phase = TurnState.Phase.ROUND_END
 
 	_start_new_round()
@@ -249,7 +257,10 @@ func _activate_unit(
 	battle_state.set_active_unit(unit)
 	battle_state.clear_pending_ability()
 
-	unit.start_activation()
+	unit.start_activation(
+		turn_state.round_number,
+		turn_state.current_activation_index
+	)
 
 	print("")
 	print("----------------------------------------")
@@ -298,6 +309,28 @@ func _activate_unit(
 		"movement_points":
 			unit.movement_points_remaining
 	})
+
+
+# ============================================================
+# LIFECYCLE RUNTIME-СПОСОБНОСТЕЙ
+# ============================================================
+
+func _start_runtime_round(round_number : int) -> void:
+	if battle_state == null:
+		return
+
+	for unit in battle_state.units:
+		if unit != null:
+			unit.start_round(round_number)
+
+
+func _finish_runtime_round(round_number : int) -> void:
+	if battle_state == null:
+		return
+
+	for unit in battle_state.units:
+		if unit != null:
+			unit.finish_round(round_number)
 	
 # ============================================================
 # ОТЛАДКА ОЧЕРЕДИ
