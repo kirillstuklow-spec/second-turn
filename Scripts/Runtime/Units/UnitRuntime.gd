@@ -15,6 +15,15 @@ var is_alive : bool = true
 
 
 # ============================================================
+# СПОСОБНОСТИ ЭТОГО ЭКЗЕМПЛЯРА ЮНИТА
+# ============================================================
+
+var active_abilities : Array[UnitAbilityRuntime] = []
+
+var passive_abilities : Array[UnitAbilityRuntime] = []
+
+
+# ============================================================
 # БОЕВЫЕ ПАРАМЕТРЫ
 # ============================================================
 
@@ -51,6 +60,8 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 	active_defenses = data.defenses.duplicate()
 	active_immunities = data.immunities.duplicate()
 
+	_initialize_ability_runtimes()
+
 	is_alive = current_hp > 0
 
 	action_points_remaining = 0
@@ -59,11 +70,92 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 	initiative_modifier_this_round = 0
 	initiative_roll_this_round = data.initiative
 
+
+func _initialize_ability_runtimes() -> void:
+	active_abilities.clear()
+	passive_abilities.clear()
+
+	if data == null:
+		return
+
+	for ability_data in data.active_abilities:
+		var ability_runtime := _create_ability_runtime(
+			ability_data
+		)
+
+		if ability_runtime != null:
+			active_abilities.append(ability_runtime)
+
+	for ability_data in data.passive_abilities:
+		var ability_runtime := _create_ability_runtime(
+			ability_data
+		)
+
+		if ability_runtime != null:
+			passive_abilities.append(ability_runtime)
+
+
+func _create_ability_runtime(
+	ability_data : UnitAbilityData
+) -> UnitAbilityRuntime:
+	if ability_data == null:
+		push_error(
+			"UnitRuntime: UnitData contains a null ability"
+		)
+		return null
+
+	var ability_runtime := UnitAbilityRuntime.new()
+	ability_runtime.setup(ability_data, self)
+	return ability_runtime
+
+
+func get_active_ability_runtime(
+	ability_data : UnitAbilityData
+) -> UnitAbilityRuntime:
+	if ability_data == null:
+		return null
+
+	for ability_runtime in active_abilities:
+		if (
+			ability_runtime != null
+			and ability_runtime.data == ability_data
+		):
+			return ability_runtime
+
+	return null
+
+
+# ============================================================
+# СТАРТ И ЗАВЕРШЕНИЕ РАУНДА
+# ============================================================
+
+func start_round(round_number : int) -> void:
+	for ability_runtime in active_abilities:
+		if ability_runtime != null:
+			ability_runtime.start_round(round_number)
+
+	for ability_runtime in passive_abilities:
+		if ability_runtime != null:
+			ability_runtime.start_round(round_number)
+
+
+func finish_round(round_number : int) -> void:
+	for ability_runtime in active_abilities:
+		if ability_runtime != null:
+			ability_runtime.finish_round(round_number)
+
+	for ability_runtime in passive_abilities:
+		if ability_runtime != null:
+			ability_runtime.finish_round(round_number)
+
 # ============================================================
 # СТАРТ АКТИВАЦИИ
 # ============================================================
 
-func start_activation() -> void:
+func start_activation(
+	round_number : int = 0,
+	activation_index : int = -1
+) -> void:
 	if data == null:
 		push_error("UnitRuntime: cannot start activation without UnitData")
 		return
@@ -75,6 +167,20 @@ func start_activation() -> void:
 
 	action_points_remaining = 1
 	movement_points_remaining = data.movement
+
+	for ability_runtime in active_abilities:
+		if ability_runtime != null:
+			ability_runtime.start_activation(
+				round_number,
+				activation_index
+			)
+
+	for ability_runtime in passive_abilities:
+		if ability_runtime != null:
+			ability_runtime.start_activation(
+				round_number,
+				activation_index
+			)
 
 	print(
 		"Activation resources for ",
