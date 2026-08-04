@@ -9,7 +9,7 @@ class_name UnitInfoPanel
 signal end_turn_requested
 
 signal ability_selected(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 )
 
 # ============================================================
@@ -172,7 +172,8 @@ var displayed_unit: UnitRuntime = null
 
 func show_unit(
 	unit: UnitRuntime,
-	is_active: bool
+	is_active: bool,
+	availability_results: Array[AbilityAvailabilityResult] = []
 ) -> void:
 	if unit == null:
 		clear_unit()
@@ -210,7 +211,8 @@ func show_unit(
 
 	_show_unit_abilities(
 		unit,
-		is_active
+		is_active,
+		availability_results
 	)
 
 
@@ -257,7 +259,8 @@ func _set_action_controls(is_active: bool) -> void:
 
 func _show_unit_abilities(
 	unit: UnitRuntime,
-	is_active: bool
+	is_active: bool,
+	availability_results: Array[AbilityAvailabilityResult]
 ) -> void:
 	_clear_ability_buttons()
 
@@ -270,7 +273,7 @@ func _show_unit_abilities(
 	if unit.data == null:
 		return
 
-	var abilities: Array = unit.data.active_abilities
+	var abilities := unit.active_abilities
 
 	var visible_ability_count: int = min(
 		abilities.size(),
@@ -280,13 +283,17 @@ func _show_unit_abilities(
 	for ability_index in range(
 		visible_ability_count
 	):
-		var unit_ability: UnitAbilityData = (
-			abilities[ability_index] as UnitAbilityData
+		var ability_runtime: UnitAbilityRuntime = (
+			abilities[ability_index] as UnitAbilityRuntime
 		)
 
 		_create_ability_button(
-			unit_ability,
-			is_active
+			ability_runtime,
+			is_active,
+			_find_availability_result(
+				ability_runtime,
+				availability_results
+			)
 		)
 
 	if abilities.size() > 6:
@@ -297,16 +304,17 @@ func _show_unit_abilities(
 
 
 func _create_ability_button(
-	unit_ability: UnitAbilityData,
-	is_active: bool
+	ability_runtime: UnitAbilityRuntime,
+	is_active: bool,
+	availability: AbilityAvailabilityResult
 ) -> void:
-	if unit_ability == null:
+	if ability_runtime == null or ability_runtime.data == null:
 		return
 
 	var ability_button := Button.new()
 
 	ability_button.text = (
-		unit_ability.ability_name
+		ability_runtime.data.ability_name
 	)
 
 	ability_button.custom_minimum_size = Vector2(
@@ -314,11 +322,22 @@ func _create_ability_button(
 		44
 	)
 
-	ability_button.disabled = not is_active
+	ability_button.disabled = (
+		not is_active
+		or availability == null
+		or not availability.is_available
+	)
+
+	if availability != null:
+		ability_button.tooltip_text = availability.get_summary()
+	else:
+		ability_button.tooltip_text = (
+			"Доступность способности не рассчитана."
+		)
 
 	ability_button.pressed.connect(
 		_on_ability_button_pressed.bind(
-			unit_ability
+			ability_runtime
 		)
 	)
 
@@ -341,19 +360,33 @@ func _clear_ability_buttons() -> void:
 # ============================================================
 
 func _on_ability_button_pressed(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 ) -> void:
-	if unit_ability == null:
+	if ability_runtime == null or ability_runtime.data == null:
 		return
 
 	print(
 		"UnitInfoPanel: ability pressed: ",
-		unit_ability.ability_name
+		ability_runtime.data.ability_name
 	)
 
 	ability_selected.emit(
-		unit_ability
+		ability_runtime
 	)
+
+
+func _find_availability_result(
+	ability_runtime: UnitAbilityRuntime,
+	availability_results: Array[AbilityAvailabilityResult]
+) -> AbilityAvailabilityResult:
+	for result in availability_results:
+		if (
+			result != null
+			and result.ability_runtime == ability_runtime
+		):
+			return result
+
+	return null
 	
 # # ============================================================
 # ОЧИСТКА ПАНЕЛИ
