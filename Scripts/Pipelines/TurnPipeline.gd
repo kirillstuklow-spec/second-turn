@@ -3,6 +3,11 @@ extends Node
 class_name TurnPipeline
 
 
+const RNG_PURPOSE_INITIATIVE_MODIFIER : StringName = (
+	&"initiative_modifier"
+)
+
+
 # ============================================================
 # ССЫЛКИ НА СОСТОЯНИЕ БОЯ
 # ============================================================
@@ -10,20 +15,9 @@ class_name TurnPipeline
 var battle_state : BattleState = null
 var event_queue : EventQueue = null
 
-
-# ============================================================
-# СЛУЧАЙНОСТЬ
-# ============================================================
-
-var rng : RandomNumberGenerator = RandomNumberGenerator.new()
-
 # ============================================================
 # НАСТРОЙКА PIPELINE
 # ============================================================
-
-func _ready() -> void:
-	rng.randomize()
-
 
 func configure(
 	new_battle_state : BattleState,
@@ -155,7 +149,29 @@ func _roll_initiative_for_unit(unit : UnitRuntime) -> void:
 	if unit == null:
 		return
 
-	var modifier : int = rng.randi_range(-5, 5)
+	if battle_state == null or battle_state.battle_rng == null:
+		push_error(
+			"TurnPipeline: BattleRng is unavailable for initiative roll"
+		)
+		return
+
+	var roll_result := battle_state.battle_rng.roll_int(
+		RNG_PURPOSE_INITIATIVE_MODIFIER,
+		-5,
+		5,
+		{
+			"unit_name": unit.data.unit_name,
+			"team_id": unit.team_id,
+			"round_number": battle_state.round_number,
+			"base_initiative": unit.data.initiative
+		}
+	)
+
+	if roll_result == null:
+		push_error("TurnPipeline: BattleRng initiative roll failed")
+		return
+
+	var modifier : int = roll_result.value
 
 	unit.set_round_initiative_modifier(modifier)
 
