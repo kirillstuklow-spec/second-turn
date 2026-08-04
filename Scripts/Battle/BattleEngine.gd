@@ -6,7 +6,8 @@ class_name BattleEngine
 # ============================================================
 
 signal presentation_refresh_requested(
-	active_unit: UnitRuntime
+	active_unit: UnitRuntime,
+	availability_results: Array[AbilityAvailabilityResult]
 )
 
 signal turn_state_refresh_requested(
@@ -83,6 +84,8 @@ var battlefield_view: BattlefieldView = null
 
 var battle_state: BattleState = null
 
+var ability_availability_service := AbilityAvailabilityService.new()
+
 var _is_initialized: bool = false
 
 
@@ -142,7 +145,8 @@ func initialize(
 
 func _configure_pipelines() -> void:
 	ability_pipeline.configure(
-		battle_state
+		battle_state,
+		ability_availability_service
 	)
 
 	movement_pipeline.configure(
@@ -341,7 +345,7 @@ func request_end_turn() -> void:
 # ============================================================
 
 func request_ability_selection(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 ) -> void:
 	if not _is_initialized:
 		push_error(
@@ -350,14 +354,14 @@ func request_ability_selection(
 		)
 		return
 
-	if unit_ability == null:
+	if ability_runtime == null:
 		push_error(
 			"BattleEngine: selected ability is null"
 		)
 		return
 
 	_on_ability_selected(
-		unit_ability
+		ability_runtime
 	)
 	
 # ============================================================
@@ -377,13 +381,39 @@ func _refresh_views() -> void:
 			battle_state
 		)
 
+	var availability_results := (
+		_build_ability_availability_results(
+			battle_state.active_unit
+		)
+	)
+
 	presentation_refresh_requested.emit(
-		battle_state.active_unit
+		battle_state.active_unit,
+		availability_results
 	)
 
 	turn_state_refresh_requested.emit(
 		battle_state.turn_state
 	)
+
+
+func _build_ability_availability_results(
+	unit: UnitRuntime
+) -> Array[AbilityAvailabilityResult]:
+	var results: Array[AbilityAvailabilityResult] = []
+
+	if unit == null:
+		return results
+
+	for ability_runtime in unit.active_abilities:
+		results.append(
+			ability_availability_service.evaluate(
+				battle_state,
+				ability_runtime
+			)
+		)
+
+	return results
 	
 # ============================================================
 # ПРАВЫЙ КЛИК И КЛАВИАТУРА
@@ -489,7 +519,7 @@ func _end_current_activation() -> void:
 # ============================================================
 
 func _on_ability_selected(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 ) -> void:
 	if battle_state == null:
 		push_error("BattleEngine: battle_state is null")
@@ -502,7 +532,7 @@ func _on_ability_selected(
 		)
 		return
 
-	if unit_ability == null:
+	if ability_runtime == null or ability_runtime.data == null:
 		push_error(
 			"BattleEngine: selected ability is null"
 		)
@@ -514,15 +544,20 @@ func _on_ability_selected(
 		)
 		return
 
-	if not battle_state.active_unit.can_spend_action_points(1):
+	var availability := ability_availability_service.evaluate(
+		battle_state,
+		ability_runtime
+	)
+
+	if not availability.is_available:
 		print(
-			"BattleEngine: active unit has "
-			+ "no action points"
+			"BattleEngine: ability is unavailable: ",
+			availability.get_summary()
 		)
 		return
 
 	battle_state.set_pending_ability(
-		unit_ability
+		ability_runtime
 	)
 
 	battlefield_view.set_targeting(
@@ -537,7 +572,7 @@ func _on_ability_selected(
 	print("")
 	print(
 		"Ability selected: ",
-		unit_ability.ability_name
+		ability_runtime.data.ability_name
 	)
 	print("Choose target on battlefield")
 
@@ -617,7 +652,7 @@ func _handle_ability_click(
 	cell: CellRuntime,
 	target_unit: UnitRuntime
 ) -> void:
-	var pending_ability: UnitAbilityData = (
+	var pending_ability: UnitAbilityRuntime = (
 		battle_state.pending_ability
 	)
 
@@ -627,7 +662,10 @@ func _handle_ability_click(
 		)
 		return
 
-	if pending_ability.ability == null:
+	if (
+		pending_ability.data == null
+		or pending_ability.data.ability == null
+	):
 		push_error(
 			"BattleEngine: pending_ability "
 			+ "has no AbilityData"
@@ -635,7 +673,7 @@ func _handle_ability_click(
 		return
 
 	var target_rule_id: String = (
-		pending_ability.ability.target_rule_id
+		pending_ability.data.ability.target_rule_id
 	)
 
 	_print_ability_click_debug(
@@ -677,21 +715,21 @@ func _handle_ability_click(
 func _dispatch_use_ability(
 	cell: CellRuntime,
 	target_unit: UnitRuntime,
-	pending_ability: UnitAbilityData
+	pending_ability: UnitAbilityRuntime
 ) -> void:
 	command_dispatcher.dispatch_command({
 		"type": "use_ability",
 		"source_unit": battle_state.active_unit,
 		"target_unit": target_unit,
 		"target_cell": cell,
-		"unit_ability": pending_ability
+		"ability_runtime": pending_ability
 	})
 
 
 func _print_ability_click_debug(
 	cell: CellRuntime,
 	target_unit: UnitRuntime,
-	pending_ability: UnitAbilityData,
+	pending_ability: UnitAbilityRuntime,
 	target_rule_id: String
 ) -> void:
 	var target_name: String = "none"
@@ -701,7 +739,7 @@ func _print_ability_click_debug(
 
 	print(
 		"BattleEngine ability click | ability: ",
-		pending_ability.ability_name,
+		pending_ability.data.ability_name,
 		" | target_rule_id: ",
 		target_rule_id,
 		" | cell: ",
