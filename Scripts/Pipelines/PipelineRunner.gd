@@ -22,14 +22,14 @@ func configure(
 	print("PipelineRunner configured")
 
 
-func run_command(command: Dictionary) -> void:
+func run_command(command: Dictionary) -> Variant:
 	if command.is_empty():
 		push_error("PipelineRunner: empty command")
-		return
+		return null
 
 	if not command.has("type"):
 		push_error("PipelineRunner: command has no type")
-		return
+		return null
 
 	var command_type: String = command["type"]
 
@@ -40,12 +40,14 @@ func run_command(command: Dictionary) -> void:
 		"command_type": command_type
 	})
 
+	var command_result : Variant = null
+
 	match command_type:
 		"use_ability":
-			_run_use_ability(command)
+			command_result = _run_use_ability(command)
 
 		"move_unit":
-			_run_move_unit(command)
+			command_result = _run_move_unit(command)
 
 		"end_turn":
 			_run_end_turn()
@@ -61,11 +63,18 @@ func run_command(command: Dictionary) -> void:
 		"command_type": command_type
 	})
 
+	return command_result
 
-func _run_use_ability(command: Dictionary) -> void:
+
+func _run_use_ability(
+	command: Dictionary
+) -> AbilityExecutionResult:
 	if ability_pipeline == null:
 		push_error("PipelineRunner: ability_pipeline is null")
-		return
+		return AbilityExecutionResult.rejected(
+			AbilityExecutionResult.Status.REJECTED_INPUT,
+			"PipelineRunner: ability_pipeline is null"
+		)
 
 	var source_unit: UnitRuntime = command.get(
 		"source_unit",
@@ -87,15 +96,7 @@ func _run_use_ability(command: Dictionary) -> void:
 		null
 	)
 
-	if source_unit == null:
-		push_error("PipelineRunner: source_unit is null")
-		return
-
-	if ability_runtime == null:
-		push_error("PipelineRunner: ability_runtime is null")
-		return
-
-	ability_pipeline.execute_ability(
+	return ability_pipeline.execute_ability(
 		source_unit,
 		target_unit,
 		ability_runtime,
@@ -103,27 +104,27 @@ func _run_use_ability(command: Dictionary) -> void:
 	)
 
 
-func _run_move_unit(command: Dictionary) -> void:
+func _run_move_unit(command: Dictionary) -> bool:
 	if movement_pipeline == null:
 		push_error("PipelineRunner: movement_pipeline is null")
-		return
+		return false
 
 	if not command.has("unit"):
 		push_error(
 			"PipelineRunner: move_unit command has no unit"
 		)
-		return
+		return false
 
 	if not command.has("target_cell"):
 		push_error(
 			"PipelineRunner: move_unit command has no target_cell"
 		)
-		return
+		return false
 
 	var unit: UnitRuntime = command["unit"]
 	var target_cell: CellRuntime = command["target_cell"]
 
-	movement_pipeline.execute_move(
+	return movement_pipeline.execute_move(
 		unit,
 		target_cell
 	)
