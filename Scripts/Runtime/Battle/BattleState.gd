@@ -25,6 +25,13 @@ var winner_team_id: int = 0
 
 
 # ============================================================
+# ЕДИНЫЙ ИСТОЧНИК СЛУЧАЙНОСТИ БОЯ
+# ============================================================
+
+var battle_rng : BattleRng = BattleRng.new()
+
+
+# ============================================================
 # ДАННЫЕ ТЕКУЩЕЙ АРЕНЫ
 # ============================================================
 
@@ -105,9 +112,20 @@ func clear() -> void:
 	is_battle_over = false
 	winner_team_id = 0
 
+	if battle_rng != null:
+		battle_rng.clear_history()
+
 	arena_data = null
 	field_width = DEFAULT_FIELD_WIDTH
 	field_height = DEFAULT_FIELD_HEIGHT
+
+
+func configure_battle_rng(seed_value : int = BattleRng.AUTO_SEED) -> void:
+	if battle_rng == null:
+		battle_rng = BattleRng.new(seed_value)
+		return
+
+	battle_rng.configure(seed_value)
 
 
 func add_cell(cell : CellRuntime) -> void:
