@@ -92,6 +92,12 @@ var ability_algorithm_registry := AbilityAlgorithmRegistry.new()
 
 var ability_availability_service := AbilityAvailabilityService.new()
 
+var targeting_service := TargetingService.new()
+
+var ability_impact_plan_builder := AbilityImpactPlanBuilder.new()
+
+var impact_executor := ImpactExecutor.new()
+
 var _is_initialized: bool = false
 
 
@@ -157,7 +163,10 @@ func _configure_pipelines() -> void:
 	ability_pipeline.configure(
 		battle_state,
 		ability_availability_service,
-		ability_algorithm_registry
+		ability_algorithm_registry,
+		targeting_service,
+		ability_impact_plan_builder,
+		impact_executor
 	)
 
 	movement_pipeline.configure(
@@ -569,7 +578,9 @@ func _cancel_pending_ability() -> void:
 # ЗАВЕРШЕНИЕ КЛИКА СПОСОБНОСТИ
 # ============================================================
 
-func _finish_ability_click() -> void:
+func _finish_ability_click(
+	execution_result: AbilityExecutionResult
+) -> void:
 	if battle_state == null:
 		return
 
@@ -581,7 +592,12 @@ func _finish_ability_click() -> void:
 			null
 		)
 
-	battle_state.check_victory_condition()
+	if (
+		execution_result != null
+		and execution_result.was_committed()
+	):
+		battle_state.check_victory_condition()
+
 	_refresh_views()
 
 
@@ -658,13 +674,39 @@ func _on_ability_selected(
 		)
 		return
 
+	var schema_result := ability_algorithm_registry.validate_unit_ability(
+		ability_runtime.data
+	)
+
+	if not schema_result.is_valid:
+		push_error(
+			"BattleEngine: invalid ability schema:\n"
+			+ schema_result.get_summary()
+		)
+		return
+
+	var valid_target_cells := targeting_service.get_valid_selection_cells(
+		battle_state,
+		battle_state.active_unit,
+		ability_runtime.data,
+		schema_result.resolved_parameters
+	)
+
+	if valid_target_cells.is_empty():
+		print(
+			"BattleEngine: ability has no valid targets: ",
+			ability_runtime.data.ability_name
+		)
+		return
+
 	battle_state.set_pending_ability(
 		ability_runtime
 	)
 
 	battlefield_view.set_targeting(
 		true,
-		battle_state.active_unit
+		battle_state.active_unit,
+		valid_target_cells
 	)
 
 	battlefield_view.draw_battlefield(
@@ -786,13 +828,13 @@ func _handle_ability_click(
 	)
 
 	if target_rule_id == TARGET_RULE_AREA_AROUND_CELL:
-		_dispatch_use_ability(
+		var area_result := _dispatch_use_ability(
 			cell,
 			target_unit,
 			pending_ability
 		)
 
-		_finish_ability_click()
+		_finish_ability_click(area_result)
 		return
 
 	if target_unit == null:
@@ -805,27 +847,40 @@ func _handle_ability_click(
 		)
 		return
 
-	_dispatch_use_ability(
+	var execution_result := _dispatch_use_ability(
 		cell,
 		target_unit,
 		pending_ability
 	)
 
-	_finish_ability_click()
+	_finish_ability_click(execution_result)
 
 
 func _dispatch_use_ability(
 	cell: CellRuntime,
 	target_unit: UnitRuntime,
 	pending_ability: UnitAbilityRuntime
-) -> void:
-	command_dispatcher.dispatch_command({
+) -> AbilityExecutionResult:
+	var command_result : Variant = command_dispatcher.dispatch_command({
 		"type": "use_ability",
 		"source_unit": battle_state.active_unit,
 		"target_unit": target_unit,
 		"target_cell": cell,
 		"ability_runtime": pending_ability
 	})
+
+	var execution_result := command_result as AbilityExecutionResult
+
+	if execution_result == null:
+		push_error(
+			"BattleEngine: ability command returned no typed result"
+		)
+		execution_result = AbilityExecutionResult.rejected(
+			AbilityExecutionResult.Status.FAILED_EXECUTION,
+			"Команда способности не вернула результат."
+		)
+
+	return execution_result
 
 
 func _print_ability_click_debug(
