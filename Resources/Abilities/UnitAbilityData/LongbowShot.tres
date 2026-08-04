@@ -10,7 +10,7 @@ ability_name = "Выстрел из лука"
 description = "Лучник выпускает стрелу в выбранную вражескую цель."
 ability = ExtResource("1_18gn8")
 parameters = {
-"armor_penetration ": 0,
+"armor_penetration": 0,
 "damage": 3,
 "keyword": "physical"
 }
