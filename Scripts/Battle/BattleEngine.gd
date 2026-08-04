@@ -35,6 +35,10 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 @export var longbow_shot: UnitAbilityData
 
+# Ноль создаёт новый seed автоматически. Ненулевое значение позволяет
+# дословно воспроизвести последовательность боевых бросков.
+@export var battle_seed: int = BattleRng.AUTO_SEED
+
 # ============================================================
 # ВНУТРЕННИЕ УЗЛЫ BATTLE ENGINE
 # ============================================================
@@ -83,6 +87,8 @@ var battlefield_view: BattlefieldView = null
 # ============================================================
 
 var battle_state: BattleState = null
+
+var ability_algorithm_registry := AbilityAlgorithmRegistry.new()
 
 var ability_availability_service := AbilityAvailabilityService.new()
 
@@ -144,9 +150,14 @@ func initialize(
 	return true
 
 func _configure_pipelines() -> void:
+	ability_availability_service.set_algorithm_registry(
+		ability_algorithm_registry
+	)
+
 	ability_pipeline.configure(
 		battle_state,
-		ability_availability_service
+		ability_availability_service,
+		ability_algorithm_registry
 	)
 
 	movement_pipeline.configure(
@@ -238,6 +249,35 @@ func _validate_configuration() -> bool:
 			"BattleEngine: longbow_shot is not assigned"
 		)
 		is_valid = false
+	else:
+		is_valid = (
+			_validate_ability_schema(
+				longbow_shot,
+				"longbow_shot"
+			)
+			and is_valid
+		)
+
+	var configured_units := {
+		"archer_data": archer_data,
+		"second_player_unit_data": second_player_unit_data,
+		"defense_dummy_data": defense_dummy_data,
+		"armor_dummy_data": armor_dummy_data
+	}
+
+	for field_name in configured_units:
+		var unit_data := configured_units[field_name] as UnitData
+
+		if unit_data == null:
+			continue
+
+		is_valid = (
+			_validate_unit_ability_schemas(
+				unit_data,
+				str(field_name)
+			)
+			and is_valid
+		)
 
 	if battle_initializer == null:
 		push_error(
@@ -296,6 +336,63 @@ func _validate_configuration() -> bool:
 		is_valid = false
 
 	return is_valid
+
+
+func _validate_unit_ability_schemas(
+	unit_data: UnitData,
+	field_name: String
+) -> bool:
+	var is_valid := true
+	var ability_index := 0
+
+	for unit_ability in unit_data.active_abilities:
+		if not _validate_ability_schema(
+			unit_ability,
+			"%s.active_abilities[%d]" % [
+				field_name,
+				ability_index
+			]
+		):
+			is_valid = false
+
+		ability_index += 1
+
+	ability_index = 0
+
+	for unit_ability in unit_data.passive_abilities:
+		if not _validate_ability_schema(
+			unit_ability,
+			"%s.passive_abilities[%d]" % [
+				field_name,
+				ability_index
+			]
+		):
+			is_valid = false
+
+		ability_index += 1
+
+	return is_valid
+
+
+func _validate_ability_schema(
+	unit_ability: UnitAbilityData,
+	field_path: String
+) -> bool:
+	var schema_result := ability_algorithm_registry.validate_unit_ability(
+		unit_ability
+	)
+
+	if schema_result.is_valid:
+		return true
+
+	push_error(
+		"BattleEngine: invalid ability schema at %s:\n%s" % [
+			field_path,
+			schema_result.get_summary()
+		]
+	)
+
+	return false
 	
 
 # ============================================================
@@ -304,8 +401,13 @@ func _validate_configuration() -> bool:
 
 func _create_battle_state() -> void:
 	battle_state = BattleState.new()
+	battle_state.configure_battle_rng(battle_seed)
 	battle_state.generate_battlefield(
 		arena_data
+	)
+	print(
+		"Battle RNG seed: ",
+		battle_state.battle_rng.initial_seed
 	)
 	battle_state.print_battlefield_zones()
 
