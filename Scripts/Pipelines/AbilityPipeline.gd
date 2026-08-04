@@ -132,7 +132,17 @@ func execute_ability(
 
 	var unit_ability : UnitAbilityData = ability_runtime.data
 	var ability_data : AbilityData = unit_ability.ability
-
+	# Недопустимая цель не должна расходовать AP, заряд,
+	# запускать кулдаун или увеличивать счётчики применений.
+	if not _validate_target_request(
+			source_unit,
+			target_unit,
+			target_cell,
+			ability_data,
+			unit_ability
+		):
+		print("Ability cancelled before commit: invalid target")
+		return
 	print("")
 	print("========================================")
 	print(source_unit.data.unit_name, " uses ", unit_ability.ability_name, " on ", _get_target_description(target_unit, target_cell))
@@ -186,7 +196,59 @@ func _get_target_description(target_unit : UnitRuntime, target_cell : CellRuntim
 
 	return "unknown target"
 
+# ============================================================
+# ПРОВЕРКА ЦЕЛИ ДО COMMIT
+# ============================================================
 
+func _validate_target_request(
+	source_unit : UnitRuntime,
+	target_unit : UnitRuntime,
+	target_cell : CellRuntime,
+	ability_data : AbilityData,
+	unit_ability : UnitAbilityData
+) -> bool:
+	if ability_data == null:
+		push_error(
+			"AbilityPipeline failed: ability_data is null "
+			+ "during target validation"
+		)
+		return false
+
+	# Эти правила не выбирают конкретного юнита как цель.
+	if ability_data.target_rule_id == TARGET_RULE_ALL_ENEMIES:
+		return true
+
+	if ability_data.target_rule_id == TARGET_RULE_AREA_AROUND_CELL:
+		if target_cell == null:
+			print("Target rule failed: target cell is missing")
+			return false
+
+		return true
+
+	if target_unit == null:
+		print("Target rule failed: target unit is missing")
+		return false
+
+	if (
+		ability_data.target_rule_id == TARGET_RULE_AREA_AROUND_UNIT
+		and target_unit.cell == null
+	):
+		print("Target rule failed: area center has no cell")
+		return false
+
+	if not _check_target_rule(source_unit, target_unit, ability_data):
+		return false
+
+	if not _check_conditions(
+		source_unit,
+		target_unit,
+		ability_data,
+		unit_ability
+	):
+		return false
+
+	return true
+	
 # ============================================================
 # МАРШРУТИЗАЦИЯ УРОНА
 # ============================================================
