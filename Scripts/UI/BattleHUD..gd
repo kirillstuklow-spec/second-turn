@@ -9,7 +9,7 @@ class_name BattleHUD
 signal end_turn_requested
 
 signal ability_selected(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 )
 
 # ============================================================
@@ -33,7 +33,8 @@ signal ability_selected(
 
 func show_unit(
 	unit: UnitRuntime,
-	is_active: bool
+	is_active: bool,
+	availability_results: Array[AbilityAvailabilityResult] = []
 ) -> void:
 	if unit_info_panel == null:
 		push_error(
@@ -43,7 +44,8 @@ func show_unit(
 
 	unit_info_panel.show_unit(
 		unit,
-		is_active
+		is_active,
+		availability_results
 	)
 	
 func _ready() -> void:
@@ -157,9 +159,9 @@ func _on_unit_info_panel_end_turn_requested() -> void:
 # ============================================================
 
 func _on_unit_info_panel_ability_selected(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 ) -> void:
-	if unit_ability == null:
+	if ability_runtime == null or ability_runtime.data == null:
 		push_error(
 			"BattleHUD: selected ability is null"
 		)
@@ -167,9 +169,9 @@ func _on_unit_info_panel_ability_selected(
 
 	print(
 		"BattleHUD: forwarding ability selection: ",
-		unit_ability.ability_name
+		ability_runtime.data.ability_name
 	)
 
 	ability_selected.emit(
-		unit_ability
+		ability_runtime
 	)
