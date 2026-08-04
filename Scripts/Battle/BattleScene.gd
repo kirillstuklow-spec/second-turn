@@ -164,7 +164,8 @@ func _on_end_turn_requested() -> void:
 # ============================================================
 
 func _on_presentation_refresh_requested(
-	active_unit: UnitRuntime
+	active_unit: UnitRuntime,
+	availability_results: Array[AbilityAvailabilityResult]
 ) -> void:
 	if active_unit == null:
 		print(
@@ -174,7 +175,8 @@ func _on_presentation_refresh_requested(
 
 		battle_hud.show_unit(
 			null,
-			false
+			false,
+			[]
 		)
 		return
 
@@ -185,7 +187,8 @@ func _on_presentation_refresh_requested(
 
 		battle_hud.show_unit(
 			null,
-			false
+			false,
+			[]
 		)
 		return
 
@@ -196,7 +199,8 @@ func _on_presentation_refresh_requested(
 
 	battle_hud.show_unit(
 		active_unit,
-		true
+		true,
+		availability_results
 	)
 # ============================================================
 # ОБНОВЛЕНИЕ СОСТОЯНИЯ ХОДОВ В HUD
@@ -231,9 +235,9 @@ func _on_turn_state_refresh_requested(
 # ============================================================
 
 func _on_ability_selected(
-	unit_ability: UnitAbilityData
+	ability_runtime: UnitAbilityRuntime
 ) -> void:
-	if unit_ability == null:
+	if ability_runtime == null or ability_runtime.data == null:
 		push_error(
 			"BattleScene: selected ability is null"
 		)
@@ -241,9 +245,9 @@ func _on_ability_selected(
 
 	print(
 		"BattleScene: ability selection intent received: ",
-		unit_ability.ability_name
+		ability_runtime.data.ability_name
 	)
 
 	battle_engine.request_ability_selection(
-		unit_ability
+		ability_runtime
 	)
