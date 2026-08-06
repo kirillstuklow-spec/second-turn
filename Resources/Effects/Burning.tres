@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EffectData" format=3 uid="uid://l18hp82tc3h"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_effect"]
+[ext_resource type="Script" uid="uid://db5ogtmoaxk10" path="res://Resources/Effects/EffectDurationData.gd" id="2_duration"]
+[ext_resource type="Script" uid="uid://b1a27jrcgriw8" path="res://Resources/Effects/PassiveRuleData.gd" id="2_ugpnt"]
+[ext_resource type="Script" uid="uid://q35jwepphd5d" path="res://Resources/Effects/EffectTriggerData.gd" id="3_trigger"]
+[ext_resource type="Resource" uid="uid://jdrsphvctx1m" path="res://Resources/Abilities/ImpactPlans/BurningTriggerPlan.tres" id="4_plan"]
+
+[sub_resource type="Resource" id="Resource_duration"]
+script = ExtResource("2_duration")
+duration_unit = 1
+amount = 2
+
+[sub_resource type="Resource" id="Resource_trigger"]
+script = ExtResource("3_trigger")
+trigger_id = "burning_on_each_damage_impact"
+response_plan_data = ExtResource("4_plan")
+
+[resource]
+script = ExtResource("1_effect")
+effect_id = "status.burning"
+effect_name = "Горение"
+description = "После каждого DamageImpact, фактически снявшего HP, наносит носителю 1 урон EFFECT + FIRE. Не реагирует на собственный урон."
+duration = SubResource("Resource_duration")
+triggers = Array[ExtResource("3_trigger")]([SubResource("Resource_trigger")])
