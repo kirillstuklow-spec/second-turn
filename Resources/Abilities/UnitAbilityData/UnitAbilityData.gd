@@ -18,6 +18,10 @@ class_name UnitAbilityData
 
 @export var parameters : Dictionary = {}
 
+# Декларативный план конкретной способности. Если поле назначено,
+# Ability Builder сможет редактировать дерево Impact без GDScript.
+@export var impact_plan_data : ImpactPlanData = null
+
 # Индивидуальные эффекты
 
 @export var effects : Array[EffectData] = []
