@@ -3,7 +3,8 @@
 [ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="1_f0ti3"]
 [ext_resource type="Resource" uid="uid://cxxtui0hsykqi" path="res://Resources/Abilities/UnitAbilityData/MusketShot.tres" id="2_hc80m"]
 [ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_jc7sv"]
-[ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="3_f0ti3"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/FireArrow.tres" id="4_f0ti3"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/PoisoningDart.tres" id="4_fkiro"]
 
 [resource]
 script = ExtResource("2_jc7sv")
@@ -12,5 +13,5 @@ faction = "test"
 unit_class = "Ranged"
 initiative = 20
 max_hp = 10
-active_abilities = Array[ExtResource("1_f0ti3")]([ExtResource("2_hc80m"), ExtResource("3_f0ti3")])
+active_abilities = Array[ExtResource("1_f0ti3")]([ExtResource("2_hc80m"), ExtResource("4_f0ti3"), ExtResource("4_fkiro")])
 metadata/_custom_type_script = "uid://s6md7hs2lnl6"
