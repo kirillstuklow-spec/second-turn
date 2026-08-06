@@ -11,6 +11,8 @@ var description : String = ""
 
 var action_type : int = AbilityData.ActionType.ATTACK
 
+var allows_any_action_type : bool = false
+
 var allowed_target_rules : Array[StringName] = []
 
 var parameter_specs : Array[AbilityParameterSpec] = []
@@ -32,3 +34,6 @@ func get_parameter_spec(
 func allows_target_rule(target_rule_id : StringName) -> bool:
 	return allowed_target_rules.has(target_rule_id)
 
+
+func allows_action_type(value : int) -> bool:
+	return allows_any_action_type or value == action_type

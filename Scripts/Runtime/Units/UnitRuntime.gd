@@ -31,6 +31,8 @@ var armor : int = 0
 var active_defenses : Array[String] = []
 var active_immunities : Array[String] = []
 
+var active_effects : Array[EffectRuntime] = []
+
 
 # ============================================================
 # РЕСУРСЫ АКТИВАЦИИ
@@ -59,6 +61,7 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 
 	active_defenses = data.defenses.duplicate()
 	active_immunities = data.immunities.duplicate()
+	active_effects.clear()
 
 	_initialize_ability_runtimes()
 
@@ -280,6 +283,20 @@ func consume_defense(keyword : String) -> void:
 
 func has_immunity(keyword : String) -> bool:
 	return active_immunities.has(keyword)
+
+
+func get_active_effect(effect_id : StringName) -> EffectRuntime:
+	if effect_id == &"":
+		return null
+
+	for effect_runtime in active_effects:
+		if (
+			effect_runtime != null
+			and effect_runtime.get_effect_id() == effect_id
+		):
+			return effect_runtime
+
+	return null
 
 
 # ============================================================

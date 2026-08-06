@@ -1,0 +1,252 @@
+extends RefCounted
+
+class_name ImpactPlanDataValidator
+
+
+static func validate(plan_data : ImpactPlanData) -> PackedStringArray:
+	return _validate_plan(plan_data, {}, {})
+
+
+static func _validate_plan(
+	plan_data : ImpactPlanData,
+	visited_plans : Dictionary,
+	visited_effects : Dictionary
+) -> PackedStringArray:
+	var issues := PackedStringArray()
+
+	if plan_data == null:
+		issues.append("ImpactPlanData отсутствует.")
+		return issues
+
+	var plan_key := plan_data.get_instance_id()
+
+	if visited_plans.has(plan_key):
+		return issues
+
+	visited_plans[plan_key] = true
+
+	if plan_data.nodes.is_empty():
+		issues.append("ImpactPlanData не содержит узлов.")
+		return issues
+
+	if plan_data.topology not in [
+		ImpactPlanData.Topology.TREE,
+		ImpactPlanData.Topology.QUEUE
+	]:
+		issues.append("ImpactPlanData содержит неизвестную топологию.")
+
+	var nodes_by_id : Dictionary = {}
+
+	for node_index in range(plan_data.nodes.size()):
+		var node : ImpactNodeData = plan_data.nodes[node_index]
+		var prefix := "nodes[%d]" % node_index
+
+		if node == null:
+			issues.append(prefix + ": узел отсутствует.")
+			continue
+
+		var node_id : String = node.node_id.strip_edges()
+
+		if node_id.is_empty():
+			issues.append(prefix + ": node_id пуст.")
+		elif node_id != node.node_id:
+			issues.append(prefix + ": node_id содержит пробелы по краям.")
+		elif nodes_by_id.has(node_id):
+			issues.append(prefix + ": node_id '%s' повторяется." % node_id)
+		else:
+			nodes_by_id[node_id] = node
+
+		_validate_node(node, prefix, issues, visited_plans, visited_effects)
+
+	if plan_data.topology == ImpactPlanData.Topology.QUEUE:
+		for node in plan_data.nodes:
+			if node != null and not node.parent_node_id.is_empty():
+				issues.append(
+					"Узел '%s': узел очереди не может иметь родителя."
+					% node.node_id
+				)
+	else:
+		_validate_tree(plan_data, nodes_by_id, issues)
+
+	return issues
+
+
+static func _validate_node(
+	node : ImpactNodeData,
+	prefix : String,
+	issues : PackedStringArray,
+	visited_plans : Dictionary,
+	visited_effects : Dictionary
+) -> void:
+	if node.operation not in [
+		Impact.Operation.DAMAGE,
+		Impact.Operation.HEAL,
+		Impact.Operation.SUMMON,
+		Impact.Operation.APPLY_EFFECT
+	]:
+		issues.append(prefix + ": неизвестная операция.")
+
+	if node.interaction_type not in [
+		Impact.InteractionType.MELEE,
+		Impact.InteractionType.RANGED,
+		Impact.InteractionType.MAGIC,
+		Impact.InteractionType.HEALING,
+		Impact.InteractionType.SUMMON,
+		Impact.InteractionType.EFFECT
+	]:
+		issues.append(prefix + ": неизвестный тип взаимодействия.")
+
+	if node.operation in [Impact.Operation.DAMAGE, Impact.Operation.HEAL]:
+		if node.magnitude <= 0:
+			issues.append(prefix + ": величина должна быть больше нуля.")
+
+	if node.operation == Impact.Operation.DAMAGE:
+		if node.source_type.strip_edges().is_empty():
+			issues.append(prefix + ": у урона отсутствует source_type.")
+
+		if node.interaction_type in [
+			Impact.InteractionType.HEALING,
+			Impact.InteractionType.SUMMON
+		]:
+			issues.append(prefix + ": урон несовместим с типом взаимодействия.")
+
+	if (
+		node.operation == Impact.Operation.HEAL
+		and node.interaction_type != Impact.InteractionType.HEALING
+	):
+		issues.append(prefix + ": лечение должно иметь тип HEALING.")
+
+	if node.operation == Impact.Operation.APPLY_EFFECT:
+		if node.interaction_type != Impact.InteractionType.EFFECT:
+			issues.append(prefix + ": наложение эффекта должно иметь тип EFFECT.")
+
+		if node.effect_data == null:
+			issues.append(prefix + ": EffectData не назначен.")
+		else:
+			_validate_effect_data(
+				node.effect_data,
+				prefix + ".effect_data",
+				issues,
+				visited_plans,
+				visited_effects
+			)
+
+	if (
+		node.operation == Impact.Operation.SUMMON
+		and node.interaction_type != Impact.InteractionType.SUMMON
+	):
+		issues.append(prefix + ": призыв должен иметь тип SUMMON.")
+
+	if (
+		node.armor_penetration < InteractionResolver.MIN_ARMOR_PENETRATION
+		or node.armor_penetration > InteractionResolver.MAX_ARMOR_PENETRATION
+	):
+		issues.append(prefix + ": бронебойность находится вне -5...5.")
+
+	if (
+		node.interaction_type == Impact.InteractionType.EFFECT
+		and node.armor_penetration != 0
+	):
+		issues.append(prefix + ": EFFECT не использует бронебойность.")
+
+
+static func _validate_effect_data(
+	effect_data : EffectData,
+	prefix : String,
+	issues : PackedStringArray,
+	visited_plans : Dictionary,
+	visited_effects : Dictionary
+) -> void:
+	var effect_key := effect_data.get_instance_id()
+
+	if visited_effects.has(effect_key):
+		return
+
+	visited_effects[effect_key] = true
+
+	if effect_data.effect_id.strip_edges().is_empty():
+		issues.append(prefix + ": effect_id пуст.")
+
+	if effect_data.duration != null:
+		if (
+			effect_data.duration.duration_unit
+			!= EffectDurationData.DurationUnit.PERMANENT
+			and effect_data.duration.amount <= 0
+		):
+			issues.append(prefix + ": длительность должна быть больше нуля.")
+
+	var trigger_ids : Dictionary = {}
+
+	for trigger_index in range(effect_data.triggers.size()):
+		var trigger : EffectTriggerData = effect_data.triggers[trigger_index]
+		var trigger_prefix := "%s.triggers[%d]" % [prefix, trigger_index]
+
+		if trigger == null:
+			issues.append(trigger_prefix + ": триггер отсутствует.")
+			continue
+
+		var trigger_id : String = trigger.trigger_id.strip_edges()
+
+		if trigger_id.is_empty():
+			issues.append(trigger_prefix + ": trigger_id пуст.")
+		elif trigger_ids.has(trigger_id):
+			issues.append(trigger_prefix + ": trigger_id повторяется.")
+		else:
+			trigger_ids[trigger_id] = true
+
+		if trigger.response_plan_data == null:
+			issues.append(trigger_prefix + ": план реакции отсутствует.")
+		else:
+			issues.append_array(
+				_validate_plan(
+					trigger.response_plan_data,
+					visited_plans,
+					visited_effects
+				)
+			)
+
+
+static func _validate_tree(
+	plan_data : ImpactPlanData,
+	nodes_by_id : Dictionary,
+	issues : PackedStringArray
+) -> void:
+	var root_count := 0
+
+	for node in plan_data.nodes:
+		if node == null:
+			continue
+
+		if node.parent_node_id.is_empty():
+			root_count += 1
+			continue
+
+		if not nodes_by_id.has(node.parent_node_id):
+			issues.append(
+				"Узел '%s': родитель '%s' не найден."
+				% [node.node_id, node.parent_node_id]
+			)
+			continue
+
+		var visited : Dictionary = {}
+		var current : ImpactNodeData = node
+		var depth := 0
+
+		while current != null and not current.parent_node_id.is_empty():
+			if visited.has(current.node_id):
+				issues.append("Узел '%s': обнаружен цикл." % node.node_id)
+				break
+
+			visited[current.node_id] = true
+			current = nodes_by_id.get(current.parent_node_id, null)
+			depth += 1
+
+			if depth > ImpactPlan.MAX_DEPTH:
+				issues.append(
+					"Узел '%s': глубина дерева превышает %d."
+					% [node.node_id, ImpactPlan.MAX_DEPTH]
+				)
+				break
+
+	if root_count == 0:
+		issues.append("Дерево ImpactPlanData не содержит корневых узлов.")

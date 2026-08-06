@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run_test() -> void:
-	_test_five_interaction_types()
+	_test_six_interaction_types()
 	_test_strict_targeting_and_typed_pipeline_result()
 	_test_aoe_uses_fixed_target_snapshot()
 	_test_tree_and_queue_interruption_rules()
@@ -23,10 +23,10 @@ func _run_test() -> void:
 
 
 # ============================================================
-# ПЯТЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
+# ШЕСТЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
 # ============================================================
 
-func _test_five_interaction_types() -> void:
+func _test_six_interaction_types() -> void:
 	var melee := _make_damage_ability(
 		"single_adjacent_enemy",
 		AbilityData.TargetingForm.MELEE
@@ -82,6 +82,10 @@ func _test_five_interaction_types() -> void:
 	assert(
 		Impact.get_interaction_type_id(Impact.InteractionType.SUMMON)
 		== &"summon"
+	)
+	assert(
+		Impact.get_interaction_type_id(Impact.InteractionType.EFFECT)
+		== &"effect"
 	)
 
 

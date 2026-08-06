@@ -29,6 +29,8 @@ var active_defenses : Array[String] = []
 
 var active_immunities : Array[String] = []
 
+var active_effect_ids : Array[StringName] = []
+
 
 static func capture(
 	runtime_unit : UnitRuntime
@@ -49,6 +51,12 @@ static func capture(
 	snapshot.active_immunities = (
 		runtime_unit.active_immunities.duplicate()
 	)
+
+	for effect_runtime in runtime_unit.active_effects:
+		if effect_runtime != null:
+			snapshot.active_effect_ids.append(
+				effect_runtime.get_effect_id()
+			)
 
 	if runtime_unit.data != null:
 		snapshot.unit_id = StringName(runtime_unit.data.unit_id)

@@ -32,6 +32,10 @@ var activation_queue: Array[UnitRuntime] = []
 
 var current_activation_index: int = -1
 
+# Монотонный ID фактически начавшейся активации. В отличие от индекса
+# очереди не сбрасывается при переходе к новому раунду.
+var activation_serial: int = 0
+
 
 # ============================================================
 # АКТИВНЫЙ ЮНИТ
@@ -50,5 +54,6 @@ func clear() -> void:
 
 	activation_queue.clear()
 	current_activation_index = -1
+	activation_serial = 0
 
 	active_unit = null

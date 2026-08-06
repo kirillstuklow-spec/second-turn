@@ -41,7 +41,10 @@ func _test_registry_catalog(
 	assert(registry.has_algorithm(
 		AbilityAlgorithmRegistry.ALGORITHM_HEAL_TARGET
 	))
-	assert(registry.get_definitions().size() == 2)
+	assert(registry.has_algorithm(
+		AbilityAlgorithmRegistry.ALGORITHM_EXECUTE_IMPACT_PLAN
+	))
+	assert(registry.get_definitions().size() == 3)
 
 	var damage_definition := registry.get_definition(
 		AbilityAlgorithmRegistry.ALGORITHM_DEAL_DAMAGE
@@ -326,7 +329,7 @@ func _test_invalid_schema_does_not_commit(
 	owner.start_round(1)
 	owner.start_activation(1, 0)
 
-	var ability_runtime := owner.active_abilities[0]
+	var ability_runtime : UnitAbilityRuntime = owner.active_abilities[0]
 	var availability_service := AbilityAvailabilityService.new(
 		registry
 	)
@@ -542,7 +545,7 @@ func _test_pipelines_share_battle_rng(
 		== TurnPipeline.RNG_PURPOSE_INITIATIVE_MODIFIER
 	)
 
-	var ability_runtime := owner.active_abilities[0]
+	var ability_runtime : UnitAbilityRuntime = owner.active_abilities[0]
 	var target_hp_before := target.current_hp
 
 	ability_pipeline.execute_ability(

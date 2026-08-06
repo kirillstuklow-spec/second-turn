@@ -20,7 +20,7 @@ const PARAM_RADIUS : StringName = AbilityAlgorithmRegistry.PARAM_RADIUS
 
 # Совместимый публичный ID для существующих тестов и журналов RNG.
 const RNG_PURPOSE_ARMOR_BLOCK : StringName = (
-	ImpactExecutor.RNG_PURPOSE_ARMOR_BLOCK
+	InteractionResolver.RNG_PURPOSE_ARMOR_BLOCK
 )
 
 

@@ -9,6 +9,7 @@ class_name AbilityAlgorithmRegistry
 
 const ALGORITHM_DEAL_DAMAGE : StringName = &"deal_damage"
 const ALGORITHM_HEAL_TARGET : StringName = &"heal_target"
+const ALGORITHM_EXECUTE_IMPACT_PLAN : StringName = &"execute_impact_plan"
 
 const PARAM_DAMAGE : StringName = &"damage"
 const PARAM_HEAL : StringName = &"heal"
@@ -148,6 +149,12 @@ func validate_unit_ability(
 		result
 	)
 
+	_validate_declarative_impact_plan(
+		unit_ability,
+		definition,
+		result
+	)
+
 	return result
 
 
@@ -160,6 +167,7 @@ func _register_builtin_algorithms() -> void:
 
 	_register_definition(_build_deal_damage_definition())
 	_register_definition(_build_heal_target_definition())
+	_register_definition(_build_execute_impact_plan_definition())
 
 
 func _register_definition(
@@ -266,28 +274,63 @@ func _build_heal_target_definition() -> AbilityAlgorithmDefinition:
 	definition.algorithm_id = ALGORITHM_HEAL_TARGET
 	definition.display_name = "Лечение цели"
 	definition.description = (
-		"Восстанавливает HP одной допустимой союзной цели."
+		"Проверяет тип и источник лечения, затем восстанавливает HP."
 	)
 	definition.action_type = AbilityData.ActionType.HEAL
 	definition.allowed_target_rules = [
 		TARGET_RULE_SINGLE_ANY_ALLY
 	]
 
+	var healing := _make_integer_spec(
+		PARAM_HEAL,
+		"Лечение",
+		"Базовая величина восстановления HP.",
+		true,
+		false,
+		0,
+		true,
+		1,
+		true,
+		99
+	)
+
+	var source_type := _make_string_spec(
+		PARAM_KEYWORD,
+		"Источник лечения",
+		"Необязательный технический ID источника лечения.",
+		false,
+		true,
+		"",
+		true,
+		true
+	)
+
 	definition.parameter_specs = [
-		_make_integer_spec(
-			PARAM_HEAL,
-			"Лечение",
-			"Базовая величина восстановления HP.",
-			true,
-			false,
-			0,
-			true,
-			1,
-			true,
-			99
-		)
+		healing,
+		source_type
 	]
 
+	return definition
+
+
+func _build_execute_impact_plan_definition() -> AbilityAlgorithmDefinition:
+	var definition := AbilityAlgorithmDefinition.new()
+	definition.algorithm_id = ALGORITHM_EXECUTE_IMPACT_PLAN
+	definition.display_name = "Декларативный план воздействий"
+	definition.description = (
+		"Строит дерево или очередь из редактируемого ImpactPlanData."
+	)
+	definition.allows_any_action_type = true
+	definition.allowed_target_rules = [
+		TARGET_RULE_SINGLE_ANY_ENEMY,
+		TARGET_RULE_SINGLE_ANY_ALLY,
+		TARGET_RULE_ALL_ENEMIES,
+		TARGET_RULE_SINGLE_ADJACENT_ENEMY,
+		TARGET_RULE_AREA_AROUND_UNIT,
+		TARGET_RULE_AREA_AROUND_CELL,
+		&"single_empty_deployment_cell"
+	]
+	definition.parameter_specs = []
 	return definition
 
 
@@ -339,7 +382,7 @@ func _validate_action_type(
 	definition : AbilityAlgorithmDefinition,
 	result : AbilitySchemaValidationResult
 ) -> void:
-	if ability_data.action_type == definition.action_type:
+	if definition.allows_action_type(ability_data.action_type):
 		return
 
 	result.add_issue(
@@ -349,6 +392,37 @@ func _validate_action_type(
 			"algorithm_id": definition.algorithm_id,
 			"expected": definition.action_type,
 			"actual": ability_data.action_type
+		}
+	)
+
+
+func _validate_declarative_impact_plan(
+	unit_ability : UnitAbilityData,
+	definition : AbilityAlgorithmDefinition,
+	result : AbilitySchemaValidationResult
+) -> void:
+	if definition.algorithm_id != ALGORITHM_EXECUTE_IMPACT_PLAN:
+		return
+
+	if unit_ability.impact_plan_data == null:
+		result.add_issue(
+			AbilitySchemaIssue.Code.IMPACT_PLAN_MISSING,
+			"unit_ability.impact_plan_data"
+		)
+		return
+
+	var plan_issues := ImpactPlanDataValidator.validate(
+		unit_ability.impact_plan_data
+	)
+
+	if plan_issues.is_empty():
+		return
+
+	result.add_issue(
+		AbilitySchemaIssue.Code.IMPACT_PLAN_INVALID,
+		"unit_ability.impact_plan_data",
+		{
+			"summary": " | ".join(plan_issues)
 		}
 	)
 

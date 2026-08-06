@@ -12,11 +12,21 @@ enum Outcome {
 	SKIPPED_QUEUE_INTERRUPTED,
 	INVALID_SOURCE,
 	INVALID_TARGET,
-	UNSUPPORTED_OPERATION
+	UNSUPPORTED_OPERATION,
+	INVALID_INTERACTION,
+	SKIPPED_CONDITION,
+	BLOCKED_PASSIVE_RULE,
+	INVALID_EFFECT
 }
 
 
 var impact : Impact = null
+
+var interaction_resolution : InteractionResolution = null
+
+var effect_application_result : EffectApplicationResult = null
+
+var blocking_effect_runtime : EffectRuntime = null
 
 var outcome : Outcome = Outcome.INVALID_TARGET
 
@@ -61,7 +71,8 @@ func was_blocked() -> bool:
 	return outcome in [
 		Outcome.BLOCKED_IMMUNITY,
 		Outcome.BLOCKED_DEFENSE,
-		Outcome.BLOCKED_ARMOR
+		Outcome.BLOCKED_ARMOR,
+		Outcome.BLOCKED_PASSIVE_RULE
 	]
 
 
@@ -93,5 +104,17 @@ func get_outcome_id() -> StringName:
 
 		Outcome.UNSUPPORTED_OPERATION:
 			return &"unsupported_operation"
+
+		Outcome.INVALID_INTERACTION:
+			return &"invalid_interaction"
+
+		Outcome.SKIPPED_CONDITION:
+			return &"skipped_condition"
+
+		Outcome.BLOCKED_PASSIVE_RULE:
+			return &"blocked_passive_rule"
+
+		Outcome.INVALID_EFFECT:
+			return &"invalid_effect"
 
 	return &"unknown"

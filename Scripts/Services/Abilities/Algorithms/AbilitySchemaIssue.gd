@@ -26,7 +26,9 @@ enum Code {
 	PARAMETER_EMPTY_STRING,
 	PARAMETER_VALUE_HAS_SURROUNDING_WHITESPACE,
 	PARAMETER_BELOW_MINIMUM,
-	PARAMETER_ABOVE_MAXIMUM
+	PARAMETER_ABOVE_MAXIMUM,
+	IMPACT_PLAN_MISSING,
+	IMPACT_PLAN_INVALID
 }
 
 
@@ -165,5 +167,12 @@ func get_message() -> String:
 				str(context.get("maximum", ""))
 			]
 
-	return "Неизвестная ошибка схемы способности."
+		Code.IMPACT_PLAN_MISSING:
+			return "Для декларативной способности не назначен ImpactPlanData."
 
+		Code.IMPACT_PLAN_INVALID:
+			return "Некорректный ImpactPlanData: %s" % (
+				str(context.get("summary", ""))
+			)
+
+	return "Неизвестная ошибка схемы способности."

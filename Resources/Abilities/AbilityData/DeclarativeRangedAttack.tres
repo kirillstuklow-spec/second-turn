@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Declarative Ranged Attack"
+technical_description = "Executes an editable ImpactPlanData against one enemy target."
+activation_mode = 0
+action_type = 0
+targeting_form = 1
+impact_plan_type = 0
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_any_enemy"
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_enemy"])
