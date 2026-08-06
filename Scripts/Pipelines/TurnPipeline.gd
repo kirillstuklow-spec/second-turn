@@ -14,6 +14,8 @@ const RNG_PURPOSE_INITIATIVE_MODIFIER : StringName = (
 
 var battle_state : BattleState = null
 var event_queue : EventQueue = null
+var status_effect_system : StatusEffectSystem = null
+var impact_executor : ImpactExecutor = null
 
 # ============================================================
 # НАСТРОЙКА PIPELINE
@@ -21,10 +23,14 @@ var event_queue : EventQueue = null
 
 func configure(
 	new_battle_state : BattleState,
-	new_event_queue : EventQueue
+	new_event_queue : EventQueue,
+	new_status_effect_system : StatusEffectSystem = null,
+	new_impact_executor : ImpactExecutor = null
 ) -> void:
 	battle_state = new_battle_state
 	event_queue = new_event_queue
+	status_effect_system = new_status_effect_system
+	impact_executor = new_impact_executor
 
 	print("TurnPipeline configured")
 
@@ -62,13 +68,37 @@ func end_current_activation() -> void:
 		print("TurnPipeline: battle is over, cannot end activation")
 		return
 
-	if battle_state.active_unit != null:
-		print("TurnPipeline: activation ended for ", battle_state.active_unit.data.unit_name)
+	var ending_unit := battle_state.active_unit
+
+	if ending_unit != null:
+		print("TurnPipeline: activation ended for ", ending_unit.data.unit_name)
+
+		if impact_executor != null:
+			var event_result := impact_executor.process_unit_event(
+				CombatEvent.Kind.ACTIVATION_ENDED,
+				ending_unit,
+				battle_state
+			)
+
+			if not event_result.is_successful():
+				push_error(
+					"TurnPipeline: activation-end reactions failed: "
+					+ event_result.get_summary()
+				)
+
+		if status_effect_system != null:
+			status_effect_system.finish_activation(
+				ending_unit,
+				battle_state.turn_state.activation_serial
+			)
 
 		_push_event({
 			"type": "ActivationEnded",
-			"unit_name": battle_state.active_unit.data.unit_name
+			"unit_name": ending_unit.data.unit_name
 		})
+
+	if battle_state.check_victory_condition():
+		return
 
 	_advance_to_next_living_unit()
 
@@ -269,6 +299,7 @@ func _activate_unit(
 	)
 
 	turn_state.phase = TurnState.Phase.ACTIVATION
+	turn_state.activation_serial += 1
 
 	battle_state.set_active_unit(unit)
 	battle_state.clear_pending_ability()
@@ -347,6 +378,9 @@ func _finish_runtime_round(round_number : int) -> void:
 	for unit in battle_state.units:
 		if unit != null:
 			unit.finish_round(round_number)
+
+	if status_effect_system != null:
+		status_effect_system.finish_round(battle_state.units)
 	
 # ============================================================
 # ОТЛАДКА ОЧЕРЕДИ
