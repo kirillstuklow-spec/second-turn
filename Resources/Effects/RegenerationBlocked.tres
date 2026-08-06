@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EffectData" format=3 uid="uid://djyuojt1nhclf"]
+
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_effect"]
+[ext_resource type="Script" uid="uid://db5ogtmoaxk10" path="res://Resources/Effects/EffectDurationData.gd" id="2_duration"]
+[ext_resource type="Script" uid="uid://b1a27jrcgriw8" path="res://Resources/Effects/PassiveRuleData.gd" id="3_rule"]
+[ext_resource type="Script" uid="uid://q35jwepphd5d" path="res://Resources/Effects/EffectTriggerData.gd" id="4_guf10"]
+
+[sub_resource type="Resource" id="Resource_duration"]
+script = ExtResource("2_duration")
+duration_unit = 1
+amount = 2
+
+[sub_resource type="Resource" id="Resource_block_regeneration"]
+script = ExtResource("3_rule")
+
+[resource]
+script = ExtResource("1_effect")
+effect_id = "status.regeneration_blocked"
+effect_name = "Запрет регенерации"
+description = "Блокирует входящее лечение вида REGENERATION, не затрагивая DIRECT."
+duration = SubResource("Resource_duration")
+passive_rules = Array[ExtResource("3_rule")]([SubResource("Resource_block_regeneration")])
