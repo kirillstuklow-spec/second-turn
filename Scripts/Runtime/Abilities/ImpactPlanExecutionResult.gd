@@ -16,6 +16,8 @@ var plan : ImpactPlan = null
 
 var impact_results : Array[ImpactResult] = []
 
+var reaction_execution_results : Array[ImpactPlanExecutionResult] = []
+
 var issues : PackedStringArray = PackedStringArray()
 
 
@@ -45,3 +47,16 @@ func get_summary() -> String:
 		return "План воздействий не исполнен."
 
 	return "\n".join(issues)
+
+
+func get_all_impact_results() -> Array[ImpactResult]:
+	var all_results : Array[ImpactResult] = []
+	all_results.append_array(impact_results)
+
+	for reaction_result in reaction_execution_results:
+		if reaction_result != null:
+			all_results.append_array(
+				reaction_result.get_all_impact_results()
+			)
+
+	return all_results
