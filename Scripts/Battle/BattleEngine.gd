@@ -96,6 +96,18 @@ var targeting_service := TargetingService.new()
 
 var ability_impact_plan_builder := AbilityImpactPlanBuilder.new()
 
+var interaction_resolver := InteractionResolver.new()
+
+var status_effect_system := StatusEffectSystem.new()
+
+var combat_event_log := CombatEventLog.new()
+
+var reaction_queue := ReactionQueue.new()
+
+var reaction_system := ReactionSystem.new()
+
+var impact_condition_evaluator := ImpactConditionEvaluator.new()
+
 var impact_executor := ImpactExecutor.new()
 
 var _is_initialized: bool = false
@@ -160,6 +172,21 @@ func _configure_pipelines() -> void:
 		ability_algorithm_registry
 	)
 
+	reaction_system.configure(
+		reaction_queue,
+		ability_impact_plan_builder
+	)
+
+	impact_executor.configure(
+		interaction_resolver,
+		status_effect_system,
+		combat_event_log,
+		reaction_queue,
+		reaction_system,
+		impact_condition_evaluator,
+		ability_impact_plan_builder
+	)
+
 	ability_pipeline.configure(
 		battle_state,
 		ability_availability_service,
@@ -176,7 +203,9 @@ func _configure_pipelines() -> void:
 
 	turn_pipeline.configure(
 		battle_state,
-		event_queue
+		event_queue,
+		status_effect_system,
+		impact_executor
 	)
 
 	pipeline_runner.configure(
@@ -409,6 +438,10 @@ func _validate_ability_schema(
 # ============================================================
 
 func _create_battle_state() -> void:
+	status_effect_system.clear_runtime_sequence()
+	combat_event_log.clear()
+	reaction_queue.clear()
+
 	battle_state = BattleState.new()
 	battle_state.configure_battle_rng(battle_seed)
 	battle_state.generate_battlefield(
