@@ -6,7 +6,8 @@ class_name Impact
 enum Operation {
 	DAMAGE,
 	HEAL,
-	SUMMON
+	SUMMON,
+	APPLY_EFFECT
 }
 
 
@@ -15,13 +16,22 @@ enum InteractionType {
 	RANGED,
 	MAGIC,
 	HEALING,
-	SUMMON
+	SUMMON,
+	EFFECT
+}
+
+
+enum HealingKind {
+	DIRECT,
+	REGENERATION
 }
 
 
 var impact_id : StringName = &""
 
 var execution_id : StringName = &""
+
+var root_execution_id : StringName = &""
 
 var parent_impact_id : StringName = &""
 
@@ -30,6 +40,8 @@ var order_index : int = -1
 var source_object : Variant = null
 
 var source_unit : UnitRuntime = null
+
+var source_ability_data : UnitAbilityData = null
 
 var target_unit : UnitRuntime = null
 
@@ -44,6 +56,16 @@ var source_type : StringName = &""
 var magnitude : int = 0
 
 var armor_penetration : int = 0
+
+var healing_kind : HealingKind = HealingKind.DIRECT
+
+var effect_data : EffectData = null
+
+var transition_condition : ImpactConditionData = null
+
+var origin_effect_runtime_id : StringName = &""
+
+var reaction_depth : int = 0
 
 var metadata : Dictionary = {}
 
@@ -63,6 +85,7 @@ static func create(
 	var impact := Impact.new()
 	impact.impact_id = new_impact_id
 	impact.execution_id = new_execution_id
+	impact.root_execution_id = new_execution_id
 	impact.source_object = new_source_unit
 	impact.source_unit = new_source_unit
 	impact.target_unit = new_target_unit
@@ -115,5 +138,21 @@ static func get_interaction_type_id(
 
 		InteractionType.SUMMON:
 			return &"summon"
+
+		InteractionType.EFFECT:
+			return &"effect"
+
+	return &""
+
+
+static func get_healing_kind_id(
+	value : HealingKind
+) -> StringName:
+	match value:
+		HealingKind.DIRECT:
+			return &"direct"
+
+		HealingKind.REGENERATION:
+			return &"regeneration"
 
 	return &""
