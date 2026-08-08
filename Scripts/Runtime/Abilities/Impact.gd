@@ -61,6 +61,8 @@ var healing_kind : HealingKind = HealingKind.DIRECT
 
 var effect_data : EffectData = null
 
+var summon_unit_data : UnitData = null
+
 var transition_condition : ImpactConditionData = null
 
 var origin_effect_runtime_id : StringName = &""

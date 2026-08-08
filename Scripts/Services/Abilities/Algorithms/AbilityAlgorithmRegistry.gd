@@ -29,6 +29,9 @@ const TARGET_RULE_SINGLE_ADJACENT_ENEMY : StringName = (
 )
 const TARGET_RULE_AREA_AROUND_UNIT : StringName = &"area_around_unit"
 const TARGET_RULE_AREA_AROUND_CELL : StringName = &"area_around_cell"
+const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL : StringName = (
+	&"single_empty_deployment_cell"
+)
 
 
 var _definitions : Dictionary = {}
@@ -333,7 +336,7 @@ func _build_execute_impact_plan_definition() -> AbilityAlgorithmDefinition:
 		TARGET_RULE_SINGLE_ADJACENT_ENEMY,
 		TARGET_RULE_AREA_AROUND_UNIT,
 		TARGET_RULE_AREA_AROUND_CELL,
-		&"single_empty_deployment_cell"
+		TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
 	]
 	definition.parameter_specs = []
 	return definition

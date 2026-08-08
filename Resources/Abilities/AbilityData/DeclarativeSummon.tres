@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Declarative Summon"
+technical_description = "Executes an active declarative SUMMON ImpactPlan on one empty cell in the source team's deployment zone."
+activation_mode = 0
+action_type = 2
+targeting_form = 2
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_empty_deployment_cell"

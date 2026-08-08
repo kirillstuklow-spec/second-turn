@@ -23,7 +23,7 @@ const TARGET_RULE_AREA_AROUND_CELL : StringName = (
 )
 
 const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL : StringName = (
-	&"single_empty_deployment_cell"
+	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
 )
 
 const PARAM_RADIUS : StringName = AbilityAlgorithmRegistry.PARAM_RADIUS

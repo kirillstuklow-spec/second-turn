@@ -70,6 +70,10 @@ enum MagnitudeRounding {
 
 @export var effect_data : EffectData = null
 
+# Один SUMMON-узел создаёт один новый UnitRuntime из этого неизменяемого
+# профиля. Команда призыва наследуется от источника Impact.
+@export var summon_unit_data : UnitData = null
+
 @export var transition_condition : ImpactConditionData = null
 
 @export var metadata : Dictionary = {}

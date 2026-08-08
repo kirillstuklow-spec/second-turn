@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/SummonPenitent.tres" id="3_summon"]
+
+[resource]
+script = ExtResource("1_unit")
+unit_id = "penitent_handler_test"
+unit_name = "Погонщик"
+description = "Тестовый профиль Погонщика для проверки призыва; числовые характеристики не являются балансными."
+faction = "white_brotherhood"
+unit_class = "support"
+initiative = 35
+max_hp = 10
+armor = 0
+movement = 2
+keywords = Array[String](["white_brotherhood", "human", "summoner"])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_summon")])

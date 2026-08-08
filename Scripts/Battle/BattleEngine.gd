@@ -20,6 +20,10 @@ signal turn_state_refresh_requested(
 
 const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
+const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL: String = (
+	"single_empty_deployment_cell"
+)
+
 
 # ============================================================
 # ТЕСТОВАЯ КОНФИГУРАЦИЯ БОЯ
@@ -963,7 +967,10 @@ func _handle_ability_click(
 		target_rule_id
 	)
 
-	if target_rule_id == TARGET_RULE_AREA_AROUND_CELL:
+	if target_rule_id in [
+		TARGET_RULE_AREA_AROUND_CELL,
+		TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
+	]:
 		var area_result := _dispatch_use_ability(
 			cell,
 			target_unit,

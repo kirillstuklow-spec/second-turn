@@ -52,6 +52,11 @@ func record_impact_result(
 			else:
 				event_kind = CombatEvent.Kind.EFFECT_APPLIED
 
+		Impact.Operation.SUMMON:
+			if impact_result.summoned_unit == null:
+				return null
+			event_kind = CombatEvent.Kind.UNIT_SUMMONED
+
 		_:
 			return null
 
@@ -66,8 +71,12 @@ func record_impact_result(
 	event.source_unit = impact.source_unit
 	event.source_ability_data = impact.source_ability_data
 	event.target_unit = impact.target_unit
+
+	if impact.operation == Impact.Operation.SUMMON:
+		event.target_unit = impact_result.summoned_unit
+
 	_capture_unit_cell(event, impact.source_unit, true)
-	_capture_unit_cell(event, impact.target_unit, false)
+	_capture_unit_cell(event, event.target_unit, false)
 	event.applied_amount = impact_result.magnitude_applied
 	event.source_type = impact.source_type
 	event.interaction_type = impact.interaction_type

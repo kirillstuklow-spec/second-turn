@@ -15,7 +15,7 @@
 [ext_resource type="Script" uid="uid://nc36c4k408o4" path="res://Scripts/Pipelines/TurnPipeline.gd" id="12_84a6n"]
 [ext_resource type="Script" path="res://Scripts/Pipelines/DecisionPipeline.gd" id="13_decision"]
 [ext_resource type="PackedScene" uid="uid://b6ivyyflbw7jm" path="res://Scense/UI/battle_hud.tscn" id="14_u4a4q"]
-[ext_resource type="Resource" path="res://Resources/Unit/PenitentData.tres" id="15_penitent"]
+[ext_resource type="Resource" path="res://Resources/Unit/PenitentHandlerData.tres" id="15_handler"]
 [ext_resource type="Script" uid="uid://cidabr5ydm5hw" path="res://Scripts/UI/BattleHUD..gd" id="16_mwncx"]
 
 [node name="BattleScene" type="Node2D" unique_id=1100306930]
@@ -24,8 +24,8 @@ script = ExtResource("1_moh7n")
 [node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
 script = ExtResource("1_rq7d2")
 arena_data = ExtResource("5_test_arena")
-player_1_units = Array[ExtResource("2_unit_data")]([ExtResource("3_white_brother")])
-player_2_units = Array[ExtResource("2_unit_data")]([ExtResource("15_penitent")])
+player_1_units = Array[ExtResource("2_unit_data")]([ExtResource("15_handler")])
+player_2_units = Array[ExtResource("2_unit_data")]([ExtResource("3_white_brother")])
 
 [node name="BattleInitializer" type="Node" parent="BattleEngine" unique_id=1595228986]
 script = ExtResource("6_no0xc")

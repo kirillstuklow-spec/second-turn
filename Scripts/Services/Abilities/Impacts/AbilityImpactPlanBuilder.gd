@@ -326,6 +326,7 @@ func _append_context_nodes(
 		))
 		impact.healing_kind = node.healing_kind
 		impact.effect_data = node.effect_data
+		impact.summon_unit_data = node.summon_unit_data
 		impact.transition_condition = node.transition_condition
 		impact.order_index = order_offset + node_index
 		impact.metadata = node.metadata.duplicate(true)

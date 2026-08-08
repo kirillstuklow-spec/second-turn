@@ -30,6 +30,18 @@ var death_origin_y : int = -1
 
 
 # ============================================================
+# ПРОИСХОЖДЕНИЕ ПРИЗВАННОГО ЭКЗЕМПЛЯРА
+# ============================================================
+
+# Эти поля относятся к конкретному runtime-экземпляру. Тот же UnitData можно
+# поставить в стартовый состав, и тогда он не считается призванным.
+var summoned_by_unit : UnitRuntime = null
+var summon_source_ability_data : UnitAbilityData = null
+var summon_execution_id : StringName = &""
+var summoned_round_number : int = 0
+
+
+# ============================================================
 # СПОСОБНОСТИ ЭТОГО ЭКЗЕМПЛЯРА ЮНИТА
 # ============================================================
 
@@ -85,12 +97,36 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 		DeathState.ALIVE if is_alive else DeathState.DEATH_PENDING
 	)
 	_clear_death_origin()
+	_clear_summon_origin()
 
 	action_points_remaining = 0
 	movement_points_remaining = 0
 	
 	initiative_modifier_this_round = 0
 	initiative_roll_this_round = data.initiative
+
+
+func mark_summoned(
+	summoner : UnitRuntime,
+	source_ability_data : UnitAbilityData,
+	execution_id : StringName,
+	round_number : int
+) -> void:
+	summoned_by_unit = summoner
+	summon_source_ability_data = source_ability_data
+	summon_execution_id = execution_id
+	summoned_round_number = round_number
+
+
+func was_summoned_in_battle() -> bool:
+	return summoned_by_unit != null and summon_execution_id != &""
+
+
+func _clear_summon_origin() -> void:
+	summoned_by_unit = null
+	summon_source_ability_data = null
+	summon_execution_id = &""
+	summoned_round_number = 0
 
 
 func _initialize_ability_runtimes() -> void:

@@ -33,6 +33,16 @@ var death_origin_x : int = -1
 
 var death_origin_y : int = -1
 
+var was_summoned : bool = false
+
+var summoned_by_unit : UnitRuntime = null
+
+var summon_source_ability_data : UnitAbilityData = null
+
+var summon_execution_id : StringName = &""
+
+var summoned_round_number : int = 0
+
 var active_defenses : Array[String] = []
 
 var active_immunities : Array[String] = []
@@ -57,6 +67,13 @@ static func capture(
 	snapshot.death_origin_cell = runtime_unit.death_origin_cell
 	snapshot.death_origin_x = runtime_unit.death_origin_x
 	snapshot.death_origin_y = runtime_unit.death_origin_y
+	snapshot.was_summoned = runtime_unit.was_summoned_in_battle()
+	snapshot.summoned_by_unit = runtime_unit.summoned_by_unit
+	snapshot.summon_source_ability_data = (
+		runtime_unit.summon_source_ability_data
+	)
+	snapshot.summon_execution_id = runtime_unit.summon_execution_id
+	snapshot.summoned_round_number = runtime_unit.summoned_round_number
 	snapshot.active_defenses = (
 		runtime_unit.active_defenses.duplicate()
 	)

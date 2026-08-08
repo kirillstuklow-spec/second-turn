@@ -370,18 +370,19 @@ func _resolve_impact(
 			ImpactResult.Outcome.INVALID_SOURCE
 		)
 
+	if impact.operation == Impact.Operation.SUMMON:
+		return _resolve_summon_impact(
+			impact,
+			snapshot,
+			battle_state
+		)
+
 	var target_snapshot := snapshot.get_unit_snapshot(impact.target_unit)
 
 	if target_snapshot == null or not target_snapshot.is_alive:
 		return ImpactResult.create(
 			impact,
 			ImpactResult.Outcome.INVALID_TARGET
-		)
-
-	if impact.operation == Impact.Operation.SUMMON:
-		return ImpactResult.create(
-			impact,
-			ImpactResult.Outcome.UNSUPPORTED_OPERATION
 		)
 
 	if impact.operation == Impact.Operation.HEAL:
@@ -443,6 +444,49 @@ func _resolve_impact(
 	return result
 
 
+func _resolve_summon_impact(
+	impact : Impact,
+	snapshot : BattleStateSnapshot,
+	battle_state : BattleState
+) -> ImpactResult:
+	var result := ImpactResult.create(
+		impact,
+		ImpactResult.Outcome.APPLIED
+	)
+	result.magnitude_requested = 1
+
+	if impact.summon_unit_data == null:
+		result.outcome = ImpactResult.Outcome.SUMMON_FAILED
+		result.message = "Summon UnitData is missing."
+		return result
+
+	var cell_snapshot := snapshot.get_cell_snapshot(impact.target_cell)
+
+	if cell_snapshot == null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Summon target cell is absent from snapshot."
+		return result
+
+	if cell_snapshot.occupying_unit != null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Summon target cell was occupied at commit."
+		return result
+
+	if (
+		battle_state == null
+		or impact.target_cell == null
+		or impact.target_cell.is_occupied()
+	):
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Summon target cell is no longer free."
+		return result
+
+	# Один Impact всегда создаёт один runtime-экземпляр. Фактическая ссылка
+	# появится в _apply_summon_result().
+	result.magnitude_applied = 1
+	return result
+
+
 func _apply_interaction_resolution(
 	impact_result : ImpactResult,
 	resolution : InteractionResolution
@@ -488,6 +532,11 @@ func _apply_batch(
 			continue
 
 		var impact := result.impact
+
+		if impact.operation == Impact.Operation.SUMMON:
+			_apply_summon_result(result, battle_state)
+			continue
+
 		var target := impact.target_unit
 
 		if target == null:
@@ -553,6 +602,50 @@ func _apply_batch(
 			reaction_system.collect_reactions(event, battle_state)
 
 		_print_result(result)
+
+
+func _apply_summon_result(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if result == null or result.impact == null:
+		return
+
+	if not result.was_applied():
+		_print_result(result)
+		return
+
+	var impact := result.impact
+	result.magnitude_applied = 0
+	var summoned_unit := battle_state.summon_unit(
+		impact.summon_unit_data,
+		impact.source_unit,
+		impact.source_ability_data,
+		impact.execution_id,
+		impact.target_cell
+	)
+
+	if summoned_unit == null:
+		result.outcome = ImpactResult.Outcome.SUMMON_FAILED
+		result.message = "BattleState rejected the summon."
+		_print_result(result)
+		return
+
+	result.summoned_unit = summoned_unit
+	result.magnitude_applied = 1
+
+	var event : CombatEvent = null
+
+	if combat_event_log != null:
+		event = combat_event_log.record_impact_result(
+			result,
+			battle_state
+		)
+
+	if event != null and reaction_system != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+	_print_result(result)
 
 
 func _stabilize_reactions_and_deaths(
@@ -773,21 +866,28 @@ func _validate_impact(
 			% impact.impact_id
 		)
 
-	if impact.target_unit == null:
-		issues.append(
-			"ImpactExecutor: impact '%s' has no target unit"
-			% impact.impact_id
-		)
-	elif snapshot != null and not snapshot.has_unit(impact.target_unit):
-		issues.append(
-			"ImpactExecutor: target of impact '%s' is absent from snapshot"
-			% impact.impact_id
-		)
-	elif battle_state != null and not battle_state.units.has(impact.target_unit):
-		issues.append(
-			"ImpactExecutor: target of impact '%s' is absent from battle"
-			% impact.impact_id
-		)
+	if impact.operation == Impact.Operation.SUMMON:
+		if impact.target_unit != null:
+			issues.append(
+				"ImpactExecutor: summon impact '%s' must target a cell"
+				% impact.impact_id
+			)
+	else:
+		if impact.target_unit == null:
+			issues.append(
+				"ImpactExecutor: impact '%s' has no target unit"
+				% impact.impact_id
+			)
+		elif snapshot != null and not snapshot.has_unit(impact.target_unit):
+			issues.append(
+				"ImpactExecutor: target of impact '%s' is absent from snapshot"
+				% impact.impact_id
+			)
+		elif battle_state != null and not battle_state.units.has(impact.target_unit):
+			issues.append(
+				"ImpactExecutor: target of impact '%s' is absent from battle"
+				% impact.impact_id
+			)
 
 	if (
 		impact.target_cell != null
@@ -807,6 +907,46 @@ func _validate_impact(
 			"ImpactExecutor: target cell of impact '%s' is absent from battle"
 			% impact.impact_id
 		)
+
+	if impact.operation == Impact.Operation.SUMMON:
+		if impact.target_cell == null:
+			issues.append(
+				"ImpactExecutor: summon impact '%s' has no target cell"
+				% impact.impact_id
+			)
+		else:
+			var summon_cell_snapshot := (
+				snapshot.get_cell_snapshot(impact.target_cell)
+				if snapshot != null
+				else null
+			)
+
+			if (
+				summon_cell_snapshot != null
+				and summon_cell_snapshot.occupying_unit != null
+			):
+				issues.append(
+					"ImpactExecutor: summon target cell of impact '%s' is occupied"
+					% impact.impact_id
+				)
+
+		if impact.summon_unit_data == null:
+			issues.append(
+				"ImpactExecutor: summon impact '%s' has no UnitData"
+				% impact.impact_id
+			)
+
+		if impact.source_ability_data == null:
+			issues.append(
+				"ImpactExecutor: summon impact '%s' has no source ability"
+				% impact.impact_id
+			)
+
+		if impact.magnitude != 1:
+			issues.append(
+				"ImpactExecutor: summon impact '%s' must create exactly one unit"
+				% impact.impact_id
+			)
 
 	if impact.operation not in [
 		Impact.Operation.DAMAGE,
@@ -914,9 +1054,6 @@ func _validate_impact(
 			"ImpactExecutor: EFFECT impact '%s' must not use armor penetration"
 			% impact.impact_id
 		)
-
-	if impact.operation == Impact.Operation.SUMMON:
-		issues.append("ImpactExecutor: SUMMON is not implemented in this stage")
 
 	if plan.topology == ImpactPlan.Topology.QUEUE:
 		if impact.parent_impact_id != &"":

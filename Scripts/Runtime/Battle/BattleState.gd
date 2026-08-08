@@ -303,6 +303,57 @@ func spawn_unit(unit_data : UnitData, team_id : int, x : int, y : int) -> UnitRu
 	return unit
 
 
+func summon_unit(
+	unit_data : UnitData,
+	summoner : UnitRuntime,
+	source_ability_data : UnitAbilityData,
+	execution_id : StringName,
+	target_cell : CellRuntime
+) -> UnitRuntime:
+	if is_battle_over:
+		push_error("BattleState: cannot summon after battle end")
+		return null
+
+	if unit_data == null:
+		push_error("BattleState: cannot summon unit without UnitData")
+		return null
+
+	if source_ability_data == null or execution_id == &"":
+		push_error("BattleState: summon origin is incomplete")
+		return null
+
+	if summoner == null or not units.has(summoner) or not summoner.is_alive:
+		push_error("BattleState: cannot summon without a living battle source")
+		return null
+
+	if target_cell == null or not cells.has(target_cell):
+		push_error("BattleState: summon target cell is absent from battle")
+		return null
+
+	if target_cell.is_occupied():
+		push_error("BattleState: summon target cell is occupied")
+		return null
+
+	var summoned_unit := spawn_unit(
+		unit_data,
+		summoner.team_id,
+		target_cell.x,
+		target_cell.y
+	)
+
+	if summoned_unit == null:
+		return null
+
+	summoned_unit.mark_summoned(
+		summoner,
+		source_ability_data,
+		execution_id,
+		round_number
+	)
+
+	return summoned_unit
+
+
 # ============================================================
 # ПОИСК КЛЕТОК И ЮНИТОВ
 # ============================================================

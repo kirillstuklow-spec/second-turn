@@ -136,6 +136,18 @@ static func _validate_node(
 	):
 		issues.append(prefix + ": призыв должен иметь тип SUMMON.")
 
+	if node.operation == Impact.Operation.SUMMON:
+		if node.summon_unit_data == null:
+			issues.append(prefix + ": UnitData призываемого юнита не назначен.")
+
+		if node.magnitude != 1:
+			issues.append(
+				prefix
+				+ ": один SUMMON-узел должен призывать ровно одного юнита."
+			)
+	elif node.summon_unit_data != null:
+		issues.append(prefix + ": summon_unit_data допустим только для SUMMON.")
+
 	if (
 		node.armor_penetration < InteractionResolver.MIN_ARMOR_PENETRATION
 		or node.armor_penetration > InteractionResolver.MAX_ARMOR_PENETRATION

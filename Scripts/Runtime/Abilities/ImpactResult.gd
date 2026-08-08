@@ -16,7 +16,8 @@ enum Outcome {
 	INVALID_INTERACTION,
 	SKIPPED_CONDITION,
 	BLOCKED_PASSIVE_RULE,
-	INVALID_EFFECT
+	INVALID_EFFECT,
+	SUMMON_FAILED
 }
 
 
@@ -27,6 +28,8 @@ var interaction_resolution : InteractionResolution = null
 var effect_application_result : EffectApplicationResult = null
 
 var blocking_effect_runtime : EffectRuntime = null
+
+var summoned_unit : UnitRuntime = null
 
 var outcome : Outcome = Outcome.INVALID_TARGET
 
@@ -116,5 +119,8 @@ func get_outcome_id() -> StringName:
 
 		Outcome.INVALID_EFFECT:
 			return &"invalid_effect"
+
+		Outcome.SUMMON_FAILED:
+			return &"summon_failed"
 
 	return &"unknown"
