@@ -20,9 +20,15 @@ var reaction_execution_results : Array[ImpactPlanExecutionResult] = []
 
 var issues : PackedStringArray = PackedStringArray()
 
+var pending_decision : PendingDecision = null
+
 
 func is_successful() -> bool:
 	return status == Status.EXECUTED
+
+
+func is_waiting_for_decision() -> bool:
+	return is_successful() and pending_decision != null
 
 
 func get_result(

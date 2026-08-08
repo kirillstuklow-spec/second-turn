@@ -91,6 +91,13 @@ var pending_ability : UnitAbilityRuntime = null
 
 
 # ============================================================
+# ОЖИДАЮЩЕЕ РЕШЕНИЕ ИГРОКА
+# ============================================================
+
+var pending_decision : PendingDecision = null
+
+
+# ============================================================
 # ОЧИСТКА СОСТОЯНИЯ
 # ============================================================
 
@@ -108,6 +115,7 @@ func clear() -> void:
 	turn_state.clear()
 
 	pending_ability = null
+	pending_decision = null
 
 	is_battle_over = false
 	winner_team_id = 0
@@ -164,6 +172,24 @@ func set_pending_ability(
 
 func clear_pending_ability() -> void:
 	pending_ability = null
+
+
+func set_pending_decision(decision : PendingDecision) -> bool:
+	if decision == null or decision.decision_id == &"":
+		push_error("BattleState: cannot set invalid pending_decision")
+		return false
+
+	if pending_decision != null:
+		push_error("BattleState: another decision is already pending")
+		return false
+
+	pending_decision = decision
+	clear_pending_ability()
+	return true
+
+
+func clear_pending_decision() -> void:
+	pending_decision = null
 
 
 # ============================================================
@@ -377,6 +403,12 @@ func cleanup_dead_units() -> void:
 		if unit.is_alive:
 			continue
 
+		# Совместимый путь для старых сцен и тестов, которые напрямую вызывают
+		# take_damage() вне ImpactExecutor. Полный боевой путь подтверждает смерть
+		# через DeathResolver и публикует DEATH_CONFIRMED.
+		if unit.is_death_pending():
+			unit.confirm_death()
+
 		if unit.cell != null:
 			print("BattleState: removing dead unit from cell: ", unit.data.unit_name)
 			unit.cell.remove_unit()
@@ -389,6 +421,12 @@ func cleanup_dead_units() -> void:
 func check_victory_condition() -> bool:
 	if is_battle_over:
 		return true
+
+	# Результат боя нельзя фиксировать, пока обязательная реакция ждёт
+	# решения игрока. После продолжения цепочки проверка будет вызвана снова.
+	if pending_decision != null:
+		print("Victory check deferred: pending decision")
+		return false
 
 	var team_1_alive : int = count_alive_units_for_team(1)
 	var team_2_alive : int = count_alive_units_for_team(2)
@@ -441,6 +479,7 @@ func _finish_battle(
 	turn_state.phase = TurnState.Phase.BATTLE_END
 
 	clear_pending_ability()
+	clear_pending_decision()
 
 	print("")
 	print("========================================")

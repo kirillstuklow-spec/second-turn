@@ -3,20 +3,19 @@
 [ext_resource type="Script" uid="uid://drwnkrknlpxa2" path="res://Scripts/Battle/BattleScene.gd" id="1_moh7n"]
 [ext_resource type="Script" uid="uid://bg0uh48u5s1sb" path="res://Scripts/Battle/BattleEngine.gd" id="1_rq7d2"]
 [ext_resource type="Script" uid="uid://lvmndv7mqmfn" path="res://Scripts/Pipelines/AbilityPipeline.gd" id="1_yn5lb"]
-[ext_resource type="Resource" uid="uid://7y3wfr34h16v" path="res://Resources/Unit/ArcherData.tres" id="2_7jnwi"]
-[ext_resource type="Resource" uid="uid://bvhppfypo4fdi" path="res://Resources/Unit/DefenseDummyData.tres" id="3_no0xc"]
-[ext_resource type="Resource" uid="uid://dai6yem20udk" path="res://Resources/Unit/ArmorDummyData.tres" id="4_4pltt"]
-[ext_resource type="Resource" uid="uid://do1a2ftpujhtw" path="res://Resources/Unit/WhiteProphet.tres" id="4_mwncx"]
+[ext_resource type="Script" uid="uid://s6md7hs2lnl6" path="res://Resources/Unit/UnitData.gd" id="2_unit_data"]
+[ext_resource type="Resource" path="res://Resources/Unit/WhiteBrotherData.tres" id="3_white_brother"]
 [ext_resource type="Script" uid="uid://bsjm7wxqxgiq6" path="res://Scripts/Battle/BattlefieldView.gd" id="4_xlw65"]
-[ext_resource type="Resource" uid="uid://cvi6jxknr8wh2" path="res://Resources/Abilities/UnitAbilityData/LongbowShot.tres" id="5_r8nk0"]
-[ext_resource type="Resource" uid="uid://bcucbjlpvfags" path="res://Resources/Arenas/Arenas/TestArena.tres" id="5_test_arena"]
+[ext_resource type="Resource" path="res://Resources/Arenas/Arenas/TestArena.tres" id="5_test_arena"]
 [ext_resource type="Script" uid="uid://bhwkcaokg5vn2" path="res://Scripts/Battle/BattleInitializer.gd" id="6_no0xc"]
 [ext_resource type="Script" uid="uid://dxtokkaaqm5ox" path="res://Scripts/Commands/CommandDispatcher.gd" id="7_4pltt"]
 [ext_resource type="Script" uid="uid://cyphkoe8h05u4" path="res://Scripts/Pipelines/PipelineRunner.gd" id="8_r8nk0"]
 [ext_resource type="Script" uid="uid://dj7kw67vp82ru" path="res://Scripts/Commands/EventQueue.gd" id="9_iuo32"]
 [ext_resource type="Script" uid="uid://boh2yj3rxo48y" path="res://Scripts/Pipelines/MovementPipeline.gd" id="11_tmwdy"]
 [ext_resource type="Script" uid="uid://nc36c4k408o4" path="res://Scripts/Pipelines/TurnPipeline.gd" id="12_84a6n"]
+[ext_resource type="Script" path="res://Scripts/Pipelines/DecisionPipeline.gd" id="13_decision"]
 [ext_resource type="PackedScene" uid="uid://b6ivyyflbw7jm" path="res://Scense/UI/battle_hud.tscn" id="14_u4a4q"]
+[ext_resource type="Resource" path="res://Resources/Unit/PenitentData.tres" id="15_penitent"]
 [ext_resource type="Script" uid="uid://cidabr5ydm5hw" path="res://Scripts/UI/BattleHUD..gd" id="16_mwncx"]
 
 [node name="BattleScene" type="Node2D" unique_id=1100306930]
@@ -25,11 +24,8 @@ script = ExtResource("1_moh7n")
 [node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
 script = ExtResource("1_rq7d2")
 arena_data = ExtResource("5_test_arena")
-archer_data = ExtResource("2_7jnwi")
-second_player_unit_data = ExtResource("4_mwncx")
-defense_dummy_data = ExtResource("3_no0xc")
-armor_dummy_data = ExtResource("4_4pltt")
-longbow_shot = ExtResource("5_r8nk0")
+player_1_units = Array[ExtResource("2_unit_data")]([ExtResource("3_white_brother")])
+player_2_units = Array[ExtResource("2_unit_data")]([ExtResource("15_penitent")])
 
 [node name="BattleInitializer" type="Node" parent="BattleEngine" unique_id=1595228986]
 script = ExtResource("6_no0xc")
@@ -53,6 +49,9 @@ script = ExtResource("11_tmwdy")
 
 [node name="TurnPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=114056271]
 script = ExtResource("12_84a6n")
+
+[node name="DecisionPipeline" type="Node" parent="BattleEngine/Pipelines"]
+script = ExtResource("13_decision")
 
 [node name="EffectPipeline" type="Node" parent="BattleEngine/Pipelines" unique_id=239925756]
 

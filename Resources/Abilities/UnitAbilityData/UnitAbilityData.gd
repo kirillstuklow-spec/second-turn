@@ -22,6 +22,11 @@ class_name UnitAbilityData
 # Ability Builder сможет редактировать дерево Impact без GDScript.
 @export var impact_plan_data : ImpactPlanData = null
 
+# Триггеры автоматического применения этой способности. Они используются
+# только при AbilityData.activation_mode == TRIGGERED. Сам ответ хранится в
+# impact_plan_data этой же способности, а не в данных эффекта.
+@export var triggers : Array[AbilityTriggerData] = []
+
 # Индивидуальные эффекты
 
 @export var effects : Array[EffectData] = []

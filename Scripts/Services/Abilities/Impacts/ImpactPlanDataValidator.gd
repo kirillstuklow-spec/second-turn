@@ -97,8 +97,7 @@ static func _validate_node(
 		issues.append(prefix + ": неизвестный тип взаимодействия.")
 
 	if node.operation in [Impact.Operation.DAMAGE, Impact.Operation.HEAL]:
-		if node.magnitude <= 0:
-			issues.append(prefix + ": величина должна быть больше нуля.")
+		_validate_magnitude(node, prefix, issues)
 
 	if node.operation == Impact.Operation.DAMAGE:
 		if node.source_type.strip_edges().is_empty():
@@ -148,6 +147,34 @@ static func _validate_node(
 		and node.armor_penetration != 0
 	):
 		issues.append(prefix + ": EFFECT не использует бронебойность.")
+
+
+static func _validate_magnitude(
+	node : ImpactNodeData,
+	prefix : String,
+	issues : PackedStringArray
+) -> void:
+	match node.magnitude_source:
+		ImpactNodeData.MagnitudeSource.FIXED:
+			if node.magnitude <= 0:
+				issues.append(
+					prefix + ": фиксированная величина должна быть больше нуля."
+				)
+
+		ImpactNodeData.MagnitudeSource.EVENT_APPLIED_AMOUNT:
+			if (
+				node.magnitude_numerator <= 0
+				or node.magnitude_denominator <= 0
+			):
+				issues.append(
+					prefix + ": коэффициент величины должен быть положительным."
+				)
+
+		_:
+			issues.append(prefix + ": неизвестный источник величины.")
+
+	if node.magnitude_rounding not in ImpactNodeData.MagnitudeRounding.values():
+		issues.append(prefix + ": неизвестное правило округления величины.")
 
 
 static func _validate_effect_data(

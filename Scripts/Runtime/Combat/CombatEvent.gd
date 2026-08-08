@@ -8,7 +8,8 @@ enum Kind {
 	HEALING_APPLIED,
 	EFFECT_APPLIED,
 	EFFECT_REFRESHED,
-	ACTIVATION_ENDED
+	ACTIVATION_ENDED,
+	DEATH_CONFIRMED
 }
 
 
@@ -24,7 +25,21 @@ var impact_id : StringName = &""
 
 var source_unit : UnitRuntime = null
 
+var source_ability_data : UnitAbilityData = null
+
 var target_unit : UnitRuntime = null
+
+var source_cell : CellRuntime = null
+
+var source_cell_x : int = -1
+
+var source_cell_y : int = -1
+
+var target_cell : CellRuntime = null
+
+var target_cell_x : int = -1
+
+var target_cell_y : int = -1
 
 var applied_amount : int = 0
 

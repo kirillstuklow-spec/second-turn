@@ -33,8 +33,8 @@ func _run_test() -> void:
 	assert(battle_engine != null)
 	assert(battle_engine.battle_state != null)
 	assert(battlefield_view != null)
-	assert(battle_engine.battle_state.units.size() == 4)
-	assert(battlefield_view._unit_views_by_id.size() == 4)
+	assert(battle_engine.battle_state.units.size() == 2)
+	assert(battlefield_view._unit_views_by_id.size() == 2)
 
 	var test_unit := battle_engine.battle_state.units[0]
 	var test_unit_id := test_unit.get_instance_id()
@@ -48,7 +48,7 @@ func _run_test() -> void:
 
 	var target_cell := battle_engine.battle_state.get_cell_at(
 		1,
-		2
+		1
 	)
 
 	assert(
@@ -67,7 +67,7 @@ func _run_test() -> void:
 	var expected_position := Vector2(
 		1 * BattlefieldView.CELL_SIZE.x
 		+ BattlefieldView.CELL_SIZE.x * 0.5,
-		2 * BattlefieldView.CELL_SIZE.y
+		1 * BattlefieldView.CELL_SIZE.y
 		+ BattlefieldView.CELL_SIZE.y * 0.5
 	)
 

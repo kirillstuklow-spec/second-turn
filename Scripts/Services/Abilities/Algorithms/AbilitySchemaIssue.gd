@@ -28,7 +28,10 @@ enum Code {
 	PARAMETER_BELOW_MINIMUM,
 	PARAMETER_ABOVE_MAXIMUM,
 	IMPACT_PLAN_MISSING,
-	IMPACT_PLAN_INVALID
+	IMPACT_PLAN_INVALID,
+	TRIGGERS_REQUIRED,
+	TRIGGERS_NOT_ALLOWED,
+	TRIGGER_INVALID
 }
 
 
@@ -172,6 +175,19 @@ func get_message() -> String:
 
 		Code.IMPACT_PLAN_INVALID:
 			return "Некорректный ImpactPlanData: %s" % (
+				str(context.get("summary", ""))
+			)
+
+		Code.TRIGGERS_REQUIRED:
+			return "Для автоматической способности не назначен триггер."
+
+		Code.TRIGGERS_NOT_ALLOWED:
+			return (
+				"Триггеры допустимы только для activation_mode=TRIGGERED."
+			)
+
+		Code.TRIGGER_INVALID:
+			return "Некорректный триггер способности: %s" % (
 				str(context.get("summary", ""))
 			)
 

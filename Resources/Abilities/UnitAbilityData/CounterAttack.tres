@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://cdskjvhth88qh"]
+
+[ext_resource type="Resource" path="res://Resources/Abilities/AbilityData/TriggeredMeleeAttack.tres" id="1_ability"]
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="2_b47wu"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Script" uid="uid://pi7ledc03ava" path="res://Resources/Abilities/UnitAbilityData/AbilityTriggerData.gd" id="3_trigger"]
+[ext_resource type="Resource" uid="uid://cq5d2urvkowa5" path="res://Resources/Abilities/ImpactPlans/CounterAttackPlan.tres" id="4_plan"]
+
+[sub_resource type="Resource" id="Resource_counter_attack_trigger"]
+script = ExtResource("3_trigger")
+trigger_id = "counter_attack_on_melee_damage"
+interaction_filter = 1
+accept_reaction_events = false
+
+[resource]
+script = ExtResource("2_unit_ability")
+ability_name = "Контр-удар"
+description = "После фактического получения ближнего урона автоматически атакует его источник на половину потерянного HP с округлением вверх."
+ability = ExtResource("1_ability")
+impact_plan_data = ExtResource("4_plan")
+triggers = Array[ExtResource("3_trigger")]([SubResource("Resource_counter_attack_trigger")])
+action_point_cost = 0

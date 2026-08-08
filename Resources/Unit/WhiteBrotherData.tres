@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/MeleeStrike.tres" id="3_melee"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/CounterAttack.tres" id="4_counter"]
+
+[resource]
+script = ExtResource("1_unit")
+unit_id = "white_brother_test"
+unit_name = "Белый брат"
+description = "Тестовый профиль Белого брата для проверки Контр-удара; числовые характеристики не являются балансными."
+faction = "white_brotherhood"
+unit_class = "melee"
+initiative = 15
+max_hp = 12
+armor = 0
+movement = 2
+keywords = Array[String](["white_brotherhood", "human", "melee"])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_melee")])
+passive_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("4_counter")])

@@ -5,6 +5,7 @@ class_name PipelineRunner
 var ability_pipeline: AbilityPipeline = null
 var movement_pipeline: MovementPipeline = null
 var turn_pipeline: TurnPipeline = null
+var decision_pipeline: DecisionPipeline = null
 var event_queue: EventQueue = null
 
 
@@ -12,12 +13,14 @@ func configure(
 	new_ability_pipeline: AbilityPipeline,
 	new_movement_pipeline: MovementPipeline,
 	new_turn_pipeline: TurnPipeline,
-	new_event_queue: EventQueue
+	new_event_queue: EventQueue,
+	new_decision_pipeline: DecisionPipeline = null
 ) -> void:
 	ability_pipeline = new_ability_pipeline
 	movement_pipeline = new_movement_pipeline
 	turn_pipeline = new_turn_pipeline
 	event_queue = new_event_queue
+	decision_pipeline = new_decision_pipeline
 
 	print("PipelineRunner configured")
 
@@ -51,6 +54,9 @@ func run_command(command: Dictionary) -> Variant:
 
 		"end_turn":
 			_run_end_turn()
+
+		"select_decision_target":
+			command_result = _run_select_decision_target(command)
 
 		_:
 			push_error(
@@ -136,6 +142,33 @@ func _run_end_turn() -> void:
 		return
 
 	turn_pipeline.end_current_activation()
+
+
+func _run_select_decision_target(
+	command : Dictionary
+) -> DecisionResolutionResult:
+	if decision_pipeline == null:
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.FAILED_EXECUTION,
+			"PipelineRunner: decision_pipeline is null"
+		)
+
+	var decision_id := StringName(command.get("decision_id", &""))
+	var target_unit := command.get("target_unit", null) as UnitRuntime
+	var result := decision_pipeline.select_reaction_target(
+		decision_id,
+		target_unit
+	)
+
+	if (
+		result.was_resolved()
+		and turn_pipeline != null
+		and turn_pipeline.battle_state != null
+		and turn_pipeline.battle_state.pending_decision == null
+	):
+		turn_pipeline.resume_after_pending_decision()
+
+	return result
 
 
 func _push_event(event: Dictionary) -> void:

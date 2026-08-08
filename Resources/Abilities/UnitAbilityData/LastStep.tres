@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3]
+
+[ext_resource type="Resource" path="res://Resources/Abilities/AbilityData/TriggeredMeleeAttack.tres" id="1_ability"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/AbilityTriggerData.gd" id="3_trigger"]
+[ext_resource type="Resource" path="res://Resources/Abilities/ImpactPlans/HookStrikePlan.tres" id="4_plan"]
+
+[sub_resource type="Resource" id="Resource_last_step_trigger"]
+script = ExtResource("3_trigger")
+trigger_id = "last_step_on_death_confirmed"
+event_kind = 5
+owner_relation = 1
+event_source_relation = 0
+interaction_filter = 0
+target_selection_policy = 1
+minimum_applied_amount = 0
+accept_reaction_events = true
+require_owner_alive = false
+require_event_source_alive = false
+
+[resource]
+script = ExtResource("2_unit_ability")
+ability_name = "Последний шаг"
+description = "После подтверждённой смерти выберите соседнего с местом гибели врага и бесплатно выполните Удар крюком. Если целей нет, реакция пропускается."
+ability = ExtResource("1_ability")
+impact_plan_data = ExtResource("4_plan")
+triggers = Array[ExtResource("3_trigger")]([SubResource("Resource_last_step_trigger")])
+action_point_cost = 0

@@ -18,6 +18,8 @@ var reaction_queue : ReactionQueue = ReactionQueue.new()
 
 var reaction_system : ReactionSystem = ReactionSystem.new()
 
+var death_resolver : DeathResolver = DeathResolver.new()
+
 var condition_evaluator : ImpactConditionEvaluator = (
 	ImpactConditionEvaluator.new()
 )
@@ -27,6 +29,8 @@ var _reaction_plan_builder : AbilityImpactPlanBuilder = (
 )
 
 var _is_draining_reactions : bool = false
+
+var _suspended_root_result : ImpactPlanExecutionResult = null
 
 
 func _init() -> void:
@@ -43,8 +47,11 @@ func configure(
 	new_reaction_queue : ReactionQueue = null,
 	new_reaction_system : ReactionSystem = null,
 	new_condition_evaluator : ImpactConditionEvaluator = null,
-	new_reaction_plan_builder : AbilityImpactPlanBuilder = null
+	new_reaction_plan_builder : AbilityImpactPlanBuilder = null,
+	new_death_resolver : DeathResolver = null
 ) -> void:
+	_is_draining_reactions = false
+	_suspended_root_result = null
 	interaction_resolver = new_interaction_resolver
 
 	if interaction_resolver == null:
@@ -68,6 +75,9 @@ func configure(
 	if new_reaction_plan_builder != null:
 		_reaction_plan_builder = new_reaction_plan_builder
 
+	if new_death_resolver != null:
+		death_resolver = new_death_resolver
+
 	if status_effect_system == null:
 		status_effect_system = StatusEffectSystem.new()
 
@@ -85,6 +95,9 @@ func configure(
 
 	if _reaction_plan_builder == null:
 		_reaction_plan_builder = AbilityImpactPlanBuilder.new()
+
+	if death_resolver == null:
+		death_resolver = DeathResolver.new()
 
 	reaction_system.configure(
 		reaction_queue,
@@ -160,10 +173,7 @@ func execute(
 	var result := _execute_plan_core(plan, snapshot, battle_state)
 
 	if result.is_successful() and is_outer_execution:
-		_drain_reactions(battle_state, result)
-
-	if battle_state != null and is_outer_execution:
-		battle_state.cleanup_dead_units()
+		_stabilize_reactions_and_deaths(battle_state, result)
 
 	return result
 
@@ -214,8 +224,7 @@ func process_unit_event(
 
 	result.status = ImpactPlanExecutionResult.Status.EXECUTED
 	reaction_system.collect_reactions(event, battle_state)
-	_drain_reactions(battle_state, result)
-	battle_state.cleanup_dead_units()
+	_stabilize_reactions_and_deaths(battle_state, result)
 	return result
 
 
@@ -537,47 +546,182 @@ func _apply_batch(
 				battle_state
 			)
 
+		if event != null and death_resolver != null:
+			death_resolver.observe_combat_event(event)
+
 		if event != null and reaction_system != null:
 			reaction_system.collect_reactions(event, battle_state)
 
 		_print_result(result)
 
 
-func _drain_reactions(
+func _stabilize_reactions_and_deaths(
 	battle_state : BattleState,
 	root_result : ImpactPlanExecutionResult
 ) -> void:
-	if reaction_queue == null or reaction_system == null:
+	if (
+		battle_state == null
+		or root_result == null
+		or reaction_queue == null
+		or reaction_system == null
+		or death_resolver == null
+	):
 		return
 
 	_is_draining_reactions = true
 
-	while reaction_queue.has_pending():
-		var task := reaction_queue.pop_front()
+	while true:
+		while reaction_queue.has_pending():
+			var task := reaction_queue.pop_front()
 
-		if task == null or task.reaction_depth > ReactionSystem.MAX_REACTION_DEPTH:
-			continue
+			if (
+				task == null
+				or task.reaction_depth > ReactionSystem.MAX_REACTION_DEPTH
+			):
+				continue
 
-		var build_result := reaction_system.build_plan(task)
+			if reaction_system.requires_target_decision(task):
+				var decision := reaction_system.create_pending_decision(
+					task,
+					battle_state
+				)
 
-		if not build_result.is_valid or build_result.plan == null:
-			var failed_build := ImpactPlanExecutionResult.new()
-			failed_build.status = (
-				ImpactPlanExecutionResult.Status.VALIDATION_FAILED
+				if decision == null or decision.options.is_empty():
+					print(
+						"Reaction skipped: no valid target for ",
+						task.source_ability_data.ability_name
+					)
+					continue
+
+				if not battle_state.set_pending_decision(decision):
+					var failed_decision := ImpactPlanExecutionResult.new()
+					failed_decision.status = (
+						ImpactPlanExecutionResult.Status.INTERNAL_ERROR
+					)
+					failed_decision.issues.append(
+						"ImpactExecutor: pending decision could not be stored"
+					)
+					root_result.reaction_execution_results.append(
+						failed_decision
+					)
+					continue
+
+				root_result.pending_decision = decision
+				_suspended_root_result = root_result
+				_is_draining_reactions = false
+				return
+
+			_execute_reaction_task(
+				task,
+				battle_state,
+				root_result
 			)
-			failed_build.issues.append(build_result.message)
-			root_result.reaction_execution_results.append(failed_build)
-			continue
 
-		var reaction_snapshot := BattleStateSnapshot.capture(battle_state)
-		var reaction_result := _execute_plan_core(
-			build_result.plan,
-			reaction_snapshot,
-			battle_state
+		var death_events := death_resolver.confirm_pending_deaths(
+			battle_state,
+			combat_event_log
 		)
-		root_result.reaction_execution_results.append(reaction_result)
 
+		if death_events.is_empty():
+			break
+
+		for death_event in death_events:
+			reaction_system.collect_reactions(
+				death_event,
+				battle_state
+			)
+
+	root_result.pending_decision = null
+	_suspended_root_result = null
 	_is_draining_reactions = false
+
+
+func resolve_pending_decision(
+	decision_id : StringName,
+	target_unit : UnitRuntime,
+	battle_state : BattleState
+) -> DecisionResolutionResult:
+	if battle_state == null or battle_state.pending_decision == null:
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.REJECTED_NO_DECISION,
+			"Нет ожидающего решения."
+		)
+
+	var decision := battle_state.pending_decision
+
+	if decision.decision_id != decision_id:
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.REJECTED_ID,
+			"Идентификатор решения не совпадает."
+		)
+
+	if not reaction_system.select_pending_decision_target(
+		decision,
+		target_unit,
+		battle_state
+	):
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.REJECTED_OPTION,
+			"Выбранная цель больше не является допустимой."
+		)
+
+	if _suspended_root_result == null:
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.FAILED_EXECUTION,
+			"Продолжаемая цепочка воздействий не найдена."
+		)
+
+	var root_result := _suspended_root_result
+	var reaction_task := decision.reaction_task
+	battle_state.clear_pending_decision()
+	root_result.pending_decision = null
+
+	if not _execute_reaction_task(
+		reaction_task,
+		battle_state,
+		root_result
+	):
+		_suspended_root_result = null
+		return DecisionResolutionResult.rejected(
+			DecisionResolutionResult.Status.FAILED_EXECUTION,
+			"Не удалось исполнить выбранную реакцию."
+		)
+
+	_stabilize_reactions_and_deaths(
+		battle_state,
+		root_result
+	)
+
+	return DecisionResolutionResult.resolved(
+		target_unit,
+		root_result
+	)
+
+
+func _execute_reaction_task(
+	task : ReactionTask,
+	battle_state : BattleState,
+	root_result : ImpactPlanExecutionResult
+) -> bool:
+	var build_result := reaction_system.build_plan(task)
+
+	if not build_result.is_valid or build_result.plan == null:
+		var failed_build := ImpactPlanExecutionResult.new()
+		failed_build.status = (
+			ImpactPlanExecutionResult.Status.VALIDATION_FAILED
+		)
+		failed_build.issues.append(build_result.message)
+		root_result.reaction_execution_results.append(failed_build)
+		return false
+
+	var reaction_snapshot := BattleStateSnapshot.capture(battle_state)
+	var reaction_result := _execute_plan_core(
+		build_result.plan,
+		reaction_snapshot,
+		battle_state
+	)
+	root_result.reaction_execution_results.append(reaction_result)
+	return reaction_result.is_successful()
 
 
 func _validate_impact(

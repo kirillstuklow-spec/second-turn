@@ -89,11 +89,27 @@ func build_triggered(
 			+ " | ".join(plan_issues)
 		)
 
+	var selected_target := task.carrier
+	var target_key := "reaction_carrier"
+
+	if task.source_ability_runtime != null:
+		if task.trigger_event == null:
+			return result.reject(
+				"ImpactPlanBuilder: triggered ability has no event"
+			)
+
+		if task.selected_target != null:
+			selected_target = task.selected_target
+			target_key = "reaction_player_choice"
+		else:
+			selected_target = task.trigger_event.source_unit
+			target_key = "reaction_event_source"
+
 	var context := {
 		"ability_source": task.source_unit,
-		"selected_target": task.carrier,
+		"selected_target": selected_target,
 		"selected_cell": (
-			task.carrier.cell if task.carrier != null else null
+			selected_target.cell if selected_target != null else null
 		),
 		"event": task.trigger_event,
 		"effect_runtime": task.source_effect_runtime,
@@ -104,7 +120,7 @@ func build_triggered(
 		"root_execution_id": task.root_execution_id,
 		"reaction_depth": task.reaction_depth,
 		"origin_effect_runtime_id": task.source_effect_runtime_id,
-		"target_key": "reaction_carrier",
+		"target_key": target_key,
 		"is_primary": false
 	}
 	var contexts : Array[Dictionary] = [context]
@@ -246,6 +262,10 @@ func _append_context_nodes(
 		)
 		var source_unit := _resolve_source_unit(node, context)
 		var target_unit := _resolve_target_unit(node, context)
+		var magnitude_result := MagnitudeResolver.resolve_node_magnitude(
+			node,
+			context.get("event", null) as CombatEvent
+		)
 
 		if source_unit == null:
 			return (
@@ -258,6 +278,20 @@ func _append_context_nodes(
 				"ImpactPlanBuilder: target for node '%s' is unavailable"
 				% node.node_id
 			)
+
+		if (
+			node.operation in [Impact.Operation.DAMAGE, Impact.Operation.HEAL]
+			and not bool(magnitude_result.get("is_valid", false))
+		):
+			return str(magnitude_result.get(
+				"message",
+				"ImpactPlanBuilder: magnitude could not be resolved"
+			))
+
+		var resolved_magnitude := node.magnitude
+
+		if node.operation in [Impact.Operation.DAMAGE, Impact.Operation.HEAL]:
+			resolved_magnitude = int(magnitude_result.get("value", 0))
 
 		var target_cell : CellRuntime = context.get("selected_cell", null)
 
@@ -273,7 +307,7 @@ func _append_context_nodes(
 			node.operation,
 			node.interaction_type,
 			StringName(node.source_type),
-			node.magnitude,
+			resolved_magnitude,
 			node.armor_penetration
 		)
 		impact.source_object = _resolve_source_object(node, context, source_unit)

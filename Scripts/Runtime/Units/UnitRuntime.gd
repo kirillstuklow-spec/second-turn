@@ -3,6 +3,13 @@ extends RefCounted
 class_name UnitRuntime
 
 
+enum DeathState {
+	ALIVE,
+	DEATH_PENDING,
+	DEAD
+}
+
+
 # ============================================================
 # DATA-РЕСУРС И БАЗОВОЕ СОСТОЯНИЕ
 # ============================================================
@@ -12,6 +19,14 @@ var current_hp : int = 0
 var team_id : int = 0
 var cell = null
 var is_alive : bool = true
+var death_state : DeathState = DeathState.ALIVE
+
+# Клетка сохраняется после подтверждения смерти. Она нужна посмертным
+# реакциям, которые выбирают цель относительно места гибели уже после того,
+# как сама клетка освобождена.
+var death_origin_cell : CellRuntime = null
+var death_origin_x : int = -1
+var death_origin_y : int = -1
 
 
 # ============================================================
@@ -66,6 +81,10 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 	_initialize_ability_runtimes()
 
 	is_alive = current_hp > 0
+	death_state = (
+		DeathState.ALIVE if is_alive else DeathState.DEATH_PENDING
+	)
+	_clear_death_origin()
 
 	action_points_remaining = 0
 	movement_points_remaining = 0
@@ -307,13 +326,13 @@ func take_damage(amount : int) -> void:
 	if amount <= 0:
 		return
 
+	if death_state != DeathState.ALIVE:
+		return
+
 	current_hp -= amount
 
 	if current_hp <= 0:
-		current_hp = 0
-		is_alive = false
-		action_points_remaining = 0
-		movement_points_remaining = 0
+		begin_death_pending()
 
 
 func heal(amount : int) -> void:
@@ -327,3 +346,74 @@ func heal(amount : int) -> void:
 
 	if current_hp > data.max_hp:
 		current_hp = data.max_hp
+
+
+# ============================================================
+# ЖИЗНЕННЫЙ ЦИКЛ СМЕРТИ
+# ============================================================
+
+func begin_death_pending() -> bool:
+	if death_state != DeathState.ALIVE:
+		return false
+
+	current_hp = 0
+	is_alive = false
+	death_state = DeathState.DEATH_PENDING
+	action_points_remaining = 0
+	movement_points_remaining = 0
+	_capture_death_origin()
+	return true
+
+
+func cancel_pending_death(restored_hp : int = 1) -> bool:
+	if death_state != DeathState.DEATH_PENDING:
+		return false
+
+	if data == null or data.max_hp <= 0:
+		return false
+
+	current_hp = clampi(restored_hp, 1, data.max_hp)
+	is_alive = true
+	death_state = DeathState.ALIVE
+	_clear_death_origin()
+	return true
+
+
+func confirm_death() -> bool:
+	if death_state == DeathState.DEAD:
+		return false
+
+	if death_state == DeathState.ALIVE and current_hp > 0:
+		return false
+
+	_capture_death_origin()
+	current_hp = 0
+	is_alive = false
+	death_state = DeathState.DEAD
+	action_points_remaining = 0
+	movement_points_remaining = 0
+	active_effects.clear()
+	return true
+
+
+func is_death_pending() -> bool:
+	return death_state == DeathState.DEATH_PENDING
+
+
+func is_dead() -> bool:
+	return death_state == DeathState.DEAD
+
+
+func _capture_death_origin() -> void:
+	if death_origin_cell != null or cell == null:
+		return
+
+	death_origin_cell = cell as CellRuntime
+	death_origin_x = cell.x
+	death_origin_y = cell.y
+
+
+func _clear_death_origin() -> void:
+	death_origin_cell = null
+	death_origin_x = -1
+	death_origin_y = -1

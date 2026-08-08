@@ -150,6 +150,89 @@ func get_valid_selection_cells(
 	return valid_cells
 
 
+# Реакция может исходить от уже погибшего юнита. Поэтому здесь намеренно
+# не требуется is_alive источника: принадлежность команды берётся из его
+# сохранённого Runtime, а пространственное правило — из клетки события.
+func get_valid_triggered_target_units(
+	battle_state : BattleState,
+	source_unit : UnitRuntime,
+	origin_cell : CellRuntime,
+	unit_ability : UnitAbilityData
+) -> Array[UnitRuntime]:
+	var valid_units : Array[UnitRuntime] = []
+
+	if (
+		battle_state == null
+		or source_unit == null
+		or unit_ability == null
+		or unit_ability.ability == null
+	):
+		return valid_units
+
+	var snapshot := BattleStateSnapshot.capture(battle_state)
+
+	if snapshot == null:
+		return valid_units
+
+	var source_snapshot := snapshot.get_unit_snapshot(source_unit)
+
+	if source_snapshot == null:
+		return valid_units
+
+	var target_rule_id := StringName(
+		unit_ability.ability.target_rule_id
+	)
+
+	for target_snapshot in snapshot.unit_snapshots:
+		if (
+			_get_unit_rejection_reason(
+				source_snapshot,
+				target_snapshot,
+				unit_ability
+			)
+			!= TargetingResult.Reason.NONE
+		):
+			continue
+
+		match target_rule_id:
+			TARGET_RULE_SINGLE_ADJACENT_ENEMY:
+				if (
+					origin_cell == null
+					or target_snapshot.cell == null
+					or (
+						abs(origin_cell.x - target_snapshot.cell_x)
+						+ abs(origin_cell.y - target_snapshot.cell_y)
+						!= 1
+					)
+				):
+					continue
+
+			TARGET_RULE_SINGLE_ANY_ENEMY, TARGET_RULE_SINGLE_ANY_ALLY:
+				pass
+
+			_:
+				continue
+
+		valid_units.append(target_snapshot.unit)
+
+	return valid_units
+
+
+func is_valid_triggered_target(
+	battle_state : BattleState,
+	source_unit : UnitRuntime,
+	origin_cell : CellRuntime,
+	unit_ability : UnitAbilityData,
+	target_unit : UnitRuntime
+) -> bool:
+	return get_valid_triggered_target_units(
+		battle_state,
+		source_unit,
+		origin_cell,
+		unit_ability
+	).has(target_unit)
+
+
 func _resolve_with_snapshot(
 	snapshot : BattleStateSnapshot,
 	source_unit : UnitRuntime,

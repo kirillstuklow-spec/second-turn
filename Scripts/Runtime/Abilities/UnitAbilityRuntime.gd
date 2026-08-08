@@ -56,6 +56,10 @@ var current_round_number : int = 0
 
 var current_activation_index : int = -1
 
+# Защита от повторной постановки одной и той же автоматической способности
+# по одному CombatEvent. Ключ включает trigger_id и event_id.
+var processed_trigger_events : Dictionary = {}
+
 
 # ============================================================
 # ИНИЦИАЛИЗАЦИЯ
@@ -97,6 +101,7 @@ func setup(
 
 	current_round_number = 0
 	current_activation_index = -1
+	processed_trigger_events.clear()
 
 
 # ============================================================
@@ -174,3 +179,38 @@ func record_use(
 	last_used_activation_index = activation_index
 
 	return true
+
+
+# ============================================================
+# СОБЫТИЯ АВТОМАТИЧЕСКИХ СПОСОБНОСТЕЙ
+# ============================================================
+
+func has_processed_trigger_event(
+	trigger_id : StringName,
+	event_id : StringName
+) -> bool:
+	if trigger_id == &"" or event_id == &"":
+		return false
+
+	return processed_trigger_events.has(
+		_make_trigger_event_key(trigger_id, event_id)
+	)
+
+
+func mark_trigger_event_processed(
+	trigger_id : StringName,
+	event_id : StringName
+) -> void:
+	if trigger_id == &"" or event_id == &"":
+		return
+
+	processed_trigger_events[
+		_make_trigger_event_key(trigger_id, event_id)
+	] = true
+
+
+func _make_trigger_event_key(
+	trigger_id : StringName,
+	event_id : StringName
+) -> String:
+	return "%s::%s" % [trigger_id, event_id]

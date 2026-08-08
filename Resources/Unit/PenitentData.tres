@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/HookStrike.tres" id="3_hook"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/LastStep.tres" id="4_last_step"]
+
+[resource]
+script = ExtResource("1_unit")
+unit_id = "penitent"
+unit_name = "Кающийся"
+description = "Слабый призываемый боец, который после подтверждённой смерти способен сделать последний удар."
+faction = "white_brotherhood"
+unit_class = "fighter"
+initiative = 45
+max_hp = 4
+armor = 0
+movement = 2
+keywords = Array[String](["white_brotherhood", "human", "summoned", "melee"])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_hook")])
+passive_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("4_last_step")])

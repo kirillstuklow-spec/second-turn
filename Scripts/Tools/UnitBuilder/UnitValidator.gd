@@ -179,6 +179,16 @@ static func _validate_abilities(
 			errors
 		)
 
+		if (
+			active_ability.ability != null
+			and active_ability.ability.activation_mode
+			!= AbilityData.ActivationMode.ACTIVE
+		):
+			errors.append(
+				"Активная способность №%d должна иметь activation_mode=ACTIVE."
+				% (ability_index + 1)
+			)
+
 	for ability_index in range(
 		unit_data.passive_abilities.size()
 	):
@@ -199,18 +209,21 @@ static func _validate_abilities(
 			errors
 		)
 
+		if (
+			passive_ability.ability != null
+			and passive_ability.ability.activation_mode
+			== AbilityData.ActivationMode.ACTIVE
+		):
+			errors.append(
+				"Пассивная способность №%d не может иметь activation_mode=ACTIVE."
+				% (ability_index + 1)
+			)
+
 	if unit_data.active_abilities.size() > 6:
 		warnings.append(
 			"Боевой интерфейс показывает только первые 6 "
 			+ "активных способностей."
 		)
-
-	if not unit_data.passive_abilities.is_empty():
-		warnings.append(
-			"Пассивные способности сохранены в UnitData, "
-			+ "но текущий Runtime ещё не исполняет их."
-		)
-
 
 static func _validate_ability_schema(
 	unit_ability: UnitAbilityData,

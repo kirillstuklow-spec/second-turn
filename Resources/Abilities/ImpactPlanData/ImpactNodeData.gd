@@ -20,6 +20,18 @@ enum TargetReference {
 }
 
 
+enum MagnitudeSource {
+	FIXED,
+	EVENT_APPLIED_AMOUNT
+}
+
+
+enum MagnitudeRounding {
+	FLOOR,
+	CEIL
+}
+
+
 @export var node_id : String = ""
 
 @export var parent_node_id : String = ""
@@ -41,6 +53,16 @@ enum TargetReference {
 @export var source_type : String = ""
 
 @export_range(0, 999, 1) var magnitude : int = 0
+
+# FIXED использует magnitude. EVENT_APPLIED_AMOUNT берёт фактически
+# применённую величину события и масштабирует её рациональным коэффициентом.
+@export var magnitude_source : MagnitudeSource = MagnitudeSource.FIXED
+
+@export_range(1, 999, 1) var magnitude_numerator : int = 1
+
+@export_range(1, 999, 1) var magnitude_denominator : int = 1
+
+@export var magnitude_rounding : MagnitudeRounding = MagnitudeRounding.FLOOR
 
 @export_range(-5, 5, 1) var armor_penetration : int = 0
 

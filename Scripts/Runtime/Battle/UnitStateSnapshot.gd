@@ -19,11 +19,19 @@ var armor : int = 0
 
 var is_alive : bool = false
 
+var death_state : UnitRuntime.DeathState = UnitRuntime.DeathState.ALIVE
+
 var cell : CellRuntime = null
 
 var cell_x : int = -1
 
 var cell_y : int = -1
+
+var death_origin_cell : CellRuntime = null
+
+var death_origin_x : int = -1
+
+var death_origin_y : int = -1
 
 var active_defenses : Array[String] = []
 
@@ -44,7 +52,11 @@ static func capture(
 	snapshot.current_hp = runtime_unit.current_hp
 	snapshot.armor = runtime_unit.armor
 	snapshot.is_alive = runtime_unit.is_alive
+	snapshot.death_state = runtime_unit.death_state
 	snapshot.cell = runtime_unit.cell
+	snapshot.death_origin_cell = runtime_unit.death_origin_cell
+	snapshot.death_origin_x = runtime_unit.death_origin_x
+	snapshot.death_origin_y = runtime_unit.death_origin_y
 	snapshot.active_defenses = (
 		runtime_unit.active_defenses.duplicate()
 	)

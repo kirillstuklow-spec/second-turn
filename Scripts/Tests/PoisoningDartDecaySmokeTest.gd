@@ -290,8 +290,10 @@ func _test_decay_kill_ends_battle_before_next_activation() -> void:
 	assert(battle_state.is_battle_over)
 	assert(battle_state.winner_team_id == 1)
 	assert(battle_state.turn_state.phase == TurnState.Phase.BATTLE_END)
-	assert(combat_event_log.history[-1].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(combat_event_log.history[-1].source_type == &"decay")
+	assert(combat_event_log.history[-2].kind == CombatEvent.Kind.DAMAGE_APPLIED)
+	assert(combat_event_log.history[-2].source_type == &"decay")
+	assert(combat_event_log.history[-2].target_unit == target)
+	assert(combat_event_log.history[-1].kind == CombatEvent.Kind.DEATH_CONFIRMED)
 	assert(combat_event_log.history[-1].target_unit == target)
 
 	_free_pipeline_bundle(bundle)

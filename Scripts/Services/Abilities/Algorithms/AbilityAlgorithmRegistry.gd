@@ -155,6 +155,11 @@ func validate_unit_ability(
 		result
 	)
 
+	_validate_trigger_data(
+		unit_ability,
+		result
+	)
+
 	return result
 
 
@@ -425,6 +430,117 @@ func _validate_declarative_impact_plan(
 			"summary": " | ".join(plan_issues)
 		}
 	)
+
+
+func _validate_trigger_data(
+	unit_ability : UnitAbilityData,
+	result : AbilitySchemaValidationResult
+) -> void:
+	var ability_data := unit_ability.ability
+
+	if ability_data == null:
+		return
+
+	if ability_data.activation_mode != AbilityData.ActivationMode.TRIGGERED:
+		if not unit_ability.triggers.is_empty():
+			result.add_issue(
+				AbilitySchemaIssue.Code.TRIGGERS_NOT_ALLOWED,
+				"triggers"
+			)
+
+		return
+
+	if unit_ability.triggers.is_empty():
+		result.add_issue(
+			AbilitySchemaIssue.Code.TRIGGERS_REQUIRED,
+			"triggers"
+		)
+		return
+
+	var seen_trigger_ids : Dictionary = {}
+
+	for trigger_index in range(unit_ability.triggers.size()):
+		var trigger := unit_ability.triggers[trigger_index]
+		var field_path := "triggers[%d]" % trigger_index
+		var trigger_issues := PackedStringArray()
+
+		if trigger == null:
+			trigger_issues.append("Триггер отсутствует.")
+		else:
+			var normalized_id := trigger.trigger_id.strip_edges()
+
+			if normalized_id.is_empty():
+				trigger_issues.append("trigger_id пуст.")
+			elif normalized_id != trigger.trigger_id:
+				trigger_issues.append("trigger_id содержит пробелы по краям.")
+			elif seen_trigger_ids.has(normalized_id):
+				trigger_issues.append("trigger_id повторяется.")
+			else:
+				seen_trigger_ids[normalized_id] = true
+
+			if trigger.event_kind not in CombatEvent.Kind.values():
+				trigger_issues.append("Неизвестный event_kind.")
+
+			if trigger.owner_relation not in AbilityTriggerData.OwnerRelation.values():
+				trigger_issues.append("Неизвестное отношение владельца к событию.")
+
+			if (
+				trigger.event_source_relation
+				not in AbilityTriggerData.EventSourceRelation.values()
+			):
+				trigger_issues.append("Неизвестное отношение источника события.")
+
+			if (
+				trigger.interaction_filter
+				not in AbilityTriggerData.InteractionFilter.values()
+			):
+				trigger_issues.append("Неизвестный фильтр interaction_type.")
+
+			if (
+				trigger.target_selection_policy
+				not in AbilityTriggerData.TargetSelectionPolicy.values()
+			):
+				trigger_issues.append("Неизвестная политика выбора цели.")
+			elif (
+				trigger.target_selection_policy
+				== AbilityTriggerData.TargetSelectionPolicy.PLAYER_CHOICE
+				and StringName(ability_data.target_rule_id) not in [
+					TARGET_RULE_SINGLE_ADJACENT_ENEMY,
+					TARGET_RULE_SINGLE_ANY_ENEMY,
+					TARGET_RULE_SINGLE_ANY_ALLY
+				]
+			):
+				trigger_issues.append(
+					"Выбор игроком требует одиночного правила цели."
+				)
+
+			if (
+				trigger.source_type_filter
+				!= trigger.source_type_filter.strip_edges()
+			):
+				trigger_issues.append(
+					"source_type_filter содержит пробелы по краям."
+				)
+
+		if not trigger_issues.is_empty():
+			result.add_issue(
+				AbilitySchemaIssue.Code.TRIGGER_INVALID,
+				field_path,
+				{
+					"summary": " | ".join(trigger_issues)
+				}
+			)
+
+	if unit_ability.action_point_cost != 0:
+		result.add_issue(
+			AbilitySchemaIssue.Code.TRIGGER_INVALID,
+			"action_point_cost",
+			{
+				"summary": (
+					"Автоматическая способность не должна расходовать AP."
+				)
+			}
+		)
 
 
 func _validate_target_rule(

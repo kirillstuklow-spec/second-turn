@@ -32,6 +32,17 @@ func dispatch_command(command: Dictionary) -> Variant:
 
 	var command_type: String = command["type"]
 
+	if (
+		battle_state != null
+		and battle_state.pending_decision != null
+		and command_type != "select_decision_target"
+	):
+		print(
+			"CommandDispatcher: command blocked by pending decision: ",
+			command_type
+		)
+		return null
+
 	print("CommandDispatcher received command: ", command_type)
 
 	return pipeline_runner.run_command(command)

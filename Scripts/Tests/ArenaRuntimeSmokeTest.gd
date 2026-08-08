@@ -43,6 +43,10 @@ func _run_test() -> void:
 	)
 	assert(
 		arena_data.get_zone_at(1, 2)
+		== ArenaZonePlacementData.Zone.PLAYER_1_DEPLOYMENT
+	)
+	assert(
+		arena_data.get_zone_at(2, 2)
 		== ArenaZonePlacementData.Zone.NEUTRAL
 	)
 
@@ -94,7 +98,7 @@ func _run_test() -> void:
 	assert(battlefield_view != null)
 	assert(battle_engine.battle_state.cells.size() == 35)
 	assert(battlefield_view.cells_root.get_child_count() == 35)
-	assert(battlefield_view._unit_views_by_id.size() == 4)
+	assert(battlefield_view._unit_views_by_id.size() == 2)
 	assert(battlefield_view.arena_background_root != null)
 
 	var first_cell_view := (
@@ -108,7 +112,7 @@ func _run_test() -> void:
 	var test_unit := battle_engine.battle_state.units[0]
 	var target_cell := battle_engine.battle_state.get_cell_at(
 		1,
-		2
+		1
 	)
 
 	assert(

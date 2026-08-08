@@ -22,18 +22,16 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 
 
 # ============================================================
-# ТЕСТОВЫЕ DATA-РЕСУРСЫ
+# ТЕСТОВАЯ КОНФИГУРАЦИЯ БОЯ
 # ============================================================
 
 @export var arena_data: ArenaData
 
-@export var archer_data: UnitData
-@export var second_player_unit_data: UnitData
+# Размер массива определяет число юнитов. Один UnitData допустимо указать
+# несколько раз: для каждой записи будет создан независимый UnitRuntime.
+@export var player_1_units: Array[UnitData] = []
 
-@export var defense_dummy_data: UnitData
-@export var armor_dummy_data: UnitData
-
-@export var longbow_shot: UnitAbilityData
+@export var player_2_units: Array[UnitData] = []
 
 # Ноль создаёт новый seed автоматически. Ненулевое значение позволяет
 # дословно воспроизвести последовательность боевых бросков.
@@ -71,6 +69,10 @@ const TARGET_RULE_AREA_AROUND_CELL: String = "area_around_cell"
 	$Pipelines/TurnPipeline
 )
 
+@onready var decision_pipeline: DecisionPipeline = (
+	$Pipelines/DecisionPipeline
+)
+
 
 # ============================================================
 # ВНЕШНИЕ ЗАВИСИМОСТИ
@@ -105,6 +107,8 @@ var combat_event_log := CombatEventLog.new()
 var reaction_queue := ReactionQueue.new()
 
 var reaction_system := ReactionSystem.new()
+
+var death_resolver := DeathResolver.new()
 
 var impact_condition_evaluator := ImpactConditionEvaluator.new()
 
@@ -145,7 +149,10 @@ func initialize(
 
 	_create_battle_state()
 	_configure_pipelines()
-	_initialize_test_battle()
+	if not _initialize_test_battle():
+		battle_state.clear()
+		battle_state = null
+		return false
 	_connect_view_and_ui()
 
 	turn_pipeline.start_battle_flow()
@@ -174,7 +181,8 @@ func _configure_pipelines() -> void:
 
 	reaction_system.configure(
 		reaction_queue,
-		ability_impact_plan_builder
+		ability_impact_plan_builder,
+		targeting_service
 	)
 
 	impact_executor.configure(
@@ -184,7 +192,8 @@ func _configure_pipelines() -> void:
 		reaction_queue,
 		reaction_system,
 		impact_condition_evaluator,
-		ability_impact_plan_builder
+		ability_impact_plan_builder,
+		death_resolver
 	)
 
 	ability_pipeline.configure(
@@ -208,11 +217,17 @@ func _configure_pipelines() -> void:
 		impact_executor
 	)
 
+	decision_pipeline.configure(
+		battle_state,
+		impact_executor
+	)
+
 	pipeline_runner.configure(
 		ability_pipeline,
 		movement_pipeline,
 		turn_pipeline,
-		event_queue
+		event_queue,
+		decision_pipeline
 	)
 
 	command_dispatcher.configure(
@@ -225,13 +240,11 @@ func _configure_pipelines() -> void:
 # ИНИЦИАЛИЗАЦИЯ ТЕСТОВОГО БОЯ
 # ============================================================
 
-func _initialize_test_battle() -> void:
-	battle_initializer.initialize_test_battle(
+func _initialize_test_battle() -> bool:
+	return battle_initializer.initialize_test_battle(
 		battle_state,
-		archer_data,
-		second_player_unit_data,
-		defense_dummy_data,
-		armor_dummy_data
+		player_1_units,
+		player_2_units
 	)
 	
 # ============================================================
@@ -257,65 +270,30 @@ func _validate_configuration() -> bool:
 			)
 			is_valid = false
 
-	if archer_data == null:
-		push_error(
-			"BattleEngine: archer_data is not assigned"
-		)
+	var roster_validation := BattleRosterValidator.validate(
+		player_1_units,
+		player_2_units,
+		arena_data
+	)
+
+	for error in roster_validation["errors"]:
+		push_error("BattleEngine: roster: " + str(error))
 		is_valid = false
 
-	if second_player_unit_data == null:
-		push_error(
-			"BattleEngine: second_player_unit_data "
-			+ "is not assigned"
+	is_valid = (
+		_validate_roster_ability_schemas(
+			player_1_units,
+			"player_1_units"
 		)
-		is_valid = false
-
-	if defense_dummy_data == null:
-		push_error(
-			"BattleEngine: defense_dummy_data is not assigned"
+		and is_valid
+	)
+	is_valid = (
+		_validate_roster_ability_schemas(
+			player_2_units,
+			"player_2_units"
 		)
-		is_valid = false
-
-	if armor_dummy_data == null:
-		push_error(
-			"BattleEngine: armor_dummy_data is not assigned"
-		)
-		is_valid = false
-
-	if longbow_shot == null:
-		push_error(
-			"BattleEngine: longbow_shot is not assigned"
-		)
-		is_valid = false
-	else:
-		is_valid = (
-			_validate_ability_schema(
-				longbow_shot,
-				"longbow_shot"
-			)
-			and is_valid
-		)
-
-	var configured_units := {
-		"archer_data": archer_data,
-		"second_player_unit_data": second_player_unit_data,
-		"defense_dummy_data": defense_dummy_data,
-		"armor_dummy_data": armor_dummy_data
-	}
-
-	for field_name in configured_units:
-		var unit_data := configured_units[field_name] as UnitData
-
-		if unit_data == null:
-			continue
-
-		is_valid = (
-			_validate_unit_ability_schemas(
-				unit_data,
-				str(field_name)
-			)
-			and is_valid
-		)
+		and is_valid
+	)
 
 	if battle_initializer == null:
 		push_error(
@@ -366,12 +344,40 @@ func _validate_configuration() -> bool:
 		)
 		is_valid = false
 
+	if decision_pipeline == null:
+		push_error(
+			"BattleEngine: DecisionPipeline node is missing "
+			+ "or has no DecisionPipeline script"
+		)
+		is_valid = false
+
 	if battlefield_view == null:
 		push_error(
 			"BattleEngine: BattlefieldView was not provided "
 			+ "by BattleScene"
 		)
 		is_valid = false
+
+	return is_valid
+
+
+func _validate_roster_ability_schemas(
+	roster: Array[UnitData],
+	field_name: String
+) -> bool:
+	var is_valid := true
+
+	for unit_index in range(roster.size()):
+		var unit_data := roster[unit_index]
+
+		if unit_data == null:
+			continue
+
+		if not _validate_unit_ability_schemas(
+			unit_data,
+			"%s[%d]" % [field_name, unit_index]
+		):
+			is_valid = false
 
 	return is_valid
 
@@ -441,6 +447,7 @@ func _create_battle_state() -> void:
 	status_effect_system.clear_runtime_sequence()
 	combat_event_log.clear()
 	reaction_queue.clear()
+	death_resolver.clear()
 
 	battle_state = BattleState.new()
 	battle_state.configure_battle_rng(battle_seed)
@@ -482,6 +489,10 @@ func request_end_turn() -> void:
 		)
 		return
 
+	if battle_state != null and battle_state.pending_decision != null:
+		print("BattleEngine: resolve the pending decision first")
+		return
+
 	_end_current_activation()
 
 # ============================================================
@@ -496,6 +507,10 @@ func request_ability_selection(
 			"BattleEngine: cannot select ability "
 			+ "before initialization"
 		)
+		return
+
+	if battle_state != null and battle_state.pending_decision != null:
+		print("BattleEngine: ability selection blocked by pending decision")
 		return
 
 	if ability_runtime == null:
@@ -591,6 +606,10 @@ func _cancel_pending_ability() -> void:
 	if battle_state == null:
 		return
 
+	if battle_state.pending_decision != null:
+		print("Pending reaction target cannot be cancelled")
+		return
+
 	if battle_state.pending_ability == null:
 		return
 
@@ -619,15 +638,19 @@ func _finish_ability_click(
 
 	battle_state.clear_pending_ability()
 
-	if battlefield_view != null:
-		battlefield_view.set_targeting(
-			false,
-			null
-		)
+	if battle_state.pending_decision != null:
+		_sync_pending_decision_targeting()
+	else:
+		if battlefield_view != null:
+			battlefield_view.set_targeting(
+				false,
+				null
+			)
 
 	if (
 		execution_result != null
 		and execution_result.was_committed()
+		and battle_state.pending_decision == null
 	):
 		battle_state.check_victory_condition()
 
@@ -661,6 +684,9 @@ func _end_current_activation() -> void:
 	command_dispatcher.dispatch_command({
 		"type": "end_turn"
 	})
+
+	if battle_state.pending_decision != null:
+		_sync_pending_decision_targeting()
 
 	_refresh_views()
 
@@ -772,6 +798,13 @@ func _on_cell_clicked(cell: CellRuntime) -> void:
 		)
 		return
 
+	if battle_state.pending_decision != null:
+		_handle_pending_decision_click(
+			cell,
+			battle_state.get_unit_on_cell(cell)
+		)
+		return
+
 	if battle_state.active_unit == null:
 		push_error(
 			"BattleEngine: active_unit is null"
@@ -793,6 +826,76 @@ func _on_cell_clicked(cell: CellRuntime) -> void:
 		cell,
 		target_unit
 	)
+
+
+# ============================================================
+# ВЫБОР ЦЕЛИ ДЛЯ ПРИОСТАНОВЛЕННОЙ РЕАКЦИИ
+# ============================================================
+
+func _handle_pending_decision_click(
+	cell : CellRuntime,
+	target_unit : UnitRuntime
+) -> void:
+	var decision := battle_state.pending_decision
+
+	if decision == null:
+		return
+
+	if target_unit == null or not decision.has_option(target_unit):
+		print(
+			"BattleEngine: cell is not a pending decision option: ",
+			cell.x,
+			",",
+			cell.y
+		)
+		return
+
+	var command_result : Variant = command_dispatcher.dispatch_command({
+		"type": "select_decision_target",
+		"decision_id": decision.decision_id,
+		"target_unit": target_unit
+	})
+	var resolution := command_result as DecisionResolutionResult
+
+	if resolution == null or not resolution.was_resolved():
+		var failure_message := "Решение не было принято."
+
+		if resolution != null:
+			failure_message = resolution.message
+
+		print("BattleEngine: ", failure_message)
+		_sync_pending_decision_targeting()
+		_refresh_views()
+		return
+
+	if battle_state.pending_decision != null:
+		_sync_pending_decision_targeting()
+	elif battlefield_view != null:
+		battlefield_view.set_targeting(false, null)
+
+	if battle_state.pending_decision == null:
+		battle_state.check_victory_condition()
+
+	_refresh_views()
+
+
+func _sync_pending_decision_targeting() -> void:
+	if battlefield_view == null or battle_state == null:
+		return
+
+	var decision := battle_state.pending_decision
+
+	if decision == null:
+		battlefield_view.set_targeting(false, null)
+		return
+
+	battlefield_view.set_targeting(
+		true,
+		decision.source_unit,
+		decision.get_option_cells()
+	)
+
+	print(decision.reason)
 
 
 # ============================================================

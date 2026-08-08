@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Triggered Melee Attack"
+technical_description = "Executes a declarative melee attack after a matching combat event; the trigger chooses an automatic or player-selected target."
+activation_mode = 2
+action_type = 0
+targeting_form = 0
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_adjacent_enemy"

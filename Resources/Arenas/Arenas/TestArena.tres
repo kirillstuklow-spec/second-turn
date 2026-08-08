@@ -38,21 +38,68 @@ cell_visual = ExtResource("5_accent")
 
 [sub_resource type="Resource" id="Zone_1"]
 script = ExtResource("3_zone_placement")
-y = 2
+y = 1
 zone = 0
 
 [sub_resource type="Resource" id="Zone_2"]
 script = ExtResource("3_zone_placement")
-y = 3
+x = 1
+y = 1
 zone = 0
 
 [sub_resource type="Resource" id="Zone_3"]
+script = ExtResource("3_zone_placement")
+y = 2
+zone = 0
+
+[sub_resource type="Resource" id="Zone_4"]
+script = ExtResource("3_zone_placement")
+x = 1
+y = 2
+zone = 0
+
+[sub_resource type="Resource" id="Zone_5"]
+script = ExtResource("3_zone_placement")
+y = 3
+zone = 0
+
+[sub_resource type="Resource" id="Zone_6"]
+script = ExtResource("3_zone_placement")
+x = 1
+y = 3
+zone = 0
+
+[sub_resource type="Resource" id="Zone_7"]
+script = ExtResource("3_zone_placement")
+x = 5
+y = 1
+zone = 4
+
+[sub_resource type="Resource" id="Zone_8"]
+script = ExtResource("3_zone_placement")
+x = 6
+y = 1
+zone = 4
+
+[sub_resource type="Resource" id="Zone_9"]
+script = ExtResource("3_zone_placement")
+x = 5
+y = 2
+zone = 4
+
+[sub_resource type="Resource" id="Zone_10"]
 script = ExtResource("3_zone_placement")
 x = 6
 y = 2
 zone = 4
 
-[sub_resource type="Resource" id="Zone_4"]
+[sub_resource type="Resource" id="Zone_11"]
+script = ExtResource("3_zone_placement")
+x = 5
+y = 3
+zone = 4
+
+[sub_resource type="Resource" id="Zone_12"]
 script = ExtResource("3_zone_placement")
 x = 6
 y = 3
@@ -66,6 +113,4 @@ description = "Арена 7×5 для проверки независимых в
 biome = ExtResource("4_biome")
 visual_placements = Array[ExtResource("2_visual_placement")]([SubResource("Visual_1"), SubResource("Visual_2"), SubResource("Visual_3"), SubResource("Visual_4"), SubResource("Visual_5")])
 background_color = Color(0.055, 0.06, 0.075, 1)
-zone_placements = Array[ExtResource("3_zone_placement")]([SubResource("Zone_1"), SubResource("Zone_2"), SubResource("Zone_3"), SubResource("Zone_4")])
-player_1_deployment_capacity = 2
-player_2_deployment_capacity = 2
+zone_placements = Array[ExtResource("3_zone_placement")]([SubResource("Zone_1"), SubResource("Zone_2"), SubResource("Zone_3"), SubResource("Zone_4"), SubResource("Zone_5"), SubResource("Zone_6"), SubResource("Zone_7"), SubResource("Zone_8"), SubResource("Zone_9"), SubResource("Zone_10"), SubResource("Zone_11"), SubResource("Zone_12")])

@@ -17,6 +17,8 @@ var event_queue : EventQueue = null
 var status_effect_system : StatusEffectSystem = null
 var impact_executor : ImpactExecutor = null
 
+var _pending_activation_end_unit : UnitRuntime = null
+
 # ============================================================
 # НАСТРОЙКА PIPELINE
 # ============================================================
@@ -31,6 +33,7 @@ func configure(
 	event_queue = new_event_queue
 	status_effect_system = new_status_effect_system
 	impact_executor = new_impact_executor
+	_pending_activation_end_unit = null
 
 	print("TurnPipeline configured")
 
@@ -53,6 +56,7 @@ func start_battle_flow() -> void:
 		return
 
 	battle_state.turn_state.clear()
+	_pending_activation_end_unit = null
 
 	_start_new_round()
 # ============================================================
@@ -66,6 +70,10 @@ func end_current_activation() -> void:
 
 	if battle_state.is_battle_over:
 		print("TurnPipeline: battle is over, cannot end activation")
+		return
+
+	if battle_state.pending_decision != null:
+		print("TurnPipeline: cannot end activation during a pending decision")
 		return
 
 	var ending_unit := battle_state.active_unit
@@ -86,6 +94,31 @@ func end_current_activation() -> void:
 					+ event_result.get_summary()
 				)
 
+			if battle_state.pending_decision != null:
+				_pending_activation_end_unit = ending_unit
+				return
+
+	_complete_activation_end(ending_unit)
+
+
+func resume_after_pending_decision() -> void:
+	if (
+		battle_state == null
+		or battle_state.pending_decision != null
+		or _pending_activation_end_unit == null
+	):
+		return
+
+	var ending_unit := _pending_activation_end_unit
+	_pending_activation_end_unit = null
+	_complete_activation_end(ending_unit)
+
+
+func _complete_activation_end(ending_unit : UnitRuntime) -> void:
+	if battle_state == null or battle_state.is_battle_over:
+		return
+
+	if ending_unit != null:
 		if status_effect_system != null:
 			status_effect_system.finish_activation(
 				ending_unit,
