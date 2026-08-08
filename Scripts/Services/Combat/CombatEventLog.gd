@@ -158,6 +158,7 @@ func record_death_event(
 	event.target_cell_y = unit.death_origin_y
 
 	if cause_event != null:
+		event.cause_event_id = cause_event.event_id
 		event.execution_id = cause_event.execution_id
 		event.root_execution_id = cause_event.root_execution_id
 		event.impact_id = cause_event.impact_id
@@ -178,6 +179,55 @@ func record_death_event(
 		)
 		event.root_execution_id = event.execution_id
 
+	_stamp_event_time(event, battle_state)
+	_next_event_sequence += 1
+	history.append(event)
+	return event
+
+
+func record_death_prevented_event(
+	unit : UnitRuntime,
+	cause_event : CombatEvent,
+	prevention_effect : EffectRuntime,
+	battle_state : BattleState
+) -> CombatEvent:
+	if (
+		unit == null
+		or battle_state == null
+		or not battle_state.units.has(unit)
+		or not unit.is_alive
+		or prevention_effect == null
+	):
+		return null
+
+	var event := CombatEvent.new()
+	event.event_id = StringName(
+		"combat_event_%06d" % _next_event_sequence
+	)
+	event.kind = CombatEvent.Kind.DEATH_PREVENTED
+	event.source_unit = prevention_effect.source_unit
+	event.source_ability_data = prevention_effect.source_ability_data
+	event.target_unit = unit
+	event.applied_amount = unit.current_hp
+	event.interaction_type = Impact.InteractionType.EFFECT
+	event.origin_effect_runtime_id = prevention_effect.runtime_id
+	event.applied_effect_runtime_id = prevention_effect.runtime_id
+	event.effect_id = prevention_effect.get_effect_id()
+
+	if cause_event != null:
+		event.cause_event_id = cause_event.event_id
+		event.execution_id = cause_event.execution_id
+		event.root_execution_id = cause_event.root_execution_id
+		event.impact_id = cause_event.impact_id
+		event.reaction_depth = cause_event.reaction_depth + 1
+	else:
+		event.execution_id = StringName(
+			"death_prevention_execution_%06d" % _next_event_sequence
+		)
+		event.root_execution_id = event.execution_id
+
+	_capture_unit_cell(event, event.source_unit, true)
+	_capture_unit_cell(event, unit, false)
 	_stamp_event_time(event, battle_state)
 	_next_event_sequence += 1
 	history.append(event)

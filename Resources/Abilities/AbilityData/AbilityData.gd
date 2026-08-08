@@ -13,7 +13,8 @@ enum ActivationMode {
 enum ActionType {
 	ATTACK,
 	HEAL,
-	SUMMON
+	SUMMON,
+	SUPPORT
 }
 
 

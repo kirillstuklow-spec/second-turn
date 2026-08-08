@@ -235,8 +235,15 @@ func _roll_initiative_for_unit(unit : UnitRuntime) -> void:
 		return
 
 	var modifier : int = roll_result.value
+	var effect_modifier := 0
 
-	unit.set_round_initiative_modifier(modifier)
+	if status_effect_system != null:
+		effect_modifier = status_effect_system.get_additive_modifier(
+			unit,
+			PassiveRuleData.RuleType.MODIFY_INITIATIVE
+		)
+
+	unit.set_round_initiative_modifier(modifier, effect_modifier)
 
 	print(
 		"Initiative roll | ",
@@ -245,6 +252,8 @@ func _roll_initiative_for_unit(unit : UnitRuntime) -> void:
 		unit.data.initiative,
 		" | modifier: ",
 		modifier,
+		" | effect modifier: ",
+		effect_modifier,
 		" | total: ",
 		unit.initiative_roll_this_round
 	)
@@ -252,13 +261,22 @@ func _roll_initiative_for_unit(unit : UnitRuntime) -> void:
 
 func _compare_units_by_initiative_roll(unit_a : UnitRuntime, unit_b : UnitRuntime) -> bool:
 	if unit_a.initiative_roll_this_round == unit_b.initiative_roll_this_round:
-		if unit_a.data.initiative == unit_b.data.initiative:
+		var effective_base_a := (
+			unit_a.data.initiative
+			+ unit_a.initiative_effect_modifier_this_round
+		)
+		var effective_base_b := (
+			unit_b.data.initiative
+			+ unit_b.initiative_effect_modifier_this_round
+		)
+
+		if effective_base_a == effective_base_b:
 			if unit_a.team_id == unit_b.team_id:
 				return unit_a.data.unit_name < unit_b.data.unit_name
 
 			return unit_a.team_id < unit_b.team_id
 
-		return unit_a.data.initiative > unit_b.data.initiative
+		return effective_base_a > effective_base_b
 
 	return unit_a.initiative_roll_this_round > unit_b.initiative_roll_this_round
 
@@ -336,10 +354,18 @@ func _activate_unit(
 
 	battle_state.set_active_unit(unit)
 	battle_state.clear_pending_ability()
+	var movement_modifier := 0
+
+	if status_effect_system != null:
+		movement_modifier = status_effect_system.get_additive_modifier(
+			unit,
+			PassiveRuleData.RuleType.MODIFY_MOVEMENT
+		)
 
 	unit.start_activation(
 		turn_state.round_number,
-		turn_state.current_activation_index
+		turn_state.current_activation_index,
+		movement_modifier
 	)
 
 	print("")
@@ -359,6 +385,10 @@ func _activate_unit(
 	print(
 		"Initiative modifier: ",
 		unit.initiative_modifier_this_round
+	)
+	print(
+		"Initiative effect modifier: ",
+		unit.initiative_effect_modifier_this_round
 	)
 	print(
 		"Initiative total: ",
@@ -387,7 +417,11 @@ func _activate_unit(
 		"action_points":
 			unit.action_points_remaining,
 		"movement_points":
-			unit.movement_points_remaining
+			unit.movement_points_remaining,
+		"movement_modifier":
+			unit.movement_modifier_this_activation,
+		"initiative_effect_modifier":
+			unit.initiative_effect_modifier_this_round
 	})
 
 
@@ -413,7 +447,10 @@ func _finish_runtime_round(round_number : int) -> void:
 			unit.finish_round(round_number)
 
 	if status_effect_system != null:
-		status_effect_system.finish_round(battle_state.units)
+		status_effect_system.finish_round(
+			battle_state.units,
+			round_number
+		)
 	
 # ============================================================
 # ОТЛАДКА ОЧЕРЕДИ
@@ -441,6 +478,8 @@ func _print_activation_queue() -> void:
 			unit.data.initiative,
 			" | modifier: ",
 			unit.initiative_modifier_this_round,
+			" | effect modifier: ",
+			unit.initiative_effect_modifier_this_round,
 			" | total: ",
 			unit.initiative_roll_this_round
 		)

@@ -15,6 +15,9 @@ const TARGET_RULE_ALL_ENEMIES : StringName = (
 const TARGET_RULE_SINGLE_ADJACENT_ENEMY : StringName = (
 	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_ADJACENT_ENEMY
 )
+const TARGET_RULE_SINGLE_ADJACENT_ALLY : StringName = (
+	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_ADJACENT_ALLY
+)
 const TARGET_RULE_AREA_AROUND_UNIT : StringName = (
 	AbilityAlgorithmRegistry.TARGET_RULE_AREA_AROUND_UNIT
 )
@@ -195,7 +198,7 @@ func get_valid_triggered_target_units(
 			continue
 
 		match target_rule_id:
-			TARGET_RULE_SINGLE_ADJACENT_ENEMY:
+			TARGET_RULE_SINGLE_ADJACENT_ENEMY, TARGET_RULE_SINGLE_ADJACENT_ALLY:
 				if (
 					origin_cell == null
 					or target_snapshot.cell == null
@@ -351,7 +354,10 @@ func _resolve_with_snapshot(
 	if unit_rejection_reason != TargetingResult.Reason.NONE:
 		return result.reject(unit_rejection_reason)
 
-	if target_rule_id == TARGET_RULE_SINGLE_ADJACENT_ENEMY:
+	if target_rule_id in [
+		TARGET_RULE_SINGLE_ADJACENT_ENEMY,
+		TARGET_RULE_SINGLE_ADJACENT_ALLY
+	]:
 		if not _are_snapshots_adjacent(
 			result.source_snapshot,
 			result.selected_unit_snapshot
@@ -371,6 +377,7 @@ func _resolve_with_snapshot(
 		target_rule_id != TARGET_RULE_SINGLE_ANY_ENEMY
 		and target_rule_id != TARGET_RULE_SINGLE_ANY_ALLY
 		and target_rule_id != TARGET_RULE_SINGLE_ADJACENT_ENEMY
+		and target_rule_id != TARGET_RULE_SINGLE_ADJACENT_ALLY
 	):
 		return result.reject(
 			TargetingResult.Reason.TARGET_RULE_UNSUPPORTED,
@@ -542,6 +549,9 @@ func _get_unit_rejection_reason(
 		return TargetingResult.Reason.TARGET_NOT_ALIVE
 
 	var action_type := unit_ability.ability.action_type
+	var target_rule_id := StringName(
+		unit_ability.ability.target_rule_id
+	)
 
 	if (
 		action_type == AbilityData.ActionType.ATTACK
@@ -551,6 +561,12 @@ func _get_unit_rejection_reason(
 
 	if (
 		action_type == AbilityData.ActionType.HEAL
+		and source_snapshot.team_id != target_snapshot.team_id
+	):
+		return TargetingResult.Reason.TARGET_NOT_ALLY
+
+	if (
+		target_rule_id == TARGET_RULE_SINGLE_ADJACENT_ALLY
 		and source_snapshot.team_id != target_snapshot.team_id
 	):
 		return TargetingResult.Reason.TARGET_NOT_ALLY

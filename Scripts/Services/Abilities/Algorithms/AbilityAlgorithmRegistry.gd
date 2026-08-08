@@ -27,6 +27,9 @@ const TARGET_RULE_ALL_ENEMIES : StringName = &"all_enemies"
 const TARGET_RULE_SINGLE_ADJACENT_ENEMY : StringName = (
 	&"single_adjacent_enemy"
 )
+const TARGET_RULE_SINGLE_ADJACENT_ALLY : StringName = (
+	&"single_adjacent_ally"
+)
 const TARGET_RULE_AREA_AROUND_UNIT : StringName = &"area_around_unit"
 const TARGET_RULE_AREA_AROUND_CELL : StringName = &"area_around_cell"
 const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL : StringName = (
@@ -334,6 +337,7 @@ func _build_execute_impact_plan_definition() -> AbilityAlgorithmDefinition:
 		TARGET_RULE_SINGLE_ANY_ALLY,
 		TARGET_RULE_ALL_ENEMIES,
 		TARGET_RULE_SINGLE_ADJACENT_ENEMY,
+		TARGET_RULE_SINGLE_ADJACENT_ALLY,
 		TARGET_RULE_AREA_AROUND_UNIT,
 		TARGET_RULE_AREA_AROUND_CELL,
 		TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
@@ -509,6 +513,7 @@ func _validate_trigger_data(
 				== AbilityTriggerData.TargetSelectionPolicy.PLAYER_CHOICE
 				and StringName(ability_data.target_rule_id) not in [
 					TARGET_RULE_SINGLE_ADJACENT_ENEMY,
+					TARGET_RULE_SINGLE_ADJACENT_ALLY,
 					TARGET_RULE_SINGLE_ANY_ENEMY,
 					TARGET_RULE_SINGLE_ANY_ALLY
 				]

@@ -51,7 +51,7 @@ func _test_resource_contract() -> void:
 	assert(handler_data.max_hp == 10)
 	assert(handler_data.armor == 0)
 	assert(handler_data.movement == 2)
-	assert(handler_data.active_abilities.size() == 1)
+	assert(handler_data.active_abilities.size() == 2)
 	assert(handler_data.active_abilities[0] == summon_ability)
 	assert(summon_ability.action_point_cost == 1)
 	assert(summon_ability.cooldown_rounds == 0)

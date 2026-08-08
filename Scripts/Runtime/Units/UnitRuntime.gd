@@ -67,8 +67,10 @@ var active_effects : Array[EffectRuntime] = []
 
 var action_points_remaining : int = 0
 var movement_points_remaining : int = 0
+var movement_modifier_this_activation : int = 0
 
 var initiative_modifier_this_round : int = 0
+var initiative_effect_modifier_this_round : int = 0
 var initiative_roll_this_round : int = 0
 
 # ============================================================
@@ -101,8 +103,10 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 
 	action_points_remaining = 0
 	movement_points_remaining = 0
+	movement_modifier_this_activation = 0
 	
 	initiative_modifier_this_round = 0
+	initiative_effect_modifier_this_round = 0
 	initiative_roll_this_round = data.initiative
 
 
@@ -212,7 +216,8 @@ func finish_round(round_number : int) -> void:
 
 func start_activation(
 	round_number : int = 0,
-	activation_index : int = -1
+	activation_index : int = -1,
+	movement_modifier : int = 0
 ) -> void:
 	if data == null:
 		push_error("UnitRuntime: cannot start activation without UnitData")
@@ -221,10 +226,15 @@ func start_activation(
 	if not is_alive:
 		action_points_remaining = 0
 		movement_points_remaining = 0
+		movement_modifier_this_activation = 0
 		return
 
 	action_points_remaining = 1
-	movement_points_remaining = data.movement
+	movement_modifier_this_activation = movement_modifier
+	movement_points_remaining = max(
+		0,
+		data.movement + movement_modifier_this_activation
+	)
 
 	for ability_runtime in active_abilities:
 		if ability_runtime != null:
@@ -246,19 +256,30 @@ func start_activation(
 		" | AP: ",
 		action_points_remaining,
 		" | MP: ",
-		movement_points_remaining
+		movement_points_remaining,
+		" (modifier: ",
+		movement_modifier_this_activation,
+		")"
 	)
 # ============================================================
 # ИНИЦИАТИВА РАУНДА
 # ============================================================
 
-func set_round_initiative_modifier(modifier : int) -> void:
+func set_round_initiative_modifier(
+	modifier : int,
+	effect_modifier : int = 0
+) -> void:
 	if data == null:
 		push_error("UnitRuntime: cannot set initiative roll without UnitData")
 		return
 
 	initiative_modifier_this_round = modifier
-	initiative_roll_this_round = data.initiative + initiative_modifier_this_round
+	initiative_effect_modifier_this_round = effect_modifier
+	initiative_roll_this_round = (
+		data.initiative
+		+ initiative_modifier_this_round
+		+ initiative_effect_modifier_this_round
+	)
 
 # ============================================================
 # ПРОВЕРКА И ТРАТА ДЕЙСТВИЯ
@@ -397,6 +418,7 @@ func begin_death_pending() -> bool:
 	death_state = DeathState.DEATH_PENDING
 	action_points_remaining = 0
 	movement_points_remaining = 0
+	movement_modifier_this_activation = 0
 	_capture_death_origin()
 	return true
 
@@ -428,6 +450,7 @@ func confirm_death() -> bool:
 	death_state = DeathState.DEAD
 	action_points_remaining = 0
 	movement_points_remaining = 0
+	movement_modifier_this_activation = 0
 	active_effects.clear()
 	return true
 

@@ -10,7 +10,8 @@ enum Kind {
 	EFFECT_REFRESHED,
 	ACTIVATION_ENDED,
 	DEATH_CONFIRMED,
-	UNIT_SUMMONED
+	UNIT_SUMMONED,
+	DEATH_PREVENTED
 }
 
 
@@ -23,6 +24,8 @@ var execution_id : StringName = &""
 var root_execution_id : StringName = &""
 
 var impact_id : StringName = &""
+
+var cause_event_id : StringName = &""
 
 var source_unit : UnitRuntime = null
 

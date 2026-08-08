@@ -214,6 +214,8 @@ static func _validate_effect_data(
 		):
 			issues.append(prefix + ": длительность должна быть больше нуля.")
 
+	_validate_passive_rules(effect_data, prefix, issues)
+
 	var trigger_ids : Dictionary = {}
 
 	for trigger_index in range(effect_data.triggers.size()):
@@ -242,6 +244,41 @@ static func _validate_effect_data(
 					visited_plans,
 					visited_effects
 				)
+			)
+
+
+static func _validate_passive_rules(
+	effect_data : EffectData,
+	prefix : String,
+	issues : PackedStringArray
+) -> void:
+	for rule_index in range(effect_data.passive_rules.size()):
+		var rule : PassiveRuleData = effect_data.passive_rules[rule_index]
+		var rule_prefix := "%s.passive_rules[%d]" % [prefix, rule_index]
+
+		if rule == null:
+			issues.append(rule_prefix + ": правило отсутствует.")
+			continue
+
+		if rule.rule_type not in PassiveRuleData.RuleType.values():
+			issues.append(rule_prefix + ": неизвестный тип правила.")
+			continue
+
+		if (
+			rule.rule_type in [
+				PassiveRuleData.RuleType.MODIFY_INITIATIVE,
+				PassiveRuleData.RuleType.MODIFY_MOVEMENT
+			]
+			and rule.modifier_amount == 0
+		):
+			issues.append(rule_prefix + ": модификатор не должен быть нулевым.")
+
+		if (
+			rule.rule_type == PassiveRuleData.RuleType.PREVENT_DEATH
+			and rule.restored_hp <= 0
+		):
+			issues.append(
+				rule_prefix + ": восстановленное HP должно быть больше нуля."
 			)
 
 

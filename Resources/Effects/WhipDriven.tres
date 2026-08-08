@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="EffectData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Effects/EffectData.gd" id="1_effect"]
+[ext_resource type="Script" path="res://Resources/Effects/EffectDurationData.gd" id="2_duration"]
+[ext_resource type="Script" path="res://Resources/Effects/PassiveRuleData.gd" id="3_rule"]
+
+[sub_resource type="Resource" id="Resource_duration"]
+script = ExtResource("2_duration")
+duration_unit = 2
+amount = 1
+skip_application_round = true
+
+[sub_resource type="Resource" id="Resource_initiative"]
+script = ExtResource("3_rule")
+rule_type = 1
+modifier_amount = 10
+
+[sub_resource type="Resource" id="Resource_movement"]
+script = ExtResource("3_rule")
+rule_type = 2
+modifier_amount = 1
+
+[sub_resource type="Resource" id="Resource_last_stand"]
+script = ExtResource("3_rule")
+rule_type = 3
+restored_hp = 1
+
+[resource]
+script = ExtResource("1_effect")
+effect_id = "status.whip_driven"
+effect_name = "Подгон"
+description = "До конца следующего раунда даёт +10 инициативы, +1 к движению и один раз предотвращает смерть, оставляя 1 HP. Тестовые значения."
+reapply_policy = 0
+duration = SubResource("Resource_duration")
+passive_rules = Array[ExtResource("3_rule")]([SubResource("Resource_initiative"), SubResource("Resource_movement"), SubResource("Resource_last_stand")])

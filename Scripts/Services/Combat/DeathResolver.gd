@@ -20,12 +20,13 @@ func observe_combat_event(event : CombatEvent) -> void:
 
 func confirm_pending_deaths(
 	battle_state : BattleState,
-	combat_event_log : CombatEventLog
+	combat_event_log : CombatEventLog,
+	status_effect_system : StatusEffectSystem = null
 ) -> Array[CombatEvent]:
-	var death_events : Array[CombatEvent] = []
+	var resolution_events : Array[CombatEvent] = []
 
 	if battle_state == null or combat_event_log == null:
-		return death_events
+		return resolution_events
 
 	for unit in battle_state.units:
 		if unit == null:
@@ -44,6 +45,34 @@ func confirm_pending_deaths(
 			unit_instance_id,
 			null
 		) as CombatEvent
+		var prevention_effect : EffectRuntime = null
+
+		if status_effect_system != null:
+			prevention_effect = status_effect_system.try_prevent_death(unit)
+
+		if prevention_effect != null:
+			print(
+				"DEATH_PREVENTED | unit: ",
+				unit.data.unit_name,
+				" | effect_id: ",
+				prevention_effect.get_effect_id(),
+				" | restored HP: ",
+				unit.current_hp
+			)
+			var prevention_event := (
+				combat_event_log.record_death_prevented_event(
+					unit,
+					cause_event,
+					prevention_effect,
+					battle_state
+				)
+			)
+
+			if prevention_event != null:
+				resolution_events.append(prevention_event)
+
+			_lethal_events_by_unit_id.erase(unit_instance_id)
+			continue
 
 		if not unit.confirm_death():
 			continue
@@ -62,11 +91,11 @@ func confirm_pending_deaths(
 		)
 
 		if death_event != null:
-			death_events.append(death_event)
+			resolution_events.append(death_event)
 
 		_lethal_events_by_unit_id.erase(unit_instance_id)
 
-	return death_events
+	return resolution_events
 
 
 func clear() -> void:

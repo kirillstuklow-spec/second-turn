@@ -123,7 +123,7 @@ func get_summary() -> String:
 			return "Атакующая способность требует вражескую цель."
 
 		Reason.TARGET_NOT_ALLY:
-			return "Лечащая способность требует союзную цель."
+			return "Способность требует союзную цель."
 
 		Reason.TARGET_NOT_ADJACENT:
 			return "Цель не находится на соседней ортогональной клетке."

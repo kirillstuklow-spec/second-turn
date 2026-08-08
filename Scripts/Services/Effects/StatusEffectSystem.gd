@@ -23,6 +23,7 @@ func apply_effect(
 	var effect_data := impact.effect_data
 	var existing := get_effect(carrier, StringName(effect_data.effect_id))
 	var activation_serial := battle_state.turn_state.activation_serial
+	var round_number := battle_state.round_number
 
 	if existing != null:
 		match effect_data.reapply_policy:
@@ -30,7 +31,8 @@ func apply_effect(
 				existing.refresh_source_and_duration(
 					impact.source_unit,
 					impact.source_ability_data,
-					activation_serial
+					activation_serial,
+					round_number
 				)
 				return EffectApplicationResult.create(
 					EffectApplicationResult.Status.REFRESHED,
@@ -57,7 +59,8 @@ func apply_effect(
 		impact.source_unit,
 		impact.source_ability_data,
 		carrier,
-		activation_serial
+		activation_serial,
+		round_number
 	)
 	_next_effect_runtime_sequence += 1
 	carrier.active_effects.append(effect_runtime)
@@ -138,7 +141,10 @@ func finish_activation(
 			remove_effect(carrier, effect_runtime)
 
 
-func finish_round(units : Array[UnitRuntime]) -> void:
+func finish_round(
+	units : Array[UnitRuntime],
+	completed_round_number : int = -1
+) -> void:
 	for carrier in units:
 		if carrier == null:
 			continue
@@ -157,6 +163,14 @@ func finish_round(units : Array[UnitRuntime]) -> void:
 			if (
 				effect_runtime.data.duration.duration_unit
 				!= EffectDurationData.DurationUnit.ROUNDS
+			):
+				continue
+
+			if (
+				effect_runtime.data.duration.skip_application_round
+				and completed_round_number >= 0
+				and effect_runtime.last_application_round
+				== completed_round_number
 			):
 				continue
 
@@ -187,6 +201,64 @@ func blocks_healing_kind(
 				and passive_rule.healing_kind == healing_kind
 			):
 				return effect_runtime
+
+	return null
+
+
+func get_additive_modifier(
+	carrier : UnitRuntime,
+	rule_type : PassiveRuleData.RuleType
+) -> int:
+	if carrier == null:
+		return 0
+
+	if rule_type not in [
+		PassiveRuleData.RuleType.MODIFY_INITIATIVE,
+		PassiveRuleData.RuleType.MODIFY_MOVEMENT
+	]:
+		return 0
+
+	var total := 0
+
+	for effect_runtime in carrier.active_effects:
+		if effect_runtime == null or effect_runtime.data == null:
+			continue
+
+		for passive_rule in effect_runtime.data.passive_rules:
+			if passive_rule == null or passive_rule.rule_type != rule_type:
+				continue
+
+			total += passive_rule.modifier_amount
+
+	return total
+
+
+# Возвращает из DEATH_PENDING первый подходящий эффект и расходует весь
+# EffectRuntime. Если предотвращение невозможно, состояние не меняется.
+func try_prevent_death(carrier : UnitRuntime) -> EffectRuntime:
+	if carrier == null or not carrier.is_death_pending():
+		return null
+
+	var effects_at_attempt : Array[EffectRuntime] = []
+	effects_at_attempt.append_array(carrier.active_effects)
+
+	for effect_runtime in effects_at_attempt:
+		if effect_runtime == null or effect_runtime.data == null:
+			continue
+
+		for passive_rule in effect_runtime.data.passive_rules:
+			if (
+				passive_rule == null
+				or passive_rule.rule_type
+				!= PassiveRuleData.RuleType.PREVENT_DEATH
+			):
+				continue
+
+			if not carrier.cancel_pending_death(passive_rule.restored_hp):
+				continue
+
+			remove_effect(carrier, effect_runtime)
+			return effect_runtime
 
 	return null
 

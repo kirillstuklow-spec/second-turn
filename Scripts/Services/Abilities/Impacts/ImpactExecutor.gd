@@ -712,7 +712,8 @@ func _stabilize_reactions_and_deaths(
 
 		var death_events := death_resolver.confirm_pending_deaths(
 			battle_state,
-			combat_event_log
+			combat_event_log,
+			status_effect_system
 		)
 
 		if death_events.is_empty():

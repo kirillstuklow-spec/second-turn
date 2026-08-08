@@ -25,6 +25,10 @@ var remaining_duration : int = -1
 # наложен или обновлён. Нужен, чтобы не списывать неполную активацию.
 var last_application_activation_serial : int = -1
 
+# Номер раунда последнего наложения или обновления. Он позволяет эффектам,
+# измеряемым раундами, не терять длительность в конце неполного раунда.
+var last_application_round : int = -1
+
 # Идемпотентность и настраиваемые частотные политики триггеров.
 var processed_event_ids : Dictionary = {}
 
@@ -41,7 +45,8 @@ func setup(
 	new_source_unit : UnitRuntime,
 	new_source_ability_data : UnitAbilityData,
 	new_carrier : Variant,
-	activation_serial : int
+	activation_serial : int,
+	round_number : int
 ) -> void:
 	runtime_id = new_runtime_id
 	data = new_data
@@ -50,18 +55,21 @@ func setup(
 	source_ability_data = new_source_ability_data
 	carrier = new_carrier
 	last_application_activation_serial = activation_serial
+	last_application_round = round_number
 	remaining_duration = _get_initial_duration()
 
 
 func refresh_source_and_duration(
 	new_source_unit : UnitRuntime,
 	new_source_ability_data : UnitAbilityData,
-	activation_serial : int
+	activation_serial : int,
+	round_number : int
 ) -> void:
 	source = new_source_unit
 	source_unit = new_source_unit
 	source_ability_data = new_source_ability_data
 	last_application_activation_serial = activation_serial
+	last_application_round = round_number
 	remaining_duration = _get_initial_duration()
 
 

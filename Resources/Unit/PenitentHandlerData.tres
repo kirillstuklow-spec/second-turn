@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
 [ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
 [ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/SummonPenitent.tres" id="3_summon"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/Whip.tres" id="4_whip"]
 
 [resource]
 script = ExtResource("1_unit")
@@ -16,4 +17,4 @@ max_hp = 10
 armor = 0
 movement = 2
 keywords = Array[String](["white_brotherhood", "human", "summoner"])
-active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_summon")])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_summon"), ExtResource("4_whip")])
