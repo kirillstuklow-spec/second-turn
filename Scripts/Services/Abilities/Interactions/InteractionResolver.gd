@@ -60,6 +60,24 @@ func resolve(
 			resolution.source_type_tag
 		)
 
+	var target_cell_snapshot := battle_snapshot.get_cell_snapshot(
+		target_snapshot.cell
+	)
+	var battlefield_type_defense : BattlefieldObjectRuntime = null
+
+	if target_cell_snapshot != null:
+		battlefield_type_defense = target_cell_snapshot.get_defense_provider(
+			resolution.interaction_type_tag
+		)
+
+	if battlefield_type_defense != null:
+		return _block_by_battlefield_object(
+			resolution,
+			InteractionResolution.Stage.BATTLEFIELD_OBJECT_DEFENSE_INTERACTION_TYPE,
+			resolution.interaction_type_tag,
+			battlefield_type_defense
+		)
+
 	if target_snapshot.has_defense(
 		resolution.interaction_type_tag
 	):
@@ -68,6 +86,21 @@ func resolve(
 			InteractionResolution.Outcome.BLOCKED_DEFENSE,
 			InteractionResolution.Stage.DEFENSE_INTERACTION_TYPE,
 			resolution.interaction_type_tag
+		)
+
+	var battlefield_source_defense : BattlefieldObjectRuntime = null
+
+	if target_cell_snapshot != null and resolution.source_type_tag != &"":
+		battlefield_source_defense = target_cell_snapshot.get_defense_provider(
+			resolution.source_type_tag
+		)
+
+	if battlefield_source_defense != null:
+		return _block_by_battlefield_object(
+			resolution,
+			InteractionResolution.Stage.BATTLEFIELD_OBJECT_DEFENSE_SOURCE_TYPE,
+			resolution.source_type_tag,
+			battlefield_source_defense
 		)
 
 	if (
@@ -134,6 +167,20 @@ func resolve(
 			&"armor"
 		)
 
+	return resolution
+
+
+func _block_by_battlefield_object(
+	resolution : InteractionResolution,
+	stage : InteractionResolution.Stage,
+	matched_tag : StringName,
+	object_runtime : BattlefieldObjectRuntime
+) -> InteractionResolution:
+	resolution.outcome = InteractionResolution.Outcome.BLOCKED_DEFENSE
+	resolution.stage = stage
+	resolution.matched_tag = matched_tag
+	resolution.defense_to_consume = &""
+	resolution.blocking_battlefield_object = object_runtime
 	return resolution
 
 

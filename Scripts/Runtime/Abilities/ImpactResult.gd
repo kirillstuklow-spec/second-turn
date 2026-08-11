@@ -31,6 +31,8 @@ var effect_application_result : EffectApplicationResult = null
 
 var blocking_effect_runtime : EffectRuntime = null
 
+var blocking_battlefield_object : BattlefieldObjectRuntime = null
+
 var summoned_unit : UnitRuntime = null
 
 var created_battlefield_object : BattlefieldObjectRuntime = null

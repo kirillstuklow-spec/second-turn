@@ -455,6 +455,123 @@ func record_spatial_impact_event(
 	return event
 
 
+# Фиксирует сам факт разрешения воздействия в покрытой клетке. В отличие от
+# IMPACT_APPLIED событие существует и для заблокированного воздействия, но не
+# сообщает о повторном изменении HP.
+func record_spatial_impact_resolved_event(
+	impact_result : ImpactResult,
+	battle_state : BattleState
+) -> CombatEvent:
+	if (
+		impact_result == null
+		or impact_result.impact == null
+		or (
+			not impact_result.was_applied()
+			and not impact_result.was_blocked()
+		)
+		or battle_state == null
+	):
+		return null
+
+	var impact := impact_result.impact
+
+	if impact.operation not in [
+		Impact.Operation.DAMAGE,
+		Impact.Operation.HEAL,
+		Impact.Operation.APPLY_EFFECT,
+		Impact.Operation.AFFECT_CELL
+	]:
+		return null
+
+	var target_cell := impact.target_cell
+
+	if (
+		target_cell == null
+		or battle_state.get_battlefield_objects_covering_cell(
+			target_cell
+		).is_empty()
+	):
+		return null
+
+	var event := CombatEvent.new()
+	event.event_id = StringName(
+		"combat_event_%06d" % _next_event_sequence
+	)
+	event.kind = CombatEvent.Kind.IMPACT_RESOLVED
+	event.execution_id = impact.execution_id
+	event.root_execution_id = impact.root_execution_id
+	event.impact_id = impact.impact_id
+	event.source_unit = impact.source_unit
+	event.source_object = impact.source_object
+	event.source_ability_data = impact.source_ability_data
+	event.target_unit = impact.target_unit
+	event.target_cell = target_cell
+	event.target_cell_x = target_cell.x
+	event.target_cell_y = target_cell.y
+	event.applied_amount = impact_result.magnitude_applied
+	event.hp_delta = impact_result.hp_after - impact_result.hp_before
+	event.impact_outcome = impact_result.get_outcome_id()
+	event.source_type = impact.source_type
+	event.interaction_type = impact.interaction_type
+	event.origin_effect_runtime_id = impact.origin_effect_runtime_id
+	event.reaction_depth = impact.reaction_depth
+	_capture_unit_cell(event, impact.source_unit, true)
+	_stamp_event_time(event, battle_state)
+
+	_next_event_sequence += 1
+	history.append(event)
+	return event
+
+
+func record_battlefield_object_triggered_event(
+	task : ReactionTask,
+	battle_state : BattleState
+) -> CombatEvent:
+	if (
+		task == null
+		or task.source_battlefield_object == null
+		or task.battlefield_object_trigger_data == null
+		or battle_state == null
+	):
+		return null
+
+	var object_runtime := task.source_battlefield_object
+	var trigger_data := task.battlefield_object_trigger_data
+	var cause_event := task.trigger_event
+	var event := CombatEvent.new()
+	event.event_id = StringName(
+		"combat_event_%06d" % _next_event_sequence
+	)
+	event.kind = CombatEvent.Kind.BATTLEFIELD_OBJECT_TRIGGERED
+	event.execution_id = task.execution_id
+	event.root_execution_id = task.root_execution_id
+	event.source_unit = object_runtime.source_unit
+	event.source_object = object_runtime
+	event.source_ability_data = object_runtime.source_ability_data
+	event.battlefield_object = object_runtime
+	event.battlefield_object_runtime_id = object_runtime.runtime_id
+	event.battlefield_object_id = object_runtime.get_object_id()
+	event.battlefield_object_trigger_id = StringName(trigger_data.trigger_id)
+	event.target_cell = object_runtime.anchor_cell
+	event.applied_amount = 1
+	event.interaction_type = Impact.InteractionType.OBJECT
+	event.reaction_depth = task.reaction_depth
+
+	if object_runtime.anchor_cell != null:
+		event.target_cell_x = object_runtime.anchor_cell.x
+		event.target_cell_y = object_runtime.anchor_cell.y
+
+	if cause_event != null:
+		event.cause_event_id = cause_event.event_id
+		event.source_type = cause_event.source_type
+
+	_capture_unit_cell(event, object_runtime.source_unit, true)
+	_stamp_event_time(event, battle_state)
+	_next_event_sequence += 1
+	history.append(event)
+	return event
+
+
 func record_battlefield_object_removed_event(
 	object_runtime : BattlefieldObjectRuntime,
 	reason : StringName,

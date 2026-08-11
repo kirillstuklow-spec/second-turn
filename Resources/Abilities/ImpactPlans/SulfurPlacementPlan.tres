@@ -1,14 +1,12 @@
-[gd_resource type="Resource" script_class="ImpactPlanData" format=3]
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3 uid="uid://dyrssfjiiliqg"]
 
-[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
-[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
-[ext_resource type="Resource" path="res://Resources/BattlefieldObjects/SulfurCloud.tres" id="3_sulfur_cloud"]
+[ext_resource type="Script" uid="uid://dlvynt075pr8p" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" uid="uid://bvbgefwste3of" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+[ext_resource type="Resource" uid="uid://dl04tsxy6okvf" path="res://Resources/BattlefieldObjects/SulfurCloud.tres" id="3_sulfur_cloud"]
 
 [sub_resource type="Resource" id="Resource_create_sulfur"]
 script = ExtResource("2_node")
 node_id = "create_sulfur_cloud"
-source_reference = 0
-target_reference = 0
 operation = 5
 interaction_type = 7
 magnitude = 1
@@ -17,5 +15,4 @@ battlefield_object_data = ExtResource("3_sulfur_cloud")
 [resource]
 script = ExtResource("1_plan")
 plan_id = "ability.ash_herald_sulfur"
-topology = 0
 nodes = Array[ExtResource("2_node")]([SubResource("Resource_create_sulfur")])

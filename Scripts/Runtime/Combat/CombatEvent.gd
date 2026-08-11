@@ -20,7 +20,12 @@ enum Kind {
 	BATTLEFIELD_OBJECT_REMOVED,
 	# Публикуется только для применённого Impact в клетке, покрытой хотя бы
 	# одним объектом. Это пространственный факт попадания, а не второй урон.
-	IMPACT_APPLIED
+	IMPACT_APPLIED,
+	# Добавлен в конец, чтобы не сдвигать значения существующих событий.
+	BATTLEFIELD_OBJECT_TRIGGERED,
+	# Факт разрешённого пространственного воздействия. В отличие от
+	# IMPACT_APPLIED публикуется и после блокировки.
+	IMPACT_RESOLVED
 }
 
 
@@ -58,6 +63,8 @@ var battlefield_object_runtime_id : StringName = &""
 
 var battlefield_object_id : StringName = &""
 
+var battlefield_object_trigger_id : StringName = &""
+
 var object_removal_reason : StringName = &""
 
 var source_cell : CellRuntime = null
@@ -78,6 +85,8 @@ var applied_amount : int = 0
 # является положительной эффективностью, а hp_delta различает лечение (+)
 # и отрицательное HEALING (-) без превращения его в DAMAGE_APPLIED.
 var hp_delta : int = 0
+
+var impact_outcome : StringName = &""
 
 # HEALTH_LOST объединяет реакции на сам факт уменьшения HP, но сохраняет
 # исходную природу потери для правил, которым важно различать урон, лечение

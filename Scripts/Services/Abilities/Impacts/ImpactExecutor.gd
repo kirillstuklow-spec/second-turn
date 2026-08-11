@@ -697,6 +697,9 @@ func _apply_interaction_resolution(
 	impact_result.block_chance = resolution.block_chance
 	impact_result.armor_roll = resolution.armor_roll
 	impact_result.consumed_defense = resolution.defense_to_consume
+	impact_result.blocking_battlefield_object = (
+		resolution.blocking_battlefield_object
+	)
 	impact_result.message = resolution.message
 
 	match resolution.outcome:
@@ -747,12 +750,14 @@ func _apply_batch(
 		if target == null:
 			continue
 
-		if result.outcome == ImpactResult.Outcome.BLOCKED_DEFENSE:
+		if (
+			result.outcome == ImpactResult.Outcome.BLOCKED_DEFENSE
+			and result.consumed_defense != &""
+		):
 			target.consume_defense(String(result.consumed_defense))
-			_print_result(result)
-			continue
 
 		if not result.was_applied():
+			_record_spatial_impact_resolved_event(result, battle_state)
 			_print_result(result)
 			continue
 
@@ -824,6 +829,7 @@ func _apply_batch(
 			)
 
 		_record_spatial_impact_event(result, battle_state)
+		_record_spatial_impact_resolved_event(result, battle_state)
 
 		_print_result(result)
 
@@ -975,6 +981,22 @@ func _record_spatial_impact_event(
 		reaction_system.collect_reactions(event, battle_state)
 
 
+func _record_spatial_impact_resolved_event(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if combat_event_log == null or reaction_system == null:
+		return
+
+	var event := combat_event_log.record_spatial_impact_resolved_event(
+		result,
+		battle_state
+	)
+
+	if event != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+
 func _apply_affect_cell_result(
 	result : ImpactResult,
 	battle_state : BattleState
@@ -984,6 +1006,7 @@ func _apply_affect_cell_result(
 
 	if result.was_applied():
 		_record_spatial_impact_event(result, battle_state)
+		_record_spatial_impact_resolved_event(result, battle_state)
 
 	_print_result(result)
 
@@ -1140,8 +1163,13 @@ func _execute_reaction_task(
 	if (
 		task != null
 		and task.source_battlefield_object != null
-		and task.selected_targets.is_empty()
+		and (
+			task.response_plan_data == null
+			or task.selected_targets.is_empty()
+		)
 	):
+		_publish_battlefield_object_triggered_event(task, battle_state)
+
 		if task.consume_source_battlefield_object:
 			_remove_battlefield_object(
 				task.source_battlefield_object,
@@ -1183,6 +1211,10 @@ func _execute_reaction_task(
 		battle_state
 	)
 	root_result.reaction_execution_results.append(reaction_result)
+	var reaction_was_successful := reaction_result.is_successful()
+
+	if reaction_was_successful:
+		_publish_battlefield_object_triggered_event(task, battle_state)
 
 	if (
 		task.source_battlefield_object != null
@@ -1195,7 +1227,42 @@ func _execute_reaction_task(
 			battle_state
 		)
 
-	return reaction_result.is_successful()
+	return reaction_was_successful
+
+
+func _publish_battlefield_object_triggered_event(
+	task : ReactionTask,
+	battle_state : BattleState
+) -> CombatEvent:
+	if (
+		task == null
+		or task.source_battlefield_object == null
+		or combat_event_log == null
+		or reaction_system == null
+	):
+		return null
+
+	var event := combat_event_log.record_battlefield_object_triggered_event(
+		task,
+		battle_state
+	)
+
+	if event != null:
+		print(
+			"BATTLEFIELD_OBJECT_TRIGGERED | name: ",
+			_get_battlefield_object_display_name(
+				task.source_battlefield_object
+			),
+			" | runtime: ",
+			task.source_battlefield_object.runtime_id,
+			" | trigger: ",
+			event.battlefield_object_trigger_id,
+			" | cause: ",
+			event.cause_event_id
+		)
+		reaction_system.collect_reactions(event, battle_state)
+
+	return event
 
 
 func _remove_battlefield_object(
@@ -1223,7 +1290,9 @@ func _remove_battlefield_object(
 		return false
 
 	print(
-		"BATTLEFIELD_OBJECT_REMOVED | runtime: ",
+		"BATTLEFIELD_OBJECT_REMOVED | name: ",
+		_get_battlefield_object_display_name(object_runtime),
+		" | runtime: ",
 		object_runtime.runtime_id,
 		" | object_id: ",
 		object_runtime.get_object_id(),
@@ -1645,13 +1714,129 @@ func _print_result(result : ImpactResult) -> void:
 	if result == null or result.impact == null:
 		return
 
-	print(
-		"Impact ",
-		result.impact.impact_id,
-		" | ",
-		result.get_outcome_id(),
-		" | requested: ",
-		result.magnitude_requested,
-		" | applied: ",
-		result.magnitude_applied
+	var impact := result.impact
+	var fields := PackedStringArray([
+		"IMPACT",
+		"id: %s" % String(impact.impact_id),
+		"result: %s" % String(result.get_outcome_id()),
+		"source: %s" % _describe_impact_source(impact),
+		"target: %s" % _describe_impact_target(impact),
+		"amount: %d/%d" % [
+			result.magnitude_applied,
+			result.magnitude_requested
+		]
+	])
+
+	if (
+		impact.target_unit != null
+		and impact.operation in [
+			Impact.Operation.DAMAGE,
+			Impact.Operation.HEAL
+		]
+	):
+		fields.append("HP: %d -> %d" % [result.hp_before, result.hp_after])
+
+	if result.blocking_battlefield_object != null:
+		fields.append(
+			"blocked_by: %s [%s]" % [
+				_get_battlefield_object_display_name(
+					result.blocking_battlefield_object
+				),
+				String(result.blocking_battlefield_object.runtime_id)
+			]
+		)
+
+	if result.created_battlefield_object != null:
+		fields.append(
+			"created: %s [%s]" % [
+				_get_battlefield_object_display_name(
+					result.created_battlefield_object
+				),
+				String(result.created_battlefield_object.runtime_id)
+			]
+		)
+
+	print(" | ".join(fields))
+
+
+func _describe_impact_source(impact : Impact) -> String:
+	if impact == null:
+		return "none"
+
+	if impact.source_object is BattlefieldObjectRuntime:
+		var object_runtime := (
+			impact.source_object as BattlefieldObjectRuntime
+		)
+		return "%s [%s]" % [
+			_get_battlefield_object_display_name(object_runtime),
+			String(object_runtime.runtime_id)
+		]
+
+	var source_name := _describe_unit(
+		impact.source_unit,
+		impact.source_unit.cell if impact.source_unit != null else null
 	)
+
+	if impact.source_ability_data != null:
+		return "%s / %s" % [
+			source_name,
+			impact.source_ability_data.ability_name
+		]
+
+	return source_name
+
+
+func _describe_impact_target(impact : Impact) -> String:
+	if impact == null:
+		return "none"
+
+	if impact.target_unit != null:
+		return _describe_unit(impact.target_unit, impact.target_cell)
+
+	if impact.target_cell != null:
+		return "cell %d,%d" % [impact.target_cell.x, impact.target_cell.y]
+
+	return "none"
+
+
+func _describe_unit(
+	unit : UnitRuntime,
+	cell_hint : CellRuntime = null
+) -> String:
+	if unit == null:
+		return "none"
+
+	var display_name := "unit"
+
+	if unit.data != null and not unit.data.unit_name.is_empty():
+		display_name = unit.data.unit_name
+
+	var display_cell : CellRuntime = unit.cell as CellRuntime
+
+	if display_cell == null:
+		display_cell = cell_hint
+
+	if display_cell != null:
+		return "%s [team %d @ %d,%d]" % [
+			display_name,
+			unit.team_id,
+			display_cell.x,
+			display_cell.y
+		]
+
+	return "%s [team %d]" % [display_name, unit.team_id]
+
+
+func _get_battlefield_object_display_name(
+	object_runtime : BattlefieldObjectRuntime
+) -> String:
+	if object_runtime == null:
+		return "none"
+
+	if (
+		object_runtime.data != null
+		and not object_runtime.data.object_name.is_empty()
+	):
+		return object_runtime.data.object_name
+
+	return String(object_runtime.get_object_id())

@@ -71,6 +71,47 @@ func covers_cell(cell : CellRuntime) -> bool:
 	return is_active and cell != null and covered_cells.has(cell)
 
 
+func provides_defense(defense_tag : StringName) -> bool:
+	return (
+		is_active
+		and data != null
+		and defense_tag != &""
+		and data.provided_defenses.has(String(defense_tag))
+	)
+
+
+func has_coverage_contact(
+	other : BattlefieldObjectRuntime
+) -> bool:
+	if (
+		other == null
+		or other == self
+		or not is_active
+		or not other.is_active
+	):
+		return false
+
+	for own_cell in covered_cells:
+		if own_cell == null:
+			continue
+
+		for other_cell in other.covered_cells:
+			if other_cell == null:
+				continue
+
+			var manhattan_distance : int = (
+				absi(own_cell.x - other_cell.x)
+				+ absi(own_cell.y - other_cell.y)
+			)
+
+			# Ноль означает перекрытие, единица — соприкосновение стороной.
+			# Диагональное касание имеет расстояние два и контактом не считается.
+			if manhattan_distance <= 1:
+				return true
+
+	return false
+
+
 func get_living_units_inside() -> Array[UnitRuntime]:
 	var result : Array[UnitRuntime] = []
 

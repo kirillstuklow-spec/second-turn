@@ -12,14 +12,17 @@ enum Outcome {
 }
 
 
-# Порядок значений повторяет фактическую иерархию проверки.
+# Существующие числовые значения являются сериализованным контрактом. Поэтому
+# новые стадии добавляются в конец, а фактический порядок задаёт Resolver.
 enum Stage {
 	NONE,
 	IMMUNITY_INTERACTION_TYPE,
 	IMMUNITY_SOURCE_TYPE,
 	DEFENSE_INTERACTION_TYPE,
 	DEFENSE_SOURCE_TYPE,
-	ARMOR
+	ARMOR,
+	BATTLEFIELD_OBJECT_DEFENSE_INTERACTION_TYPE,
+	BATTLEFIELD_OBJECT_DEFENSE_SOURCE_TYPE
 }
 
 
@@ -36,6 +39,8 @@ var source_type_tag : StringName = &""
 var matched_tag : StringName = &""
 
 var defense_to_consume : StringName = &""
+
+var blocking_battlefield_object : BattlefieldObjectRuntime = null
 
 var armor_was_checked : bool = false
 
@@ -115,5 +120,11 @@ func get_stage_id() -> StringName:
 
 		Stage.ARMOR:
 			return &"armor"
+
+		Stage.BATTLEFIELD_OBJECT_DEFENSE_INTERACTION_TYPE:
+			return &"battlefield_object_defense_interaction_type"
+
+		Stage.BATTLEFIELD_OBJECT_DEFENSE_SOURCE_TYPE:
+			return &"battlefield_object_defense_source_type"
 
 	return &"unknown"

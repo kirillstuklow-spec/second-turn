@@ -29,14 +29,18 @@ func _run_test() -> void:
 	_test_placement_and_activation_end_damage()
 	_test_applied_fire_explodes_and_burns_all_units_inside()
 	_test_fire_contact_on_empty_covered_cell_explodes()
+	_test_adjacent_sulfur_clouds_chain_without_overlap()
+	_test_empty_middle_cloud_propagates_chain()
+	_test_separated_sulfur_cloud_does_not_chain()
 	_test_blocked_fire_does_not_trigger_object()
 	_test_round_lifetime_ignores_creation_round()
 
 	print(
 		"SulfurBattlefieldObjectSmokeTest: PASS — Data → Runtime → View "
 		+ "contract, full 3x3 placement, activation-end poison, applied "
-		+ "FIRE spatial trigger, all-unit explosion, Burning, removal and "
-		+ "two full subsequent rounds of lifetime"
+		+ "FIRE spatial trigger, all-unit explosion, same-type side-contact "
+		+ "chain reaction, Burning, removal and two full subsequent rounds "
+		+ "of lifetime"
 	)
 	quit()
 
@@ -49,7 +53,7 @@ func _test_resource_contract_and_full_square_targeting() -> void:
 	assert(object_data.get_validation_issues().is_empty())
 	assert(object_data.coverage_offsets.size() == 9)
 	assert(object_data.lifetime_rounds == 2)
-	assert(object_data.triggers.size() == 2)
+	assert(object_data.triggers.size() == 3)
 	assert(
 		object_data.triggers[0].event_kind
 		== CombatEvent.Kind.ACTIVATION_ENDED
@@ -60,6 +64,16 @@ func _test_resource_contract_and_full_square_targeting() -> void:
 	)
 	assert(object_data.triggers[1].source_type_filter == "fire")
 	assert(object_data.triggers[1].consume_object_on_trigger)
+	assert(
+		object_data.triggers[2].event_kind
+		== CombatEvent.Kind.BATTLEFIELD_OBJECT_TRIGGERED
+	)
+	assert(object_data.triggers[2].source_type_filter == "fire")
+	assert(
+		object_data.triggers[2].event_location_policy
+		== BattlefieldObjectTriggerData.EventLocationPolicy.SAME_TYPE_COVERAGE_CONTACT
+	)
+	assert(object_data.triggers[2].consume_object_on_trigger)
 
 	var registry := AbilityAlgorithmRegistry.new()
 	var schema := registry.validate_unit_ability(sulfur)
@@ -81,6 +95,11 @@ func _test_resource_contract_and_full_square_targeting() -> void:
 			object_data.triggers[1].response_plan_data
 		).is_empty()
 	)
+	assert(
+		ImpactPlanDataValidator.validate(
+			object_data.triggers[2].response_plan_data
+		).is_empty()
+	)
 
 	var battle_state := _make_battle_state()
 	var herald := _spawn_ash_herald(battle_state, 1, 0, 0)
@@ -95,6 +114,51 @@ func _test_resource_contract_and_full_square_targeting() -> void:
 	assert(valid_cells.has(battle_state.get_cell_at(3, 2)))
 	assert(not valid_cells.has(battle_state.get_cell_at(0, 0)))
 	assert(not valid_cells.has(battle_state.get_cell_at(6, 4)))
+
+	var first_runtime := BattlefieldObjectRuntime.new()
+	var first_coverage : Array[CellRuntime] = [
+		battle_state.get_cell_at(1, 1)
+	]
+	first_runtime.setup(
+		&"contact_first",
+		object_data,
+		null,
+		null,
+		&"contact_test",
+		first_coverage[0],
+		first_coverage,
+		1
+	)
+	var side_runtime := BattlefieldObjectRuntime.new()
+	var side_coverage : Array[CellRuntime] = [
+		battle_state.get_cell_at(2, 1)
+	]
+	side_runtime.setup(
+		&"contact_side",
+		object_data,
+		null,
+		null,
+		&"contact_test",
+		side_coverage[0],
+		side_coverage,
+		1
+	)
+	var diagonal_runtime := BattlefieldObjectRuntime.new()
+	var diagonal_coverage : Array[CellRuntime] = [
+		battle_state.get_cell_at(2, 2)
+	]
+	diagonal_runtime.setup(
+		&"contact_diagonal",
+		object_data,
+		null,
+		null,
+		&"contact_test",
+		diagonal_coverage[0],
+		diagonal_coverage,
+		1
+	)
+	assert(first_runtime.has_coverage_contact(side_runtime))
+	assert(not first_runtime.has_coverage_contact(diagonal_runtime))
 	battle_state.clear()
 
 
@@ -323,6 +387,205 @@ func _test_fire_contact_on_empty_covered_cell_explodes() -> void:
 	_free_pipeline_bundle(bundle)
 
 
+func _test_adjacent_sulfur_clouds_chain_without_overlap() -> void:
+	var battle_state := _make_battle_state()
+	var herald := _spawn_ash_herald(battle_state, 1, 6, 0)
+	var firestarter := battle_state.spawn_unit(
+		load(FIRESTARTER_PATH) as UnitData,
+		2,
+		0,
+		4
+	)
+	var first_victim := battle_state.spawn_unit(
+		_make_unit_data("adjacent_first", "Adjacent First", 12),
+		1,
+		1,
+		2
+	)
+	var second_victim := battle_state.spawn_unit(
+		_make_unit_data("adjacent_second", "Adjacent Second", 12),
+		2,
+		4,
+		2
+	)
+	var bundle := _make_pipeline_bundle(battle_state)
+	var first_placement := _place_sulfur(
+		bundle,
+		herald,
+		battle_state.get_cell_at(1, 2)
+	)
+	assert(first_placement.was_committed(), first_placement.message)
+	var first_object := battle_state.battlefield_objects[0]
+	var second_placement := _place_sulfur(
+		bundle,
+		herald,
+		battle_state.get_cell_at(4, 2)
+	)
+	assert(second_placement.was_committed(), second_placement.message)
+	var second_object := battle_state.battlefield_objects[1]
+
+	for covered_cell in first_object.covered_cells:
+		assert(not second_object.covered_cells.has(covered_cell))
+
+	assert(first_object.has_coverage_contact(second_object))
+	var first_hp_before := first_victim.current_hp
+	var second_hp_before := second_victim.current_hp
+	var result := _execute_fire_cell_contact(
+		bundle,
+		firestarter,
+		battle_state.get_cell_at(0, 2),
+		&"adjacent_chain_fire"
+	)
+
+	assert(result.is_successful(), result.get_summary())
+	assert(not battle_state.battlefield_objects.has(first_object))
+	assert(not battle_state.battlefield_objects.has(second_object))
+	assert(first_victim.current_hp == first_hp_before - 2)
+	assert(second_victim.current_hp == second_hp_before - 2)
+	assert(first_victim.get_active_effect(&"status.burning") != null)
+	assert(second_victim.get_active_effect(&"status.burning") != null)
+
+	var event_log := bundle["combat_event_log"] as CombatEventLog
+	var first_triggered := _find_object_triggered_event(
+		event_log,
+		first_object
+	)
+	var second_triggered := _find_object_triggered_event(
+		event_log,
+		second_object
+	)
+	assert(first_triggered != null)
+	assert(second_triggered != null)
+	assert(second_triggered.cause_event_id == first_triggered.event_id)
+	assert(second_triggered.reaction_depth == first_triggered.reaction_depth + 1)
+
+	_free_pipeline_bundle(bundle)
+
+
+func _test_empty_middle_cloud_propagates_chain() -> void:
+	var battle_state := _make_battle_state()
+	var herald := _spawn_ash_herald(battle_state, 1, 6, 0)
+	var firestarter := battle_state.spawn_unit(
+		load(FIRESTARTER_PATH) as UnitData,
+		2,
+		0,
+		4
+	)
+	var first_victim := battle_state.spawn_unit(
+		_make_unit_data("empty_chain_first", "Empty Chain First", 12),
+		1,
+		1,
+		2
+	)
+	var third_victim := battle_state.spawn_unit(
+		_make_unit_data("empty_chain_third", "Empty Chain Third", 12),
+		2,
+		5,
+		2
+	)
+	var bundle := _make_pipeline_bundle(battle_state)
+	var anchors : Array[CellRuntime] = [
+		battle_state.get_cell_at(1, 2),
+		battle_state.get_cell_at(3, 2),
+		battle_state.get_cell_at(5, 2)
+	]
+	var objects : Array[BattlefieldObjectRuntime] = []
+
+	for anchor in anchors:
+		var placement := _place_sulfur(bundle, herald, anchor)
+		assert(placement.was_committed(), placement.message)
+		objects.append(battle_state.battlefield_objects[-1])
+
+	assert(objects[1].get_living_units_inside().is_empty())
+	var first_hp_before := first_victim.current_hp
+	var third_hp_before := third_victim.current_hp
+	var result := _execute_fire_cell_contact(
+		bundle,
+		firestarter,
+		battle_state.get_cell_at(0, 2),
+		&"empty_middle_chain_fire"
+	)
+
+	assert(result.is_successful(), result.get_summary())
+	assert(battle_state.battlefield_objects.is_empty())
+	assert(first_victim.current_hp == first_hp_before - 2)
+	assert(third_victim.current_hp == third_hp_before - 2)
+	var event_log := bundle["combat_event_log"] as CombatEventLog
+	var first_triggered := _find_object_triggered_event(event_log, objects[0])
+	var middle_triggered := _find_object_triggered_event(event_log, objects[1])
+	var third_triggered := _find_object_triggered_event(event_log, objects[2])
+	assert(first_triggered != null)
+	assert(middle_triggered != null)
+	assert(third_triggered != null)
+	assert(middle_triggered.cause_event_id == first_triggered.event_id)
+	assert(third_triggered.cause_event_id == middle_triggered.event_id)
+
+	_free_pipeline_bundle(bundle)
+
+
+func _test_separated_sulfur_cloud_does_not_chain() -> void:
+	var battle_state := _make_battle_state()
+	var herald := _spawn_ash_herald(battle_state, 1, 3, 0)
+	var firestarter := battle_state.spawn_unit(
+		load(FIRESTARTER_PATH) as UnitData,
+		2,
+		3,
+		4
+	)
+	var first_victim := battle_state.spawn_unit(
+		_make_unit_data("separated_first", "Separated First", 12),
+		1,
+		1,
+		2
+	)
+	var second_victim := battle_state.spawn_unit(
+		_make_unit_data("separated_second", "Separated Second", 12),
+		2,
+		5,
+		2
+	)
+	var bundle := _make_pipeline_bundle(battle_state)
+	var first_placement := _place_sulfur(
+		bundle,
+		herald,
+		battle_state.get_cell_at(1, 2)
+	)
+	assert(first_placement.was_committed(), first_placement.message)
+	var first_object := battle_state.battlefield_objects[0]
+	var second_placement := _place_sulfur(
+		bundle,
+		herald,
+		battle_state.get_cell_at(5, 2)
+	)
+	assert(second_placement.was_committed(), second_placement.message)
+	var second_object := battle_state.battlefield_objects[1]
+	assert(not first_object.has_coverage_contact(second_object))
+	var first_hp_before := first_victim.current_hp
+	var second_hp_before := second_victim.current_hp
+	var result := _execute_fire_cell_contact(
+		bundle,
+		firestarter,
+		battle_state.get_cell_at(0, 2),
+		&"separated_cloud_fire"
+	)
+
+	assert(result.is_successful(), result.get_summary())
+	assert(not battle_state.battlefield_objects.has(first_object))
+	assert(battle_state.battlefield_objects.has(second_object))
+	assert(first_victim.current_hp == first_hp_before - 2)
+	assert(second_victim.current_hp == second_hp_before)
+	assert(first_victim.get_active_effect(&"status.burning") != null)
+	assert(second_victim.get_active_effect(&"status.burning") == null)
+	assert(
+		_find_object_triggered_event(
+			bundle["combat_event_log"] as CombatEventLog,
+			second_object
+		) == null
+	)
+
+	_free_pipeline_bundle(bundle)
+
+
 func _test_blocked_fire_does_not_trigger_object() -> void:
 	var battle_state := _make_battle_state()
 	var herald := _spawn_ash_herald(battle_state, 1, 0, 0)
@@ -510,6 +773,35 @@ func _make_pipeline_bundle(battle_state : BattleState) -> Dictionary:
 	}
 
 
+func _execute_fire_cell_contact(
+	bundle : Dictionary,
+	source_unit : UnitRuntime,
+	target_cell : CellRuntime,
+	impact_id : StringName
+) -> ImpactPlanExecutionResult:
+	var execution_id := StringName("%s_execution" % String(impact_id))
+	var impact := Impact.create(
+		impact_id,
+		execution_id,
+		source_unit,
+		null,
+		target_cell,
+		Impact.Operation.AFFECT_CELL,
+		Impact.InteractionType.CELL,
+		&"fire",
+		1,
+		0
+	)
+	impact.source_ability_data = load(FIRE_ARROW_PATH) as UnitAbilityData
+	var plan := ImpactPlan.create(execution_id, ImpactPlan.Topology.TREE)
+	assert(plan.add_root_impact(impact))
+	return (bundle["impact_executor"] as ImpactExecutor).execute(
+		plan,
+		BattleStateSnapshot.capture(bundle["battle_state"] as BattleState),
+		bundle["battle_state"] as BattleState
+	)
+
+
 func _make_battlefield_view() -> BattlefieldView:
 	var battlefield_view := BattlefieldView.new()
 	var cells_root := Node2D.new()
@@ -555,6 +847,22 @@ func _find_object_removed_event(
 		if (
 			event != null
 			and event.kind == CombatEvent.Kind.BATTLEFIELD_OBJECT_REMOVED
+			and event.battlefield_object == object_runtime
+		):
+			return event
+
+	return null
+
+
+func _find_object_triggered_event(
+	event_log : CombatEventLog,
+	object_runtime : BattlefieldObjectRuntime
+) -> CombatEvent:
+	for event in event_log.history:
+		if (
+			event != null
+			and event.kind
+			== CombatEvent.Kind.BATTLEFIELD_OBJECT_TRIGGERED
 			and event.battlefield_object == object_runtime
 		):
 			return event

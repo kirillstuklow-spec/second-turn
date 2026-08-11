@@ -17,6 +17,10 @@ class_name BattlefieldObjectData
 # последующих раундов; неполный раунд создания длительность не уменьшает.
 @export_range(0, 99, 1) var lifetime_rounds : int = 0
 
+# Нерасходуемые защиты, которые объект предоставляет всем юнитам в покрытых
+# клетках. Они существуют только в пространстве и не копируются в UnitRuntime.
+@export var provided_defenses : Array[String] = []
+
 @export var triggers : Array[BattlefieldObjectTriggerData] = []
 
 @export var visual_data : BattlefieldObjectVisualData = null
@@ -46,6 +50,22 @@ func get_validation_issues() -> PackedStringArray:
 
 	if not seen_offsets.has("0:0"):
 		issues.append("coverage_offsets должен включать клетку-якорь 0:0.")
+
+	var seen_defenses : Dictionary = {}
+
+	for defense_index in range(provided_defenses.size()):
+		var defense := provided_defenses[defense_index]
+		var normalized_defense := defense.strip_edges()
+		var defense_prefix := "provided_defenses[%d]" % defense_index
+
+		if normalized_defense.is_empty():
+			issues.append(defense_prefix + ": защита пуста.")
+		elif normalized_defense != defense:
+			issues.append(defense_prefix + ": защита содержит пробелы по краям.")
+		elif seen_defenses.has(normalized_defense):
+			issues.append(defense_prefix + ": защита повторяется.")
+		else:
+			seen_defenses[normalized_defense] = true
 
 	var seen_trigger_ids : Dictionary = {}
 
@@ -77,7 +97,16 @@ func get_validation_issues() -> PackedStringArray:
 		):
 			issues.append(prefix + ": неизвестная target_policy.")
 
-		if trigger.response_plan_data == null:
+		if (
+			trigger.event_location_policy
+			not in BattlefieldObjectTriggerData.EventLocationPolicy.values()
+		):
+			issues.append(prefix + ": неизвестная event_location_policy.")
+
+		if (
+			trigger.response_plan_data == null
+			and not trigger.consume_object_on_trigger
+		):
 			issues.append(prefix + ": response_plan_data отсутствует.")
 
 	return issues

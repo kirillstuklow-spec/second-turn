@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="BattlefieldObjectData" format=3]
+
+[ext_resource type="Script" path="res://Resources/BattlefieldObjects/BattlefieldObjectData.gd" id="1_object"]
+[ext_resource type="Script" path="res://Resources/BattlefieldObjects/BattlefieldObjectTriggerData.gd" id="2_trigger"]
+[ext_resource type="Resource" path="res://Resources/BattlefieldObjects/BlackSmokeCloudVisual.tres" id="3_visual"]
+
+[sub_resource type="Resource" id="Resource_fire_dispersal_trigger"]
+script = ExtResource("2_trigger")
+trigger_id = "black_smoke_fire_dispersal"
+event_kind = 14
+source_type_filter = "fire"
+minimum_applied_amount = 0
+accept_reaction_events = true
+target_policy = 0
+consume_object_on_trigger = true
+
+[resource]
+script = ExtResource("1_object")
+object_id = "field_object.black_smoke_cloud"
+object_name = "Чёрный дым"
+description = "Временная завеса 3×3. Все юниты внутри получают нерасходуемую защиту от RANGED. Любое разрешённое FIRE-воздействие внутри рассеивает дым, даже если само воздействие было заблокировано."
+coverage_offsets = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+lifetime_rounds = 2
+provided_defenses = Array[String](["ranged"])
+triggers = Array[ExtResource("2_trigger")]([SubResource("Resource_fire_dispersal_trigger")])
+visual_data = ExtResource("3_visual")

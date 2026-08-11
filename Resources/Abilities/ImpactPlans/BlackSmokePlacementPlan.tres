@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+[ext_resource type="Resource" path="res://Resources/BattlefieldObjects/BlackSmokeCloud.tres" id="3_black_smoke"]
+
+[sub_resource type="Resource" id="Resource_create_black_smoke"]
+script = ExtResource("2_node")
+node_id = "create_black_smoke_cloud"
+source_reference = 0
+target_reference = 0
+operation = 5
+interaction_type = 7
+magnitude = 1
+battlefield_object_data = ExtResource("3_black_smoke")
+
+[resource]
+script = ExtResource("1_plan")
+plan_id = "ability.ash_herald_black_smoke"
+topology = 0
+nodes = Array[ExtResource("2_node")]([SubResource("Resource_create_black_smoke")])

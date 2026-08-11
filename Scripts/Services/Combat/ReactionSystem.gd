@@ -502,7 +502,13 @@ func _matches_battlefield_object_trigger(
 	trigger_data : BattlefieldObjectTriggerData,
 	event : CombatEvent
 ) -> bool:
-	if trigger_data == null or trigger_data.response_plan_data == null:
+	if trigger_data == null:
+		return false
+
+	if (
+		trigger_data.response_plan_data == null
+		and not trigger_data.consume_object_on_trigger
+	):
 		return false
 
 	var trigger_id := StringName(trigger_data.trigger_id.strip_edges())
@@ -530,8 +536,10 @@ func _matches_battlefield_object_trigger(
 	if event.source_object == object_runtime:
 		return false
 
-	if event.target_cell == null or not object_runtime.covers_cell(
-		event.target_cell
+	if not _matches_battlefield_object_event_location(
+		object_runtime,
+		trigger_data,
+		event
 	):
 		return false
 
@@ -539,6 +547,33 @@ func _matches_battlefield_object_trigger(
 		trigger_id,
 		event.event_id
 	)
+
+
+func _matches_battlefield_object_event_location(
+	object_runtime : BattlefieldObjectRuntime,
+	trigger_data : BattlefieldObjectTriggerData,
+	event : CombatEvent
+) -> bool:
+	match trigger_data.event_location_policy:
+		BattlefieldObjectTriggerData.EventLocationPolicy.TARGET_CELL_IN_COVERAGE:
+			return (
+				event.target_cell != null
+				and object_runtime.covers_cell(event.target_cell)
+			)
+
+		BattlefieldObjectTriggerData.EventLocationPolicy.SAME_TYPE_COVERAGE_CONTACT:
+			var source_object := (
+				event.source_object as BattlefieldObjectRuntime
+			)
+
+			return (
+				source_object != null
+				and source_object.get_object_id()
+				== object_runtime.get_object_id()
+				and object_runtime.has_coverage_contact(source_object)
+			)
+
+	return false
 
 
 func _get_battlefield_object_trigger_targets(
