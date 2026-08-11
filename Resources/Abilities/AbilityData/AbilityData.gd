@@ -14,7 +14,8 @@ enum ActionType {
 	ATTACK,
 	HEAL,
 	SUMMON,
-	SUPPORT
+	SUPPORT,
+	MOVEMENT
 }
 
 

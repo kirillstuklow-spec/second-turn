@@ -228,6 +228,56 @@ func process_unit_event(
 	return result
 
 
+# Вызывается AbilityPipeline после окончательного commit HP-цены, но до
+# исполнения основного ImpactPlan. Реакция ставится в общую очередь и будет
+# стабилизирована после основного плана: поэтому «Прыжок» сначала перемещает
+# Гуля, а затем Горение отвечает на уже совершённую трату здоровья.
+func collect_health_point_cost_event(
+	unit : UnitRuntime,
+	ability_data : UnitAbilityData,
+	execution_id : StringName,
+	hp_before : int,
+	hp_after : int,
+	battle_state : BattleState
+) -> CombatEvent:
+	if combat_event_log == null or reaction_system == null:
+		return null
+
+	var event := combat_event_log.record_health_point_cost_event(
+		unit,
+		ability_data,
+		execution_id,
+		hp_before,
+		hp_after,
+		battle_state
+	)
+
+	if event != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+	return event
+
+
+func finish_battlefield_object_round(
+	round_number : int,
+	battle_state : BattleState
+) -> void:
+	if battle_state == null:
+		return
+
+	var objects_at_round_end : Array[BattlefieldObjectRuntime] = []
+	objects_at_round_end.append_array(battle_state.battlefield_objects)
+
+	for object_runtime in objects_at_round_end:
+		if object_runtime != null and object_runtime.finish_round(round_number):
+			_remove_battlefield_object(
+				object_runtime,
+				&"duration_expired",
+				null,
+				battle_state
+			)
+
+
 func _execute_plan_core(
 	plan : ImpactPlan,
 	snapshot : BattleStateSnapshot,
@@ -370,11 +420,31 @@ func _resolve_impact(
 			ImpactResult.Outcome.INVALID_SOURCE
 		)
 
+	if impact.operation == Impact.Operation.MOVE:
+		return _resolve_move_impact(
+			impact,
+			snapshot,
+			battle_state
+		)
+
 	if impact.operation == Impact.Operation.SUMMON:
 		return _resolve_summon_impact(
 			impact,
 			snapshot,
 			battle_state
+		)
+
+	if impact.operation == Impact.Operation.CREATE_OBJECT:
+		return _resolve_create_object_impact(
+			impact,
+			snapshot,
+			battle_state
+		)
+
+	if impact.operation == Impact.Operation.AFFECT_CELL:
+		return _resolve_affect_cell_impact(
+			impact,
+			snapshot
 		)
 
 	var target_snapshot := snapshot.get_unit_snapshot(impact.target_unit)
@@ -425,11 +495,14 @@ func _resolve_impact(
 
 	match impact.operation:
 		Impact.Operation.HEAL:
-			result.hp_after = min(
-				target_snapshot.max_hp,
-				target_snapshot.current_hp + impact.magnitude
+			result.hp_after = clampi(
+				target_snapshot.current_hp + impact.magnitude,
+				0,
+				target_snapshot.max_hp
 			)
-			result.magnitude_applied = result.hp_after - result.hp_before
+			result.magnitude_applied = abs(
+				result.hp_after - result.hp_before
+			)
 
 		Impact.Operation.DAMAGE:
 			result.hp_after = max(
@@ -441,6 +514,57 @@ func _resolve_impact(
 		Impact.Operation.APPLY_EFFECT:
 			result.hp_after = result.hp_before
 
+	return result
+
+
+func _resolve_move_impact(
+	impact : Impact,
+	snapshot : BattleStateSnapshot,
+	battle_state : BattleState
+) -> ImpactResult:
+	var result := ImpactResult.create(
+		impact,
+		ImpactResult.Outcome.APPLIED
+	)
+	var target_snapshot := snapshot.get_unit_snapshot(impact.target_unit)
+
+	if target_snapshot == null or not target_snapshot.is_alive:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Movement target is not a living battle unit."
+		return result
+
+	var destination_snapshot := snapshot.get_cell_snapshot(
+		impact.target_cell
+	)
+
+	if destination_snapshot == null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Movement destination is absent from snapshot."
+		return result
+
+	if destination_snapshot.occupying_unit != null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Movement destination was occupied at commit."
+		return result
+
+	if (
+		battle_state == null
+		or not battle_state.can_unit_move_to(
+			impact.target_unit,
+			impact.target_cell,
+			impact.movement_max_distance
+		)
+	):
+		result.outcome = ImpactResult.Outcome.MOVE_FAILED
+		result.message = "BattleState rejected movement rules."
+		return result
+
+	result.movement_from_cell = target_snapshot.cell
+	result.movement_to_cell = impact.target_cell
+	result.magnitude_applied = (
+		abs(target_snapshot.cell_x - destination_snapshot.x)
+		+ abs(target_snapshot.cell_y - destination_snapshot.y)
+	)
 	return result
 
 
@@ -483,6 +607,75 @@ func _resolve_summon_impact(
 
 	# Один Impact всегда создаёт один runtime-экземпляр. Фактическая ссылка
 	# появится в _apply_summon_result().
+	result.magnitude_applied = 1
+	return result
+
+
+func _resolve_create_object_impact(
+	impact : Impact,
+	snapshot : BattleStateSnapshot,
+	battle_state : BattleState
+) -> ImpactResult:
+	var result := ImpactResult.create(
+		impact,
+		ImpactResult.Outcome.APPLIED
+	)
+	result.magnitude_requested = 1
+
+	if impact.battlefield_object_data == null:
+		result.outcome = ImpactResult.Outcome.OBJECT_CREATION_FAILED
+		result.message = "BattlefieldObjectData is missing."
+		return result
+
+	var anchor_snapshot := snapshot.get_cell_snapshot(
+		impact.target_cell
+	)
+
+	if anchor_snapshot == null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Object anchor cell is absent from snapshot."
+		return result
+
+	if battle_state == null:
+		result.outcome = ImpactResult.Outcome.OBJECT_CREATION_FAILED
+		result.message = "BattleState is unavailable for object creation."
+		return result
+
+	result.object_covered_cells = (
+		battle_state.get_battlefield_object_coverage(
+			impact.battlefield_object_data,
+			impact.target_cell
+		)
+	)
+
+	if (
+		result.object_covered_cells.size()
+		!= impact.battlefield_object_data.coverage_offsets.size()
+	):
+		result.outcome = ImpactResult.Outcome.OBJECT_CREATION_FAILED
+		result.object_covered_cells.clear()
+		result.message = "Object coverage is outside battlefield."
+		return result
+
+	result.magnitude_applied = 1
+	return result
+
+
+func _resolve_affect_cell_impact(
+	impact : Impact,
+	snapshot : BattleStateSnapshot
+) -> ImpactResult:
+	var result := ImpactResult.create(
+		impact,
+		ImpactResult.Outcome.APPLIED
+	)
+	result.magnitude_requested = 1
+
+	if snapshot.get_cell_snapshot(impact.target_cell) == null:
+		result.outcome = ImpactResult.Outcome.INVALID_TARGET
+		result.message = "Affected cell is absent from snapshot."
+		return result
+
 	result.magnitude_applied = 1
 	return result
 
@@ -537,6 +730,18 @@ func _apply_batch(
 			_apply_summon_result(result, battle_state)
 			continue
 
+		if impact.operation == Impact.Operation.MOVE:
+			_apply_move_result(result, battle_state)
+			continue
+
+		if impact.operation == Impact.Operation.CREATE_OBJECT:
+			_apply_create_object_result(result, battle_state)
+			continue
+
+		if impact.operation == Impact.Operation.AFFECT_CELL:
+			_apply_affect_cell_result(result, battle_state)
+			continue
+
 		var target := impact.target_unit
 
 		if target == null:
@@ -562,9 +767,12 @@ func _apply_batch(
 				)
 
 			Impact.Operation.HEAL:
-				target.heal(impact.magnitude)
-				result.magnitude_applied = max(
-					0,
+				if impact.magnitude > 0:
+					target.heal(impact.magnitude)
+				else:
+					target.take_damage(abs(impact.magnitude))
+
+				result.magnitude_applied = abs(
 					target.current_hp - hp_before_apply
 				)
 
@@ -588,11 +796,19 @@ func _apply_batch(
 		result.hp_after = target.current_hp
 
 		var event : CombatEvent = null
+		var health_loss_event : CombatEvent = null
 
 		if combat_event_log != null:
 			event = combat_event_log.record_impact_result(
 				result,
 				battle_state
+			)
+			health_loss_event = (
+				combat_event_log.record_health_loss_from_impact_result(
+					result,
+					event,
+					battle_state
+				)
 			)
 
 		if event != null and death_resolver != null:
@@ -600,6 +816,14 @@ func _apply_batch(
 
 		if event != null and reaction_system != null:
 			reaction_system.collect_reactions(event, battle_state)
+
+		if health_loss_event != null and reaction_system != null:
+			reaction_system.collect_reactions(
+				health_loss_event,
+				battle_state
+			)
+
+		_record_spatial_impact_event(result, battle_state)
 
 		_print_result(result)
 
@@ -644,6 +868,122 @@ func _apply_summon_result(
 
 	if event != null and reaction_system != null:
 		reaction_system.collect_reactions(event, battle_state)
+
+	_print_result(result)
+
+
+func _apply_move_result(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if result == null or result.impact == null:
+		return
+
+	if not result.was_applied():
+		_print_result(result)
+		return
+
+	var impact := result.impact
+	var moved := battle_state.move_unit(
+		impact.target_unit,
+		impact.target_cell,
+		impact.movement_max_distance
+	)
+
+	if not moved:
+		result.outcome = ImpactResult.Outcome.MOVE_FAILED
+		result.magnitude_applied = 0
+		result.message = "BattleState could not apply movement."
+		_print_result(result)
+		return
+
+	result.movement_to_cell = impact.target_unit.cell
+
+	var event : CombatEvent = null
+
+	if combat_event_log != null:
+		event = combat_event_log.record_impact_result(
+			result,
+			battle_state
+		)
+
+	if event != null and reaction_system != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+	_print_result(result)
+
+
+func _apply_create_object_result(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if result == null or result.impact == null:
+		return
+
+	if not result.was_applied():
+		_print_result(result)
+		return
+
+	var impact := result.impact
+	var object_runtime := battle_state.create_battlefield_object(
+		impact.battlefield_object_data,
+		impact.source_unit,
+		impact.source_ability_data,
+		impact.execution_id,
+		impact.target_cell
+	)
+
+	if object_runtime == null:
+		result.outcome = ImpactResult.Outcome.OBJECT_CREATION_FAILED
+		result.magnitude_applied = 0
+		result.message = "BattleState rejected battlefield object creation."
+		_print_result(result)
+		return
+
+	result.created_battlefield_object = object_runtime
+	result.object_covered_cells.clear()
+	result.object_covered_cells.append_array(object_runtime.covered_cells)
+	result.magnitude_applied = 1
+
+	var event : CombatEvent = null
+
+	if combat_event_log != null:
+		event = combat_event_log.record_impact_result(
+			result,
+			battle_state
+		)
+
+	if event != null and reaction_system != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+	_print_result(result)
+
+
+func _record_spatial_impact_event(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if combat_event_log == null or reaction_system == null:
+		return
+
+	var event := combat_event_log.record_spatial_impact_event(
+		result,
+		battle_state
+	)
+
+	if event != null:
+		reaction_system.collect_reactions(event, battle_state)
+
+
+func _apply_affect_cell_result(
+	result : ImpactResult,
+	battle_state : BattleState
+) -> void:
+	if result == null or result.impact == null:
+		return
+
+	if result.was_applied():
+		_record_spatial_impact_event(result, battle_state)
 
 	_print_result(result)
 
@@ -797,6 +1137,21 @@ func _execute_reaction_task(
 	battle_state : BattleState,
 	root_result : ImpactPlanExecutionResult
 ) -> bool:
+	if (
+		task != null
+		and task.source_battlefield_object != null
+		and task.selected_targets.is_empty()
+	):
+		if task.consume_source_battlefield_object:
+			_remove_battlefield_object(
+				task.source_battlefield_object,
+				&"trigger_consumed",
+				task.trigger_event,
+				battle_state
+			)
+
+		return true
+
 	var build_result := reaction_system.build_plan(task)
 
 	if not build_result.is_valid or build_result.plan == null:
@@ -806,6 +1161,19 @@ func _execute_reaction_task(
 		)
 		failed_build.issues.append(build_result.message)
 		root_result.reaction_execution_results.append(failed_build)
+
+		if (
+			task != null
+			and task.source_battlefield_object != null
+			and task.consume_source_battlefield_object
+		):
+			_remove_battlefield_object(
+				task.source_battlefield_object,
+				&"trigger_failed",
+				task.trigger_event,
+				battle_state
+			)
+
 		return false
 
 	var reaction_snapshot := BattleStateSnapshot.capture(battle_state)
@@ -815,7 +1183,55 @@ func _execute_reaction_task(
 		battle_state
 	)
 	root_result.reaction_execution_results.append(reaction_result)
+
+	if (
+		task.source_battlefield_object != null
+		and task.consume_source_battlefield_object
+	):
+		_remove_battlefield_object(
+			task.source_battlefield_object,
+			&"trigger_consumed",
+			task.trigger_event,
+			battle_state
+		)
+
 	return reaction_result.is_successful()
+
+
+func _remove_battlefield_object(
+	object_runtime : BattlefieldObjectRuntime,
+	reason : StringName,
+	cause_event : CombatEvent,
+	battle_state : BattleState
+) -> bool:
+	if (
+		object_runtime == null
+		or battle_state == null
+		or not battle_state.battlefield_objects.has(object_runtime)
+	):
+		return false
+
+	if combat_event_log != null:
+		combat_event_log.record_battlefield_object_removed_event(
+			object_runtime,
+			reason,
+			cause_event,
+			battle_state
+		)
+
+	if not battle_state.remove_battlefield_object(object_runtime):
+		return false
+
+	print(
+		"BATTLEFIELD_OBJECT_REMOVED | runtime: ",
+		object_runtime.runtime_id,
+		" | object_id: ",
+		object_runtime.get_object_id(),
+		" | reason: ",
+		reason
+	)
+
+	return true
 
 
 func _validate_impact(
@@ -867,10 +1283,14 @@ func _validate_impact(
 			% impact.impact_id
 		)
 
-	if impact.operation == Impact.Operation.SUMMON:
+	if impact.operation in [
+		Impact.Operation.SUMMON,
+		Impact.Operation.CREATE_OBJECT,
+		Impact.Operation.AFFECT_CELL
+	]:
 		if impact.target_unit != null:
 			issues.append(
-				"ImpactExecutor: summon impact '%s' must target a cell"
+				"ImpactExecutor: cell impact '%s' must not target a unit"
 				% impact.impact_id
 			)
 	else:
@@ -889,6 +1309,18 @@ func _validate_impact(
 				"ImpactExecutor: target of impact '%s' is absent from battle"
 				% impact.impact_id
 			)
+
+	if (
+		impact.operation == Impact.Operation.DAMAGE
+		and impact.source_unit != null
+		and impact.target_unit != null
+		and impact.source_unit.team_id == impact.target_unit.team_id
+		and not (impact.source_object is BattlefieldObjectRuntime)
+	):
+		issues.append(
+			"ImpactExecutor: ordinary damage impact '%s' cannot target an ally"
+			% impact.impact_id
+		)
 
 	if (
 		impact.target_cell != null
@@ -949,11 +1381,100 @@ func _validate_impact(
 				% impact.impact_id
 			)
 
+	if impact.operation == Impact.Operation.MOVE:
+		if impact.target_cell == null:
+			issues.append(
+				"ImpactExecutor: move impact '%s' has no destination cell"
+				% impact.impact_id
+			)
+		else:
+			var move_cell_snapshot := (
+				snapshot.get_cell_snapshot(impact.target_cell)
+				if snapshot != null
+				else null
+			)
+
+			if (
+				move_cell_snapshot != null
+				and move_cell_snapshot.occupying_unit != null
+			):
+				issues.append(
+					"ImpactExecutor: move destination of impact '%s' is occupied"
+					% impact.impact_id
+				)
+
+		if impact.movement_max_distance <= 0:
+			issues.append(
+				"ImpactExecutor: move impact '%s' has invalid distance"
+				% impact.impact_id
+			)
+
+		if impact.magnitude != 1:
+			issues.append(
+				"ImpactExecutor: move impact '%s' must move one unit"
+				% impact.impact_id
+			)
+
+	if impact.operation == Impact.Operation.CREATE_OBJECT:
+		if impact.target_cell == null:
+			issues.append(
+				"ImpactExecutor: object impact '%s' has no anchor cell"
+				% impact.impact_id
+			)
+
+		if impact.battlefield_object_data == null:
+			issues.append(
+				"ImpactExecutor: object impact '%s' has no BattlefieldObjectData"
+				% impact.impact_id
+			)
+		else:
+			for object_issue in (
+				impact.battlefield_object_data.get_validation_issues()
+			):
+				issues.append(
+					"ImpactExecutor: object impact '%s': %s"
+					% [impact.impact_id, object_issue]
+				)
+
+		if impact.source_ability_data == null:
+			issues.append(
+				"ImpactExecutor: object impact '%s' has no source ability"
+				% impact.impact_id
+			)
+
+		if impact.magnitude != 1:
+			issues.append(
+				"ImpactExecutor: object impact '%s' must create one object"
+				% impact.impact_id
+			)
+
+	if impact.operation == Impact.Operation.AFFECT_CELL:
+		if impact.target_cell == null:
+			issues.append(
+				"ImpactExecutor: cell impact '%s' has no target cell"
+				% impact.impact_id
+			)
+
+		if impact.source_type == &"":
+			issues.append(
+				"ImpactExecutor: cell impact '%s' has no source type"
+				% impact.impact_id
+			)
+
+		if impact.magnitude != 1:
+			issues.append(
+				"ImpactExecutor: cell impact '%s' must affect one cell"
+				% impact.impact_id
+			)
+
 	if impact.operation not in [
 		Impact.Operation.DAMAGE,
 		Impact.Operation.HEAL,
 		Impact.Operation.SUMMON,
-		Impact.Operation.APPLY_EFFECT
+		Impact.Operation.APPLY_EFFECT,
+		Impact.Operation.MOVE,
+		Impact.Operation.CREATE_OBJECT,
+		Impact.Operation.AFFECT_CELL
 	]:
 		issues.append(
 			"ImpactExecutor: impact '%s' has invalid operation"
@@ -966,7 +1487,10 @@ func _validate_impact(
 		Impact.InteractionType.MAGIC,
 		Impact.InteractionType.HEALING,
 		Impact.InteractionType.SUMMON,
-		Impact.InteractionType.EFFECT
+		Impact.InteractionType.EFFECT,
+		Impact.InteractionType.MOVEMENT,
+		Impact.InteractionType.OBJECT,
+		Impact.InteractionType.CELL
 	]:
 		issues.append(
 			"ImpactExecutor: impact '%s' has invalid interaction type"
@@ -977,7 +1501,10 @@ func _validate_impact(
 		impact.operation == Impact.Operation.DAMAGE
 		and impact.interaction_type in [
 			Impact.InteractionType.HEALING,
-			Impact.InteractionType.SUMMON
+			Impact.InteractionType.SUMMON,
+			Impact.InteractionType.MOVEMENT,
+			Impact.InteractionType.OBJECT,
+			Impact.InteractionType.CELL
 		]
 	):
 		issues.append(
@@ -1003,6 +1530,33 @@ func _validate_impact(
 			% impact.impact_id
 		)
 
+	if (
+		impact.operation == Impact.Operation.MOVE
+		and impact.interaction_type != Impact.InteractionType.MOVEMENT
+	):
+		issues.append(
+			"ImpactExecutor: move impact '%s' has incompatible interaction"
+			% impact.impact_id
+		)
+
+	if (
+		impact.operation == Impact.Operation.CREATE_OBJECT
+		and impact.interaction_type != Impact.InteractionType.OBJECT
+	):
+		issues.append(
+			"ImpactExecutor: object impact '%s' has incompatible interaction"
+			% impact.impact_id
+		)
+
+	if (
+		impact.operation == Impact.Operation.AFFECT_CELL
+		and impact.interaction_type != Impact.InteractionType.CELL
+	):
+		issues.append(
+			"ImpactExecutor: cell impact '%s' has incompatible interaction"
+			% impact.impact_id
+		)
+
 	if impact.operation == Impact.Operation.APPLY_EFFECT:
 		if impact.interaction_type != Impact.InteractionType.EFFECT:
 			issues.append(
@@ -1025,12 +1579,15 @@ func _validate_impact(
 			% impact.impact_id
 		)
 
-	if (
-		impact.operation in [Impact.Operation.DAMAGE, Impact.Operation.HEAL]
-		and impact.magnitude <= 0
-	):
+	if impact.operation == Impact.Operation.DAMAGE and impact.magnitude <= 0:
 		issues.append(
-			"ImpactExecutor: impact '%s' has non-positive magnitude"
+			"ImpactExecutor: damage impact '%s' has non-positive magnitude"
+			% impact.impact_id
+		)
+
+	if impact.operation == Impact.Operation.HEAL and impact.magnitude == 0:
+		issues.append(
+			"ImpactExecutor: healing impact '%s' has zero magnitude"
 			% impact.impact_id
 		)
 
@@ -1048,11 +1605,16 @@ func _validate_impact(
 		)
 
 	if (
-		impact.interaction_type == Impact.InteractionType.EFFECT
+		impact.interaction_type in [
+			Impact.InteractionType.EFFECT,
+			Impact.InteractionType.MOVEMENT,
+			Impact.InteractionType.OBJECT,
+			Impact.InteractionType.CELL
+		]
 		and impact.armor_penetration != 0
 	):
 		issues.append(
-			"ImpactExecutor: EFFECT impact '%s' must not use armor penetration"
+			"ImpactExecutor: non-armor impact '%s' must not use armor penetration"
 			% impact.impact_id
 		)
 

@@ -9,9 +9,13 @@ var _lethal_events_by_unit_id : Dictionary = {}
 func observe_combat_event(event : CombatEvent) -> void:
 	if (
 		event == null
-		or event.kind != CombatEvent.Kind.DAMAGE_APPLIED
 		or event.target_unit == null
 		or not event.target_unit.is_death_pending()
+		or event.hp_delta >= 0
+		or event.kind not in [
+			CombatEvent.Kind.DAMAGE_APPLIED,
+			CombatEvent.Kind.HEALING_APPLIED
+		]
 	):
 		return
 
@@ -32,7 +36,7 @@ func confirm_pending_deaths(
 		if unit == null:
 			continue
 
-		var unit_instance_id := unit.get_instance_id()
+		var unit_instance_id : int = unit.get_instance_id()
 
 		if not unit.is_death_pending():
 			# Реакция предотвращения смерти могла вернуть юнита в ALIVE.

@@ -98,7 +98,7 @@ func _run_test() -> void:
 	assert(battlefield_view != null)
 	assert(battle_engine.battle_state.cells.size() == 35)
 	assert(battlefield_view.cells_root.get_child_count() == 35)
-	assert(battlefield_view._unit_views_by_id.size() == 2)
+	assert(battlefield_view._unit_views_by_id.size() == 5)
 	assert(battlefield_view.arena_background_root != null)
 
 	var first_cell_view := (

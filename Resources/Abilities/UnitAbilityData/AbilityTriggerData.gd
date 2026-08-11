@@ -25,7 +25,10 @@ enum InteractionFilter {
 	MAGIC,
 	HEALING,
 	SUMMON,
-	EFFECT
+	EFFECT,
+	MOVEMENT,
+	OBJECT,
+	CELL
 }
 
 
@@ -59,6 +62,13 @@ enum TargetSelectionPolicy {
 )
 
 @export var source_type_filter : String = ""
+
+# Необязательная точная ссылка на способность-источник события. Нужна для
+# реакций вроде лечения Гуля только после убийства именно «Укусом», а не после
+# любого его ближнего воздействия с тем же source_type. Базовый Resource
+# намеренно избегает циклической типовой зависимости AbilityTriggerData ↔
+# UnitAbilityData; реестр схем проверяет фактический тип.
+@export var source_ability_filter : Resource = null
 
 @export_range(0, 999, 1) var minimum_applied_amount : int = 1
 
@@ -96,5 +106,14 @@ func matches_interaction(
 
 		InteractionFilter.EFFECT:
 			return interaction_type == Impact.InteractionType.EFFECT
+
+		InteractionFilter.MOVEMENT:
+			return interaction_type == Impact.InteractionType.MOVEMENT
+
+		InteractionFilter.OBJECT:
+			return interaction_type == Impact.InteractionType.OBJECT
+
+		InteractionFilter.CELL:
+			return interaction_type == Impact.InteractionType.CELL
 
 	return false

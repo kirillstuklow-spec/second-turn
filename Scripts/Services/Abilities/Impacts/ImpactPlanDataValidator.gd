@@ -82,7 +82,10 @@ static func _validate_node(
 		Impact.Operation.DAMAGE,
 		Impact.Operation.HEAL,
 		Impact.Operation.SUMMON,
-		Impact.Operation.APPLY_EFFECT
+		Impact.Operation.APPLY_EFFECT,
+		Impact.Operation.MOVE,
+		Impact.Operation.CREATE_OBJECT,
+		Impact.Operation.AFFECT_CELL
 	]:
 		issues.append(prefix + ": неизвестная операция.")
 
@@ -92,7 +95,10 @@ static func _validate_node(
 		Impact.InteractionType.MAGIC,
 		Impact.InteractionType.HEALING,
 		Impact.InteractionType.SUMMON,
-		Impact.InteractionType.EFFECT
+		Impact.InteractionType.EFFECT,
+		Impact.InteractionType.MOVEMENT,
+		Impact.InteractionType.OBJECT,
+		Impact.InteractionType.CELL
 	]:
 		issues.append(prefix + ": неизвестный тип взаимодействия.")
 
@@ -105,7 +111,10 @@ static func _validate_node(
 
 		if node.interaction_type in [
 			Impact.InteractionType.HEALING,
-			Impact.InteractionType.SUMMON
+			Impact.InteractionType.SUMMON,
+			Impact.InteractionType.MOVEMENT,
+			Impact.InteractionType.OBJECT,
+			Impact.InteractionType.CELL
 		]:
 			issues.append(prefix + ": урон несовместим с типом взаимодействия.")
 
@@ -114,6 +123,17 @@ static func _validate_node(
 		and node.interaction_type != Impact.InteractionType.HEALING
 	):
 		issues.append(prefix + ": лечение должно иметь тип HEALING.")
+
+	if (
+		node.operation == Impact.Operation.MOVE
+		and node.interaction_type != Impact.InteractionType.MOVEMENT
+	):
+		issues.append(prefix + ": перемещение должно иметь тип MOVEMENT.")
+
+	if node.operation == Impact.Operation.MOVE and node.magnitude != 1:
+		issues.append(
+			prefix + ": один MOVE-узел должен перемещать одного юнита."
+		)
 
 	if node.operation == Impact.Operation.APPLY_EFFECT:
 		if node.interaction_type != Impact.InteractionType.EFFECT:
@@ -148,6 +168,45 @@ static func _validate_node(
 	elif node.summon_unit_data != null:
 		issues.append(prefix + ": summon_unit_data допустим только для SUMMON.")
 
+	if node.operation == Impact.Operation.CREATE_OBJECT:
+		if node.interaction_type != Impact.InteractionType.OBJECT:
+			issues.append(
+				prefix + ": создание объекта должно иметь тип OBJECT."
+			)
+
+		if node.battlefield_object_data == null:
+			issues.append(prefix + ": BattlefieldObjectData не назначен.")
+		else:
+			for object_issue in node.battlefield_object_data.get_validation_issues():
+				issues.append(prefix + ".battlefield_object_data: " + object_issue)
+
+		if node.magnitude != 1:
+			issues.append(
+				prefix
+				+ ": один CREATE_OBJECT-узел должен создавать ровно один объект."
+			)
+	elif node.battlefield_object_data != null:
+		issues.append(
+			prefix
+			+ ": battlefield_object_data допустим только для CREATE_OBJECT."
+		)
+
+	if node.operation == Impact.Operation.AFFECT_CELL:
+		if node.interaction_type != Impact.InteractionType.CELL:
+			issues.append(
+				prefix + ": воздействие на клетку должно иметь тип CELL."
+			)
+
+		if node.source_type.strip_edges().is_empty():
+			issues.append(
+				prefix + ": у воздействия на клетку отсутствует source_type."
+			)
+
+		if node.magnitude != 1:
+			issues.append(
+				prefix + ": один AFFECT_CELL-узел должен отмечать одну клетку."
+			)
+
 	if (
 		node.armor_penetration < InteractionResolver.MIN_ARMOR_PENETRATION
 		or node.armor_penetration > InteractionResolver.MAX_ARMOR_PENETRATION
@@ -160,6 +219,18 @@ static func _validate_node(
 	):
 		issues.append(prefix + ": EFFECT не использует бронебойность.")
 
+	if (
+		node.interaction_type in [
+			Impact.InteractionType.MOVEMENT,
+			Impact.InteractionType.OBJECT,
+			Impact.InteractionType.CELL
+		]
+		and node.armor_penetration != 0
+	):
+		issues.append(
+			prefix + ": MOVEMENT, OBJECT и CELL не используют бронебойность."
+		)
+
 
 static func _validate_magnitude(
 	node : ImpactNodeData,
@@ -168,7 +239,17 @@ static func _validate_magnitude(
 ) -> void:
 	match node.magnitude_source:
 		ImpactNodeData.MagnitudeSource.FIXED:
-			if node.magnitude <= 0:
+			if (
+				node.operation == Impact.Operation.HEAL
+				and node.magnitude == 0
+			):
+				issues.append(
+					prefix + ": величина лечения не может быть равна нулю."
+				)
+			elif (
+				node.operation != Impact.Operation.HEAL
+				and node.magnitude <= 0
+			):
 				issues.append(
 					prefix + ": фиксированная величина должна быть больше нуля."
 				)

@@ -135,6 +135,7 @@ func execute_ability(
 		return rejected_target
 
 	var execution_id := _peek_execution_id()
+	var hp_before_commit := source_unit.current_hp
 	var build_result := impact_plan_builder.build(
 		execution_id,
 		source_unit,
@@ -186,6 +187,15 @@ func execute_ability(
 		return failed_commit
 
 	_next_execution_sequence += 1
+
+	impact_executor.collect_health_point_cost_event(
+		source_unit,
+		ability_runtime.data,
+		execution_id,
+		hp_before_commit,
+		source_unit.current_hp,
+		battle_state
+	)
 
 	print("")
 	print("========================================")
@@ -273,8 +283,19 @@ func _commit_costs(
 	execution_id : StringName
 ) -> bool:
 	var action_point_cost := ability_runtime.data.action_point_cost
+	var health_point_cost := ability_runtime.data.health_point_cost
+
+	if not source_unit.can_spend_action_points(action_point_cost):
+		return false
+
+	if not source_unit.can_spend_health_points(health_point_cost):
+		return false
 
 	if not source_unit.spend_action_points(action_point_cost):
+		return false
+
+	if not source_unit.spend_health_points(health_point_cost):
+		source_unit.action_points_remaining += action_point_cost
 		return false
 
 	if ability_runtime.record_use(
@@ -284,9 +305,10 @@ func _commit_costs(
 	):
 		return true
 
-	# record_use не меняет Runtime при отказе, поэтому достаточно
-	# вернуть единственный уже списанный ресурс — AP.
+	# record_use не меняет Runtime при отказе, поэтому возвращаем обе уже
+	# списанные цены без создания игровых событий.
 	source_unit.action_points_remaining += action_point_cost
+	source_unit.refund_health_point_cost(health_point_cost)
 	return false
 
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Declarative Battlefield Object Placement"
+technical_description = "Creates one BattlefieldObjectRuntime on a selected anchor cell through a declarative CREATE_OBJECT Impact."
+activation_mode = 0
+action_type = 3
+targeting_form = 2
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_cell"

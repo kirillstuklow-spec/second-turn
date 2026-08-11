@@ -23,7 +23,8 @@ enum Reason {
 	TARGET_CELL_OCCUPIED,
 	TARGET_CELL_WRONG_ZONE,
 	NO_VALID_TARGETS,
-	CONDITION_FAILED
+	CONDITION_FAILED,
+	TARGET_CELL_OUT_OF_RANGE
 }
 
 
@@ -133,6 +134,9 @@ func get_summary() -> String:
 
 		Reason.TARGET_CELL_WRONG_ZONE:
 			return "Выбранная клетка не относится к зоне расстановки владельца."
+
+		Reason.TARGET_CELL_OUT_OF_RANGE:
+			return "Выбранная клетка находится вне дальности способности."
 
 		Reason.NO_VALID_TARGETS:
 			return "В выбранной области нет допустимых целей."

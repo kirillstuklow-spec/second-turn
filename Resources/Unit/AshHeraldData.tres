@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/Sulfur.tres" id="3_sulfur"]
+
+[resource]
+script = ExtResource("1_unit")
+unit_id = "ash_herald_test"
+unit_name = "Глашатай пепла"
+description = "Тестовый профиль Глашатая пепла и первой реализации объектов поля через «Серу». Числовые характеристики не являются балансными."
+faction = "ash"
+unit_class = "area_controller"
+initiative = 35
+max_hp = 10
+armor = 0
+movement = 2
+keywords = Array[String](["ash", "caster", "battlefield_object_user"])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_sulfur")])

@@ -221,10 +221,11 @@ func _test_counter_attack_schema_and_half_actual_damage() -> void:
 	assert(counter_result.interaction_resolution.armor_was_checked)
 
 	var combat_event_log := bundle["combat_event_log"] as CombatEventLog
-	assert(combat_event_log.history.size() == 2)
-	assert(combat_event_log.history[1].source_ability_data == counter_attack)
-	assert(combat_event_log.history[1].interaction_type == Impact.InteractionType.MELEE)
-	assert(combat_event_log.history[1].source_type == &"physical")
+	assert(combat_event_log.history.size() == 4)
+	assert(combat_event_log.history[2].source_ability_data == counter_attack)
+	assert(combat_event_log.history[2].interaction_type == Impact.InteractionType.MELEE)
+	assert(combat_event_log.history[2].source_type == &"physical")
+	assert(combat_event_log.history[3].kind == CombatEvent.Kind.HEALTH_LOST)
 
 	_free_counter_bundle(bundle)
 

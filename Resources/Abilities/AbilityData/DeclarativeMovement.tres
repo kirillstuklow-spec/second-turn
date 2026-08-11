@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Declarative Movement"
+technical_description = "Moves one living unit to a selected empty cell through the shared BattleState movement rules. This mechanism is not push."
+activation_mode = 0
+action_type = 4
+targeting_form = 0
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_empty_cell_in_radius"
+default_parameters = {
+"radius": 1
+}

@@ -18,12 +18,12 @@ func _run_test() -> void:
 	_test_existing_burning_uses_captured_source_then_refreshes()
 	_test_effect_defense_blocks_application()
 	_test_late_effect_defense_blocks_trigger_but_keeps_status()
-	_test_each_damage_impact_and_self_damage_trigger_separately()
+	_test_each_health_loss_and_self_damage_trigger_separately()
 	_test_duration_and_regeneration_rule()
 
 	print(
 		"FireArrowEffectsSmokeTest: PASS — declarative Fire Arrow, "
-		+ "EFFECT defenses without armor, per-DamageImpact Burning, "
+		+ "EFFECT defenses without armor, per-HEALTH_LOST Burning, "
 		+ "source refresh, two carrier activations and regeneration block"
 	)
 
@@ -32,10 +32,17 @@ func _run_test() -> void:
 
 func _test_resource_schema_and_first_hit() -> void:
 	var fire_arrow := _load_fire_arrow()
+	var burning_data := load(BURNING_PATH) as EffectData
 	var registry := AbilityAlgorithmRegistry.new()
 	var schema := registry.validate_unit_ability(fire_arrow)
 
 	assert(schema.is_valid, schema.get_summary())
+	assert(burning_data != null)
+	assert(burning_data.triggers.size() == 1)
+	assert(
+		burning_data.triggers[0].event_kind
+		== CombatEvent.Kind.HEALTH_LOST
+	)
 	assert(fire_arrow.impact_plan_data != null)
 	assert(fire_arrow.impact_plan_data.nodes.size() == 3)
 	assert(
@@ -81,10 +88,15 @@ func _test_resource_schema_and_first_hit() -> void:
 	assert(execution.impact_execution_result.reaction_execution_results.is_empty())
 	assert(target.current_hp == hp_before - 3)
 	assert(target.active_effects.size() == 2)
-	assert(combat_event_log.history.size() == 3)
+	assert(combat_event_log.history.size() == 4)
 	assert(combat_event_log.history[0].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(combat_event_log.history[1].kind == CombatEvent.Kind.EFFECT_APPLIED)
+	assert(combat_event_log.history[1].kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(
+		combat_event_log.history[1].health_loss_cause
+		== CombatEvent.HealthLossCause.DAMAGE
+	)
 	assert(combat_event_log.history[2].kind == CombatEvent.Kind.EFFECT_APPLIED)
+	assert(combat_event_log.history[3].kind == CombatEvent.Kind.EFFECT_APPLIED)
 
 	var burning := target.get_active_effect(&"status.burning")
 	var regeneration_block := target.get_active_effect(
@@ -276,7 +288,7 @@ func _test_late_effect_defense_blocks_trigger_but_keeps_status() -> void:
 	_free_pipeline_bundle(bundle)
 
 
-func _test_each_damage_impact_and_self_damage_trigger_separately() -> void:
+func _test_each_health_loss_and_self_damage_trigger_separately() -> void:
 	var fire_arrow := _load_fire_arrow()
 	var bundle := _make_pipeline_battle(fire_arrow, false)
 	var pipeline := bundle["pipeline"] as AbilityPipeline

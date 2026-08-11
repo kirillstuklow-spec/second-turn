@@ -35,6 +35,10 @@ const TARGET_RULE_AREA_AROUND_CELL : StringName = &"area_around_cell"
 const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL : StringName = (
 	&"single_empty_deployment_cell"
 )
+const TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS : StringName = (
+	&"single_empty_cell_in_radius"
+)
+const TARGET_RULE_SINGLE_CELL : StringName = &"single_cell"
 
 
 var _definitions : Dictionary = {}
@@ -340,9 +344,27 @@ func _build_execute_impact_plan_definition() -> AbilityAlgorithmDefinition:
 		TARGET_RULE_SINGLE_ADJACENT_ALLY,
 		TARGET_RULE_AREA_AROUND_UNIT,
 		TARGET_RULE_AREA_AROUND_CELL,
-		TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
+		TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL,
+		TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS,
+		TARGET_RULE_SINGLE_CELL
 	]
-	definition.parameter_specs = []
+
+	var radius := _make_integer_spec(
+		PARAM_RADIUS,
+		"Радиус",
+		"Манхэттенская дальность выбора свободной клетки.",
+		false,
+		false,
+		0,
+		true,
+		1,
+		true,
+		99
+	)
+	radius.required_target_rules = [
+		TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS
+	]
+	definition.parameter_specs = [radius]
 	return definition
 
 
@@ -467,14 +489,14 @@ func _validate_trigger_data(
 	var seen_trigger_ids : Dictionary = {}
 
 	for trigger_index in range(unit_ability.triggers.size()):
-		var trigger := unit_ability.triggers[trigger_index]
+		var trigger : AbilityTriggerData = unit_ability.triggers[trigger_index]
 		var field_path := "triggers[%d]" % trigger_index
 		var trigger_issues := PackedStringArray()
 
 		if trigger == null:
 			trigger_issues.append("Триггер отсутствует.")
 		else:
-			var normalized_id := trigger.trigger_id.strip_edges()
+			var normalized_id : String = trigger.trigger_id.strip_edges()
 
 			if normalized_id.is_empty():
 				trigger_issues.append("trigger_id пуст.")
@@ -530,6 +552,16 @@ func _validate_trigger_data(
 					"source_type_filter содержит пробелы по краям."
 				)
 
+			if (
+				trigger.source_ability_filter != null
+				and not (
+					trigger.source_ability_filter is UnitAbilityData
+				)
+			):
+				trigger_issues.append(
+					"source_ability_filter должен ссылаться на UnitAbilityData."
+				)
+
 		if not trigger_issues.is_empty():
 			result.add_issue(
 				AbilitySchemaIssue.Code.TRIGGER_INVALID,
@@ -546,6 +578,17 @@ func _validate_trigger_data(
 			{
 				"summary": (
 					"Автоматическая способность не должна расходовать AP."
+				)
+			}
+		)
+
+	if unit_ability.health_point_cost != 0:
+		result.add_issue(
+			AbilitySchemaIssue.Code.TRIGGER_INVALID,
+			"health_point_cost",
+			{
+				"summary": (
+					"Автоматическая способность не должна расходовать HP."
 				)
 			}
 		)

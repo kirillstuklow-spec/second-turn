@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Unit/UnitData.gd" id="1_unit"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/FireArrow.tres" id="3_fire_arrow"]
+
+[resource]
+script = ExtResource("1_unit")
+unit_id = "firestarter_test"
+unit_name = "Поджигатель"
+description = "Тестовый профиль Поджигателя с уже реализованной Огненной стрелой для проверки огненных реакций объектов поля."
+faction = "test_fire"
+unit_class = "ranged_fire"
+initiative = 35
+max_hp = 10
+armor = 0
+movement = 2
+keywords = Array[String](["fire", "ranged", "battlefield_object_tester"])
+active_abilities = Array[ExtResource("2_unit_ability")]([ExtResource("3_fire_arrow")])

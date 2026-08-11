@@ -90,6 +90,21 @@ func get_cell_snapshot(
 	return null
 
 
+func get_cell_snapshot_at(
+	x : int,
+	y : int
+) -> CellStateSnapshot:
+	for cell_snapshot in cell_snapshots:
+		if (
+			cell_snapshot != null
+			and cell_snapshot.x == x
+			and cell_snapshot.y == y
+		):
+			return cell_snapshot
+
+	return null
+
+
 func has_unit(runtime_unit : UnitRuntime) -> bool:
 	return get_unit_snapshot(runtime_unit) != null
 

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3 uid="uid://rqdgt86a70nd"]
+
+[ext_resource type="Resource" path="res://Resources/Abilities/AbilityData/TriggeredSelfHealing.tres" id="1_ability"]
+[ext_resource type="Script" uid="uid://ckeuu0agsm1r5" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="2_v26hq"]
+[ext_resource type="Script" uid="uid://pi7ledc03ava" path="res://Resources/Abilities/UnitAbilityData/AbilityTriggerData.gd" id="3_trigger"]
+[ext_resource type="Resource" uid="uid://bybayyb56w0ny" path="res://Resources/Abilities/ImpactPlans/GhoulBiteKillHealPlan.tres" id="4_plan"]
+[ext_resource type="Resource" path="res://Resources/Abilities/UnitAbilityData/GhoulBite.tres" id="5_bite"]
+
+[sub_resource type="Resource" id="Resource_bite_kill_trigger"]
+script = ExtResource("3_trigger")
+trigger_id = "ghoul_bite_heal_on_confirmed_kill"
+event_kind = 5
+owner_relation = 2
+event_source_relation = 3
+interaction_filter = 1
+source_ability_filter = ExtResource("5_bite")
+minimum_applied_amount = 0
+accept_reaction_events = false
+
+[resource]
+script = ExtResource("2_unit_ability")
+ability_name = "Пир после укуса"
+description = "После подтверждённого убийства прямым ударом способности «Укус» Гуль восстанавливает 2 HP. Тестовое значение лечения."
+ability = ExtResource("1_ability")
+impact_plan_data = ExtResource("4_plan")
+triggers = Array[ExtResource("3_trigger")]([SubResource("Resource_bite_kill_trigger")])
+action_point_cost = 0

@@ -61,6 +61,15 @@ func collect_reactions(
 				battle_state
 			)
 
+	var objects_at_event : Array[BattlefieldObjectRuntime] = []
+	objects_at_event.append_array(battle_state.battlefield_objects)
+
+	for object_runtime in objects_at_event:
+		_collect_battlefield_object_reactions(
+			object_runtime,
+			event
+		)
+
 
 func _collect_ability_reactions(
 	ability_runtime : UnitAbilityRuntime,
@@ -139,6 +148,13 @@ func _matches_ability_trigger(
 	if (
 		not source_type_filter.is_empty()
 		and event.source_type != StringName(source_type_filter)
+	):
+		return false
+
+	if (
+		trigger_data.source_ability_filter != null
+		and event.source_ability_data
+		!= trigger_data.source_ability_filter
 	):
 		return false
 
@@ -431,3 +447,114 @@ func _get_event_round_number(
 		return 0
 
 	return battle_state.round_number
+
+
+func _collect_battlefield_object_reactions(
+	object_runtime : BattlefieldObjectRuntime,
+	event : CombatEvent
+) -> void:
+	if (
+		object_runtime == null
+		or object_runtime.data == null
+		or not object_runtime.is_active
+		or object_runtime.is_pending_consumption
+		or event == null
+		or event.reaction_depth >= MAX_REACTION_DEPTH
+	):
+		return
+
+	for trigger_data in object_runtime.data.triggers:
+		if not _matches_battlefield_object_trigger(
+			object_runtime,
+			trigger_data,
+			event
+		):
+			continue
+
+		var target_units := _get_battlefield_object_trigger_targets(
+			object_runtime,
+			trigger_data,
+			event
+		)
+		var task := reaction_queue.enqueue_battlefield_object_trigger(
+			object_runtime,
+			trigger_data,
+			event,
+			target_units
+		)
+
+		if task == null:
+			continue
+
+		object_runtime.mark_event_processed(
+			StringName(trigger_data.trigger_id),
+			event.event_id
+		)
+
+		if trigger_data.consume_object_on_trigger:
+			# Блокирует повторную постановку взрыва от остальных FIRE-Impact той
+			# же способности и от собственного ответа объекта.
+			object_runtime.mark_pending_consumption()
+
+
+func _matches_battlefield_object_trigger(
+	object_runtime : BattlefieldObjectRuntime,
+	trigger_data : BattlefieldObjectTriggerData,
+	event : CombatEvent
+) -> bool:
+	if trigger_data == null or trigger_data.response_plan_data == null:
+		return false
+
+	var trigger_id := StringName(trigger_data.trigger_id.strip_edges())
+
+	if trigger_id == &"":
+		return false
+
+	if trigger_data.event_kind != event.kind:
+		return false
+
+	if event.applied_amount < trigger_data.minimum_applied_amount:
+		return false
+
+	if not trigger_data.accept_reaction_events and event.reaction_depth > 0:
+		return false
+
+	var source_type_filter := trigger_data.source_type_filter.strip_edges()
+
+	if (
+		not source_type_filter.is_empty()
+		and event.source_type != StringName(source_type_filter)
+	):
+		return false
+
+	if event.source_object == object_runtime:
+		return false
+
+	if event.target_cell == null or not object_runtime.covers_cell(
+		event.target_cell
+	):
+		return false
+
+	return not object_runtime.has_processed_event(
+		trigger_id,
+		event.event_id
+	)
+
+
+func _get_battlefield_object_trigger_targets(
+	object_runtime : BattlefieldObjectRuntime,
+	trigger_data : BattlefieldObjectTriggerData,
+	event : CombatEvent
+) -> Array[UnitRuntime]:
+	var result : Array[UnitRuntime] = []
+
+	if (
+		trigger_data.target_policy
+		== BattlefieldObjectTriggerData.TargetPolicy.ALL_UNITS_IN_COVERAGE
+	):
+		return object_runtime.get_living_units_inside()
+
+	if event.target_unit != null and event.target_unit.is_alive:
+		result.append(event.target_unit)
+
+	return result

@@ -224,13 +224,15 @@ func _test_death_confirmation_choice_and_shared_attack() -> void:
 	)
 
 	var event_log := bundle["combat_event_log"] as CombatEventLog
-	assert(event_log.history.size() == 3)
+	assert(event_log.history.size() == 5)
 	assert(event_log.history[0].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(event_log.history[1].kind == CombatEvent.Kind.DEATH_CONFIRMED)
-	assert(event_log.history[1].target_cell_x == 1)
-	assert(event_log.history[1].target_cell_y == 2)
-	assert(event_log.history[2].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(event_log.history[2].source_unit == penitent)
+	assert(event_log.history[1].kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(event_log.history[2].kind == CombatEvent.Kind.DEATH_CONFIRMED)
+	assert(event_log.history[2].target_cell_x == 1)
+	assert(event_log.history[2].target_cell_y == 2)
+	assert(event_log.history[3].kind == CombatEvent.Kind.DAMAGE_APPLIED)
+	assert(event_log.history[3].source_unit == penitent)
+	assert(event_log.history[4].kind == CombatEvent.Kind.HEALTH_LOST)
 	assert(battle_state.check_victory_condition())
 	assert(battle_state.winner_team_id == 1)
 

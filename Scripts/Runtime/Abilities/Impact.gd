@@ -7,7 +7,14 @@ enum Operation {
 	DAMAGE,
 	HEAL,
 	SUMMON,
-	APPLY_EFFECT
+	APPLY_EFFECT,
+	MOVE,
+	# Добавлено в конец, чтобы сохранить числовые значения уже
+	# сериализованных операций в .tres.
+	CREATE_OBJECT,
+	# Пространственное воздействие на клетку без обязательной цели-юнита.
+	# Используется, когда механике важен сам факт попадания в клетку.
+	AFFECT_CELL
 }
 
 
@@ -17,7 +24,11 @@ enum InteractionType {
 	MAGIC,
 	HEALING,
 	SUMMON,
-	EFFECT
+	EFFECT,
+	MOVEMENT,
+	# Размещение объекта не является ни призывом, ни воздействием на юнита.
+	OBJECT,
+	CELL
 }
 
 
@@ -62,6 +73,12 @@ var healing_kind : HealingKind = HealingKind.DIRECT
 var effect_data : EffectData = null
 
 var summon_unit_data : UnitData = null
+
+var battlefield_object_data : BattlefieldObjectData = null
+
+# Максимальная манхэттенская дистанция для MOVE. Обычный и принудительный
+# шаг используют 1; способность может передать собственную дальность.
+var movement_max_distance : int = 1
 
 var transition_condition : ImpactConditionData = null
 
@@ -112,6 +129,9 @@ static func interaction_type_from_ability(
 	if ability_data.action_type == AbilityData.ActionType.SUMMON:
 		return InteractionType.SUMMON
 
+	if ability_data.action_type == AbilityData.ActionType.MOVEMENT:
+		return InteractionType.MOVEMENT
+
 	match ability_data.targeting_form:
 		AbilityData.TargetingForm.RANGED:
 			return InteractionType.RANGED
@@ -143,6 +163,15 @@ static func get_interaction_type_id(
 
 		InteractionType.EFFECT:
 			return &"effect"
+
+		InteractionType.MOVEMENT:
+			return &"movement"
+
+		InteractionType.OBJECT:
+			return &"object"
+
+		InteractionType.CELL:
+			return &"cell"
 
 	return &""
 

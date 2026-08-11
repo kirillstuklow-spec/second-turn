@@ -160,7 +160,10 @@ func _get_input_error(
 		Impact.InteractionType.MAGIC,
 		Impact.InteractionType.HEALING,
 		Impact.InteractionType.SUMMON,
-		Impact.InteractionType.EFFECT
+		Impact.InteractionType.EFFECT,
+		Impact.InteractionType.MOVEMENT,
+		Impact.InteractionType.OBJECT,
+		Impact.InteractionType.CELL
 	]:
 		return "InteractionResolver: interaction type is invalid"
 

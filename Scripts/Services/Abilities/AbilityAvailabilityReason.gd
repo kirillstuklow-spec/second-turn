@@ -20,7 +20,8 @@ enum Code {
 	BATTLE_USE_LIMIT_REACHED,
 	ROUND_USE_LIMIT_REACHED,
 	ACTIVATION_USE_LIMIT_REACHED,
-	EXTERNAL_BLOCKER
+	EXTERNAL_BLOCKER,
+	INSUFFICIENT_HEALTH_POINTS
 }
 
 
@@ -75,6 +76,15 @@ func get_message() -> String:
 
 		Code.INSUFFICIENT_ACTION_POINTS:
 			return "Недостаточно AP: нужно %d, доступно %d." % [
+				int(context.get("required", 0)),
+				int(context.get("available", 0))
+			]
+
+		Code.INSUFFICIENT_HEALTH_POINTS:
+			return (
+				"Недостаточно HP для безопасной оплаты: нужно %d, "
+				+ "доступно к трате %d."
+			) % [
 				int(context.get("required", 0)),
 				int(context.get("available", 0))
 			]

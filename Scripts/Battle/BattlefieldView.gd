@@ -14,6 +14,7 @@ const UNIT_VIEW_SCENE: PackedScene = preload(
 
 var cells_root : Node2D = null
 var units_root : Node2D = null
+var temporary_objects_root : Node2D = null
 var arena_background_root: Control = null
 
 var _unit_views_by_id: Dictionary = {}
@@ -38,6 +39,23 @@ func _ensure_cells_root() -> bool:
 	return true
 
 
+func _ensure_temporary_objects_root() -> bool:
+	if temporary_objects_root != null:
+		return true
+
+	temporary_objects_root = get_node_or_null(
+		"TemporaryObjects"
+	) as Node2D
+
+	if temporary_objects_root == null:
+		temporary_objects_root = Node2D.new()
+		temporary_objects_root.name = "TemporaryObjects"
+		add_child(temporary_objects_root)
+
+	temporary_objects_root.z_index = 5
+	return true
+
+
 func _ensure_units_root() -> bool:
 	if units_root != null:
 		return true
@@ -49,6 +67,8 @@ func _ensure_units_root() -> bool:
 			"BattlefieldView: child node 'Units' not found."
 		)
 		return false
+
+	units_root.z_index = 10
 
 	return true
 	
@@ -88,6 +108,7 @@ func draw_battlefield(battle_state : BattleState) -> void:
 	for cell in battle_state.cells:
 		_create_cell_view(cell)
 
+	_sync_battlefield_object_views(battle_state)
 	_sync_unit_views(battle_state)
 
 
@@ -290,6 +311,82 @@ func _get_cell_label(cell : CellRuntime) -> String:
 	var text : String = str(cell.x) + "," + str(cell.y) + "\n" + _get_zone_label(cell.zone)
 
 	return text
+
+
+# -----------------------
+# Представления объектов поля
+# -----------------------
+
+func _sync_battlefield_object_views(
+	battle_state : BattleState
+) -> void:
+	if not _ensure_temporary_objects_root():
+		return
+
+	for child in temporary_objects_root.get_children():
+		child.free()
+
+	for object_runtime in battle_state.battlefield_objects:
+		if (
+			object_runtime == null
+			or not object_runtime.is_active
+			or object_runtime.data == null
+		):
+			continue
+
+		var visual_data := object_runtime.data.visual_data
+
+		if visual_data == null:
+			continue
+
+		for covered_cell in object_runtime.covered_cells:
+			if covered_cell == null:
+				continue
+
+			var overlay := ColorRect.new()
+			overlay.position = Vector2(
+				covered_cell.x * CELL_SIZE.x,
+				covered_cell.y * CELL_SIZE.y
+			)
+			overlay.size = CELL_SIZE
+			overlay.color = visual_data.covered_cell_color
+
+			if covered_cell == object_runtime.anchor_cell:
+				overlay.color = visual_data.anchor_cell_color
+
+			overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			temporary_objects_root.add_child(overlay)
+
+		_add_battlefield_object_label(
+			object_runtime,
+			visual_data
+		)
+
+
+func _add_battlefield_object_label(
+	object_runtime : BattlefieldObjectRuntime,
+	visual_data : BattlefieldObjectVisualData
+) -> void:
+	if (
+		object_runtime == null
+		or object_runtime.anchor_cell == null
+		or visual_data == null
+		or visual_data.anchor_label.is_empty()
+	):
+		return
+
+	var label := Label.new()
+	label.position = Vector2(
+		object_runtime.anchor_cell.x * CELL_SIZE.x,
+		object_runtime.anchor_cell.y * CELL_SIZE.y
+	)
+	label.size = CELL_SIZE
+	label.text = visual_data.anchor_label
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", visual_data.label_color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	temporary_objects_root.add_child(label)
 
 
 # -----------------------

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitAbilityData" format=3]
+
+[ext_resource type="Resource" path="res://Resources/Abilities/AbilityData/DeclarativeMovement.tres" id="1_ability"]
+[ext_resource type="Script" path="res://Resources/Abilities/UnitAbilityData/UnitAbilityData.gd" id="2_unit_ability"]
+[ext_resource type="Resource" path="res://Resources/Abilities/ImpactPlans/GhoulLeapPlan.tres" id="3_plan"]
+
+[resource]
+script = ExtResource("2_unit_ability")
+ability_name = "Прыжок"
+description = "Перемещает Гуля на выбранную свободную клетку в манхэттенском радиусе 3. Стоимость: 1 AP и 1 HP; обычные MP не расходуются."
+ability = ExtResource("1_ability")
+parameters = {
+"radius": 3
+}
+impact_plan_data = ExtResource("3_plan")
+action_point_cost = 1
+health_point_cost = 1

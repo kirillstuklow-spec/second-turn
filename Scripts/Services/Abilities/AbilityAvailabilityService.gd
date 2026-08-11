@@ -86,6 +86,7 @@ func evaluate(
 		)
 
 	_evaluate_action_points(result, ability_runtime)
+	_evaluate_health_points(result, ability_runtime)
 	_evaluate_cooldown_and_charges(result, ability_runtime)
 	_evaluate_usage_limits(result, ability_runtime)
 	_evaluate_external_blockers(result, external_blockers)
@@ -131,6 +132,28 @@ func _evaluate_action_points(
 
 	result.add_reason(
 		AbilityAvailabilityReason.Code.INSUFFICIENT_ACTION_POINTS,
+		{
+			"required": required,
+			"available": available
+		}
+	)
+
+
+func _evaluate_health_points(
+	result : AbilityAvailabilityResult,
+	ability_runtime : UnitAbilityRuntime
+) -> void:
+	var required := ability_runtime.data.health_point_cost
+	var available : int = maxi(
+		0,
+		ability_runtime.owner.current_hp - 1
+	)
+
+	if available >= required:
+		return
+
+	result.add_reason(
+		AbilityAvailabilityReason.Code.INSUFFICIENT_HEALTH_POINTS,
 		{
 			"required": required,
 			"available": available

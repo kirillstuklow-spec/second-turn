@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="BattlefieldObjectData" format=3]
+
+[ext_resource type="Script" path="res://Resources/BattlefieldObjects/BattlefieldObjectData.gd" id="1_object"]
+[ext_resource type="Script" path="res://Resources/BattlefieldObjects/BattlefieldObjectTriggerData.gd" id="2_trigger"]
+[ext_resource type="Resource" path="res://Resources/BattlefieldObjects/SulfurCloudVisual.tres" id="3_visual"]
+[ext_resource type="Resource" path="res://Resources/Abilities/ImpactPlans/SulfurCloudPeriodicPlan.tres" id="4_periodic"]
+[ext_resource type="Resource" path="res://Resources/Abilities/ImpactPlans/SulfurCloudExplosionPlan.tres" id="5_explosion"]
+
+[sub_resource type="Resource" id="Resource_activation_end_trigger"]
+script = ExtResource("2_trigger")
+trigger_id = "sulfur_activation_end_inside"
+event_kind = 4
+minimum_applied_amount = 0
+accept_reaction_events = true
+target_policy = 0
+consume_object_on_trigger = false
+response_plan_data = ExtResource("4_periodic")
+
+[sub_resource type="Resource" id="Resource_fire_trigger"]
+script = ExtResource("2_trigger")
+trigger_id = "sulfur_fire_hit_inside"
+event_kind = 12
+source_type_filter = "fire"
+minimum_applied_amount = 0
+accept_reaction_events = true
+target_policy = 1
+consume_object_on_trigger = true
+response_plan_data = ExtResource("5_explosion")
+
+[resource]
+script = ExtResource("1_object")
+object_id = "field_object.sulfur_cloud"
+object_name = "Облако серы"
+description = "Временный объект 3×3. Наносит яд в конце активации каждого юнита внутри. Применённый FIRE по покрытой клетке или юниту взрывает объект, наносит огненный урон всем внутри и накладывает Горение."
+coverage_offsets = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+lifetime_rounds = 2
+triggers = Array[ExtResource("2_trigger")]([SubResource("Resource_activation_end_trigger"), SubResource("Resource_fire_trigger")])
+visual_data = ExtResource("3_visual")

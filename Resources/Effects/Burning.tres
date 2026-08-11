@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EffectData" format=3 uid="uid://l18hp82tc3h"]
+[gd_resource type="Resource" script_class="EffectData" format=3 uid="uid://nty0lacauv7l"]
 
 [ext_resource type="Script" uid="uid://c2b8oknabdmwg" path="res://Resources/Effects/EffectData.gd" id="1_effect"]
 [ext_resource type="Script" uid="uid://db5ogtmoaxk10" path="res://Resources/Effects/EffectDurationData.gd" id="2_duration"]
@@ -13,13 +13,14 @@ amount = 2
 
 [sub_resource type="Resource" id="Resource_trigger"]
 script = ExtResource("3_trigger")
-trigger_id = "burning_on_each_damage_impact"
+trigger_id = "burning_on_each_health_loss"
+event_kind = 9
 response_plan_data = ExtResource("4_plan")
 
 [resource]
 script = ExtResource("1_effect")
 effect_id = "status.burning"
 effect_name = "Горение"
-description = "После каждого DamageImpact, фактически снявшего HP, наносит носителю 1 урон EFFECT + FIRE. Не реагирует на собственный урон."
+description = "После каждого отдельного факта утраты HP наносит носителю 1 урон EFFECT + FIRE. Реагирует на урон, отрицательное лечение и цену способности, но не на собственное срабатывание."
 duration = SubResource("Resource_duration")
 triggers = Array[ExtResource("3_trigger")]([SubResource("Resource_trigger")])

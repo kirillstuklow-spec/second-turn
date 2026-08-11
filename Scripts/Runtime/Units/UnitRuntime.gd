@@ -104,7 +104,7 @@ func setup(unit_data : UnitData, unit_team_id : int) -> void:
 	action_points_remaining = 0
 	movement_points_remaining = 0
 	movement_modifier_this_activation = 0
-	
+
 	initiative_modifier_this_round = 0
 	initiative_effect_modifier_this_round = 0
 	initiative_roll_this_round = data.initiative
@@ -343,6 +343,34 @@ func spend_movement_points(amount : int) -> bool:
 	)
 
 	return true
+
+
+# Стоимость HP не является воздействием и потому не проходит через урон,
+# лечение или защиты. После успешного commit AbilityPipeline отдельно
+# публикует HEALTH_LOST; юнит всегда должен сохранить 1 HP.
+func can_spend_health_points(amount : int) -> bool:
+	if amount <= 0:
+		return true
+
+	if not is_alive or death_state != DeathState.ALIVE:
+		return false
+
+	return current_hp > amount
+
+
+func spend_health_points(amount : int) -> bool:
+	if not can_spend_health_points(amount):
+		return false
+
+	current_hp -= amount
+	return true
+
+
+func refund_health_point_cost(amount : int) -> void:
+	if amount <= 0 or data == null:
+		return
+
+	current_hp = min(data.max_hp, current_hp + amount)
 
 
 # ============================================================

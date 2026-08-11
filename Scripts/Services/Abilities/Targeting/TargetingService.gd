@@ -28,6 +28,12 @@ const TARGET_RULE_AREA_AROUND_CELL : StringName = (
 const TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL : StringName = (
 	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_EMPTY_DEPLOYMENT_CELL
 )
+const TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS : StringName = (
+	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS
+)
+const TARGET_RULE_SINGLE_CELL : StringName = (
+	AbilityAlgorithmRegistry.TARGET_RULE_SINGLE_CELL
+)
 
 const PARAM_RADIUS : StringName = AbilityAlgorithmRegistry.PARAM_RADIUS
 
@@ -316,6 +322,20 @@ func _resolve_with_snapshot(
 			target_cell
 		)
 
+	if target_rule_id == TARGET_RULE_SINGLE_EMPTY_CELL_IN_RADIUS:
+		return _resolve_empty_cell_in_radius(
+			result,
+			target_cell,
+			resolved_parameters
+		)
+
+	if target_rule_id == TARGET_RULE_SINGLE_CELL:
+		return _resolve_single_cell(
+			result,
+			target_cell,
+			unit_ability
+		)
+
 	if target_unit == null:
 		return result.reject(
 			TargetingResult.Reason.TARGET_UNIT_REQUIRED
@@ -521,6 +541,110 @@ func _resolve_empty_deployment_cell(
 	return result
 
 
+func _resolve_empty_cell_in_radius(
+	result : TargetingResult,
+	target_cell : CellRuntime,
+	resolved_parameters : Dictionary
+) -> TargetingResult:
+	if target_cell == null:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_REQUIRED
+		)
+
+	result.selected_cell_snapshot = result.snapshot.get_cell_snapshot(
+		target_cell
+	)
+
+	if result.selected_cell_snapshot == null:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_NOT_IN_BATTLE
+		)
+
+	if result.selected_cell_snapshot.occupying_unit != null:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_OCCUPIED
+		)
+
+	var radius := int(resolved_parameters.get(PARAM_RADIUS, 0))
+	var distance : int = (
+		abs(result.source_snapshot.cell_x - result.selected_cell_snapshot.x)
+		+ abs(result.source_snapshot.cell_y - result.selected_cell_snapshot.y)
+	)
+
+	if distance <= 0 or distance > radius:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_OUT_OF_RANGE,
+			{
+				"distance": distance,
+				"radius": radius
+			}
+		)
+
+	result.target_cell_snapshots.append(
+		result.selected_cell_snapshot
+	)
+	return result
+
+
+func _resolve_single_cell(
+	result : TargetingResult,
+	target_cell : CellRuntime,
+	unit_ability : UnitAbilityData
+) -> TargetingResult:
+	if target_cell == null:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_REQUIRED
+		)
+
+	result.selected_cell_snapshot = result.snapshot.get_cell_snapshot(
+		target_cell
+	)
+
+	if result.selected_cell_snapshot == null:
+		return result.reject(
+			TargetingResult.Reason.TARGET_CELL_NOT_IN_BATTLE
+		)
+
+	var object_data := _get_created_battlefield_object_data(unit_ability)
+
+	if object_data != null:
+		for offset in object_data.coverage_offsets:
+			if result.snapshot.get_cell_snapshot_at(
+				target_cell.x + offset.x,
+				target_cell.y + offset.y
+			) == null:
+				return result.reject(
+					TargetingResult.Reason.TARGET_CELL_OUT_OF_RANGE,
+					{
+						"reason": "object_coverage_outside_battlefield",
+						"offset_x": offset.x,
+						"offset_y": offset.y
+					}
+				)
+
+	result.target_cell_snapshots.append(
+		result.selected_cell_snapshot
+	)
+	return result
+
+
+func _get_created_battlefield_object_data(
+	unit_ability : UnitAbilityData
+) -> BattlefieldObjectData:
+	if unit_ability == null or unit_ability.impact_plan_data == null:
+		return null
+
+	for node in unit_ability.impact_plan_data.nodes:
+		if (
+			node != null
+			and node.operation == Impact.Operation.CREATE_OBJECT
+			and node.battlefield_object_data != null
+		):
+			return node.battlefield_object_data
+
+	return null
+
+
 func _collect_all_valid_units(
 	result : TargetingResult,
 	unit_ability : UnitAbilityData
@@ -554,7 +678,10 @@ func _get_unit_rejection_reason(
 	)
 
 	if (
-		action_type == AbilityData.ActionType.ATTACK
+		(
+			action_type == AbilityData.ActionType.ATTACK
+			or _deals_damage_to_selected_target(unit_ability)
+		)
 		and source_snapshot.team_id == target_snapshot.team_id
 	):
 		return TargetingResult.Reason.TARGET_NOT_ENEMY
@@ -606,6 +733,26 @@ func _get_unit_rejection_reason(
 			return TargetingResult.Reason.CONDITION_FAILED
 
 	return TargetingResult.Reason.NONE
+
+
+func _deals_damage_to_selected_target(
+	unit_ability : UnitAbilityData
+) -> bool:
+	if unit_ability == null or unit_ability.impact_plan_data == null:
+		return false
+
+	for node in unit_ability.impact_plan_data.nodes:
+		if (
+			node != null
+			and node.operation == Impact.Operation.DAMAGE
+			and (
+				node.target_reference
+				== ImpactNodeData.TargetReference.SELECTED_TARGET
+			)
+		):
+			return true
+
+	return false
 
 
 func _require_nonempty_unit_targets(

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3 uid="uid://i08bun8yi04d"]
+
+[ext_resource type="Script" uid="uid://dlvynt075pr8p" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" uid="uid://bvbgefwste3of" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+
+[sub_resource type="Resource" id="Resource_ghoul_leap_move"]
+script = ExtResource("2_node")
+node_id = "ghoul_leap_move"
+target_reference = 1
+operation = 4
+interaction_type = 6
+magnitude = 1
+
+[resource]
+script = ExtResource("1_plan")
+plan_id = "ability.ghoul_leap"
+nodes = Array[ExtResource("2_node")]([SubResource("Resource_ghoul_leap_move")])

@@ -451,7 +451,13 @@ func _finish_runtime_round(round_number : int) -> void:
 			battle_state.units,
 			round_number
 		)
-	
+
+	if impact_executor != null:
+		impact_executor.finish_battlefield_object_round(
+			round_number,
+			battle_state
+		)
+
 # ============================================================
 # ОТЛАДКА ОЧЕРЕДИ
 # ============================================================

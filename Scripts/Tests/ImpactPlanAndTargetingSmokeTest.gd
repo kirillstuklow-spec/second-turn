@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run_test() -> void:
-	_test_six_interaction_types()
+	_test_seven_interaction_types()
 	_test_strict_targeting_and_typed_pipeline_result()
 	_test_aoe_uses_fixed_target_snapshot()
 	_test_tree_and_queue_interruption_rules()
@@ -23,10 +23,10 @@ func _run_test() -> void:
 
 
 # ============================================================
-# ШЕСТЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
+# СЕМЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
 # ============================================================
 
-func _test_six_interaction_types() -> void:
+func _test_seven_interaction_types() -> void:
 	var melee := _make_damage_ability(
 		"single_adjacent_enemy",
 		AbilityData.TargetingForm.MELEE
@@ -42,6 +42,8 @@ func _test_six_interaction_types() -> void:
 	var healing := _make_healing_ability()
 	var summon_data := AbilityData.new()
 	summon_data.action_type = AbilityData.ActionType.SUMMON
+	var movement_data := AbilityData.new()
+	movement_data.action_type = AbilityData.ActionType.MOVEMENT
 
 	assert(
 		Impact.interaction_type_from_ability(melee.ability)
@@ -62,6 +64,10 @@ func _test_six_interaction_types() -> void:
 	assert(
 		Impact.interaction_type_from_ability(summon_data)
 		== Impact.InteractionType.SUMMON
+	)
+	assert(
+		Impact.interaction_type_from_ability(movement_data)
+		== Impact.InteractionType.MOVEMENT
 	)
 	assert(
 		Impact.get_interaction_type_id(Impact.InteractionType.MELEE)
@@ -86,6 +92,10 @@ func _test_six_interaction_types() -> void:
 	assert(
 		Impact.get_interaction_type_id(Impact.InteractionType.EFFECT)
 		== &"effect"
+	)
+	assert(
+		Impact.get_interaction_type_id(Impact.InteractionType.MOVEMENT)
+		== &"movement"
 	)
 
 

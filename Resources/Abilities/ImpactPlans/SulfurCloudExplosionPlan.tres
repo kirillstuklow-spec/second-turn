@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactConditionData.gd" id="3_condition"]
+[ext_resource type="Resource" path="res://Resources/Effects/Burning.tres" id="4_burning"]
+
+[sub_resource type="Resource" id="Resource_damage_applied"]
+script = ExtResource("3_condition")
+condition_type = 2
+minimum_magnitude = 1
+
+[sub_resource type="Resource" id="Resource_explosion_damage"]
+script = ExtResource("2_node")
+node_id = "sulfur_explosion_damage"
+source_reference = 4
+target_reference = 0
+operation = 0
+interaction_type = 5
+source_type = "fire"
+magnitude = 2
+
+[sub_resource type="Resource" id="Resource_apply_burning"]
+script = ExtResource("2_node")
+node_id = "sulfur_explosion_burning"
+parent_node_id = "sulfur_explosion_damage"
+source_reference = 4
+target_reference = 0
+operation = 3
+interaction_type = 5
+source_type = "fire"
+effect_data = ExtResource("4_burning")
+transition_condition = SubResource("Resource_damage_applied")
+
+[resource]
+script = ExtResource("1_plan")
+plan_id = "object.sulfur_cloud.fire_explosion"
+topology = 0
+nodes = Array[ExtResource("2_node")]([SubResource("Resource_explosion_damage"), SubResource("Resource_apply_burning")])

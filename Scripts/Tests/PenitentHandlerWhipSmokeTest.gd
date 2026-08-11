@@ -15,6 +15,7 @@ const WHIP_PATH : String = (
 const WHIP_EFFECT_PATH : String = (
 	"res://Resources/Effects/WhipDriven.tres"
 )
+const BURNING_PATH : String = "res://Resources/Effects/Burning.tres"
 
 
 func _initialize() -> void:
@@ -23,13 +24,18 @@ func _initialize() -> void:
 
 func _run_test() -> void:
 	_test_resource_contract()
-	_test_adjacent_ally_targeting_and_blocked_hit()
+	_test_adjacent_ally_targeting_and_blocked_negative_healing()
+	_test_ordinary_damage_cannot_target_allies()
+	_test_lethal_negative_healing_confirms_death_without_effect()
+	_test_negative_healing_triggers_health_loss_reaction()
 	_test_round_lifetime_initiative_and_movement()
 	_test_last_stand_prevents_one_death_before_last_step()
 
 	print(
-		"PenitentHandlerWhipSmokeTest: PASS — adjacent-ally SUPPORT "
-		+ "targeting, MELEE + PHYSICAL damage gate, refreshable Подгон, "
+		"PenitentHandlerWhipSmokeTest: PASS — adjacent-ally HEAL "
+		+ "targeting, negative HEALING gate, ordinary allied-damage ban, "
+		+ "HEALTH_LOST and Burning response to negative healing, "
+		+ "lethal negative-healing attribution without child effect, "
 		+ "+10 next-round initiative, +1 movement, round lifetime, "
 		+ "one-use DEATH_PENDING prevention, DEATH_PREVENTED event and "
 		+ "Last Step only after the following confirmed death"
@@ -53,22 +59,25 @@ func _test_resource_contract() -> void:
 	assert(whip.action_point_cost == 1)
 	assert(whip.ability != null)
 	assert(whip.ability.activation_mode == AbilityData.ActivationMode.ACTIVE)
-	assert(whip.ability.action_type == AbilityData.ActionType.SUPPORT)
+	assert(whip.ability.action_type == AbilityData.ActionType.HEAL)
 	assert(whip.ability.targeting_form == AbilityData.TargetingForm.MELEE)
 	assert(whip.ability.algorithm_id == "execute_impact_plan")
 	assert(whip.ability.target_rule_id == "single_adjacent_ally")
 	assert(whip.impact_plan_data != null)
 	assert(whip.impact_plan_data.nodes.size() == 2)
 
-	var damage_node := whip.impact_plan_data.nodes[0]
-	var effect_node := whip.impact_plan_data.nodes[1]
-	assert(damage_node.node_id == "whip_damage")
-	assert(damage_node.operation == Impact.Operation.DAMAGE)
-	assert(damage_node.interaction_type == Impact.InteractionType.MELEE)
-	assert(damage_node.source_type == "physical")
-	assert(damage_node.magnitude == 1)
-	assert(damage_node.armor_penetration == 0)
-	assert(effect_node.parent_node_id == damage_node.node_id)
+	var negative_healing_node : ImpactNodeData = whip.impact_plan_data.nodes[0]
+	var effect_node : ImpactNodeData = whip.impact_plan_data.nodes[1]
+	assert(negative_healing_node.node_id == "whip_negative_healing")
+	assert(negative_healing_node.operation == Impact.Operation.HEAL)
+	assert(
+		negative_healing_node.interaction_type
+		== Impact.InteractionType.HEALING
+	)
+	assert(negative_healing_node.source_type.is_empty())
+	assert(negative_healing_node.magnitude == -1)
+	assert(negative_healing_node.armor_penetration == 0)
+	assert(effect_node.parent_node_id == negative_healing_node.node_id)
 	assert(effect_node.operation == Impact.Operation.APPLY_EFFECT)
 	assert(effect_node.interaction_type == Impact.InteractionType.EFFECT)
 	assert(effect_node.effect_data == effect)
@@ -110,7 +119,7 @@ func _test_resource_contract() -> void:
 # ЦЕЛЬ И ЗАВИСИМОСТЬ ЭФФЕКТА ОТ ПОПАДАНИЯ
 # ============================================================
 
-func _test_adjacent_ally_targeting_and_blocked_hit() -> void:
+func _test_adjacent_ally_targeting_and_blocked_negative_healing() -> void:
 	var battle_state := _make_battle_state()
 	var handler := battle_state.spawn_unit(
 		load(HANDLER_PATH) as UnitData,
@@ -147,7 +156,7 @@ func _test_adjacent_ally_targeting_and_blocked_hit() -> void:
 	var bundle := _make_pipeline_bundle(battle_state)
 	var registry := bundle["algorithm_registry"] as AbilityAlgorithmRegistry
 	var targeting := bundle["targeting_service"] as TargetingService
-	var whip_runtime := handler.active_abilities[1]
+	var whip_runtime : UnitAbilityRuntime = handler.active_abilities[1]
 	var schema := registry.validate_unit_ability(whip_runtime.data)
 	assert(schema.is_valid, schema.get_summary())
 
@@ -174,7 +183,7 @@ func _test_adjacent_ally_targeting_and_blocked_hit() -> void:
 	assert(not enemy_target.is_valid)
 	assert(enemy_target.reason == TargetingResult.Reason.TARGET_NOT_ALLY)
 
-	ally.active_defenses.append("physical")
+	ally.active_defenses.append("healing")
 	var execution := (
 		bundle["ability_pipeline"] as AbilityPipeline
 	).execute_ability(
@@ -186,7 +195,7 @@ func _test_adjacent_ally_targeting_and_blocked_hit() -> void:
 	assert(execution.was_committed(), execution.message)
 	assert(handler.action_points_remaining == 0)
 	assert(ally.current_hp == ally.data.max_hp)
-	assert(not ally.active_defenses.has("physical"))
+	assert(not ally.active_defenses.has("healing"))
 	assert(ally.get_active_effect(&"status.whip_driven") == null)
 	assert(execution.get_impact_results().size() == 2)
 	assert(
@@ -196,6 +205,208 @@ func _test_adjacent_ally_targeting_and_blocked_hit() -> void:
 	assert(
 		execution.get_impact_results()[1].outcome
 		== ImpactResult.Outcome.SKIPPED_PARENT
+	)
+
+	_free_pipeline_bundle(bundle)
+
+
+func _test_negative_healing_triggers_health_loss_reaction() -> void:
+	var battle_state := _make_battle_state()
+	var handler := battle_state.spawn_unit(
+		load(HANDLER_PATH) as UnitData,
+		1,
+		1,
+		2
+	)
+	var ally := battle_state.spawn_unit(
+		_make_unit_data("burning_whip_ally", "Burning Whip Ally", 10, 20),
+		1,
+		2,
+		2
+	)
+	var enemy := battle_state.spawn_unit(
+		_make_unit_data("burning_whip_enemy", "Burning Whip Enemy", 10, 10),
+		2,
+		6,
+		2
+	)
+	assert(handler != null)
+	assert(ally != null)
+	assert(enemy != null)
+	battle_state.set_active_unit(handler)
+	handler.start_round(1)
+	handler.start_activation(1, 0)
+
+	var burning := EffectRuntime.new()
+	burning.setup(
+		&"test_whip_burning",
+		load(BURNING_PATH) as EffectData,
+		enemy,
+		null,
+		ally,
+		battle_state.turn_state.activation_serial,
+		battle_state.round_number
+	)
+	ally.active_effects.append(burning)
+
+	var bundle := _make_pipeline_bundle(battle_state)
+	var hp_before := ally.current_hp
+	var execution := (
+		bundle["ability_pipeline"] as AbilityPipeline
+	).execute_ability(
+		handler,
+		ally,
+		handler.active_abilities[1],
+		ally.cell
+	)
+
+	assert(execution.was_committed(), execution.message)
+	assert(ally.current_hp == hp_before - 2)
+	assert(ally.get_active_effect(&"status.whip_driven") != null)
+	assert(
+		execution.impact_execution_result.reaction_execution_results.size()
+		== 1
+	)
+
+	var event_log := bundle["combat_event_log"] as CombatEventLog
+	assert(event_log.history.size() == 5)
+	assert(event_log.history[0].kind == CombatEvent.Kind.HEALING_APPLIED)
+	assert(event_log.history[1].kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(
+		event_log.history[1].health_loss_cause
+		== CombatEvent.HealthLossCause.NEGATIVE_HEALING
+	)
+	assert(event_log.history[1].cause_event_id == event_log.history[0].event_id)
+	assert(event_log.history[2].kind == CombatEvent.Kind.EFFECT_APPLIED)
+	assert(event_log.history[3].kind == CombatEvent.Kind.DAMAGE_APPLIED)
+	assert(event_log.history[3].origin_effect_runtime_id == burning.runtime_id)
+	assert(event_log.history[4].kind == CombatEvent.Kind.HEALTH_LOST)
+
+	_free_pipeline_bundle(bundle)
+
+
+# ============================================================
+# ОБЫЧНЫЙ УРОН НЕ МОЖЕТ ИСПОЛЬЗОВАТЬ СОЮЗНУЮ ЦЕЛЬ
+# ============================================================
+
+func _test_ordinary_damage_cannot_target_allies() -> void:
+	var battle_state := _make_battle_state()
+	var source := battle_state.spawn_unit(
+		_make_unit_data("ally_damage_source", "Ally Damage Source", 10, 20),
+		1,
+		0,
+		2
+	)
+	var ally := battle_state.spawn_unit(
+		_make_unit_data("ally_damage_target", "Ally Damage Target", 10, 10),
+		1,
+		1,
+		2
+	)
+	var bundle := _make_pipeline_bundle(battle_state)
+	var impact := Impact.create(
+		&"forbidden_ally_damage",
+		&"forbidden_ally_damage_execution",
+		source,
+		ally,
+		ally.cell,
+		Impact.Operation.DAMAGE,
+		Impact.InteractionType.MELEE,
+		&"physical",
+		1,
+		0
+	)
+	var plan := ImpactPlan.create(
+		&"forbidden_ally_damage_execution",
+		ImpactPlan.Topology.TREE
+	)
+	assert(plan.add_root_impact(impact))
+	var executor := bundle["impact_executor"] as ImpactExecutor
+	var hp_before := ally.current_hp
+	var result := executor.execute(
+		plan,
+		BattleStateSnapshot.capture(battle_state),
+		battle_state
+	)
+	assert(not result.is_successful())
+	assert(ally.current_hp == hp_before)
+	assert(result.get_summary().contains("cannot target an ally"))
+
+	_free_pipeline_bundle(bundle)
+
+
+# ============================================================
+# СМЕРТЕЛЬНОЕ ОТРИЦАТЕЛЬНОЕ ЛЕЧЕНИЕ НЕ НАКЛАДЫВАЕТ ДОЧЕРНИЙ ЭФФЕКТ
+# ============================================================
+
+func _test_lethal_negative_healing_confirms_death_without_effect() -> void:
+	var battle_state := _make_battle_state()
+	var handler := battle_state.spawn_unit(
+		load(HANDLER_PATH) as UnitData,
+		1,
+		0,
+		2
+	)
+	var ally := battle_state.spawn_unit(
+		_make_unit_data("lethal_whip_ally", "Lethal Whip Ally", 10, 20),
+		1,
+		1,
+		2
+	)
+	var enemy := battle_state.spawn_unit(
+		_make_unit_data("lethal_whip_enemy", "Lethal Whip Enemy", 10, 10),
+		2,
+		6,
+		2
+	)
+	assert(handler != null)
+	assert(ally != null)
+	assert(enemy != null)
+	battle_state.set_active_unit(handler)
+	handler.start_round(1)
+	handler.start_activation(1, 0)
+	ally.current_hp = 1
+
+	var bundle := _make_pipeline_bundle(battle_state)
+	var execution := (
+		bundle["ability_pipeline"] as AbilityPipeline
+	).execute_ability(
+		handler,
+		ally,
+		handler.active_abilities[1],
+		ally.cell
+	)
+	assert(execution.was_committed(), execution.message)
+	assert(ally.is_dead())
+	assert(ally.cell == null)
+	assert(ally.get_active_effect(&"status.whip_driven") == null)
+	assert(execution.get_impact_results().size() == 2)
+	assert(execution.get_impact_results()[0].was_applied())
+	assert(
+		execution.get_impact_results()[1].outcome
+		== ImpactResult.Outcome.INVALID_TARGET
+	)
+
+	var event_log := bundle["combat_event_log"] as CombatEventLog
+	assert(event_log.history.size() == 3)
+	var healing_event : CombatEvent = event_log.history[0]
+	var health_loss_event : CombatEvent = event_log.history[1]
+	var death_event : CombatEvent = event_log.history[2]
+	assert(healing_event.kind == CombatEvent.Kind.HEALING_APPLIED)
+	assert(healing_event.hp_delta == -1)
+	assert(health_loss_event.kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(
+		health_loss_event.health_loss_cause
+		== CombatEvent.HealthLossCause.NEGATIVE_HEALING
+	)
+	assert(health_loss_event.cause_event_id == healing_event.event_id)
+	assert(death_event.kind == CombatEvent.Kind.DEATH_CONFIRMED)
+	assert(death_event.cause_event_id == healing_event.event_id)
+	assert(death_event.source_unit == handler)
+	assert(death_event.target_unit == ally)
+	assert(
+		death_event.interaction_type
+		== Impact.InteractionType.HEALING
 	)
 
 	_free_pipeline_bundle(bundle)
@@ -234,6 +445,8 @@ func _test_round_lifetime_initiative_and_movement() -> void:
 
 	turn_pipeline.end_current_activation()
 	assert(battle_state.active_unit == handler)
+	ally.armor = 5
+	ally.active_defenses.append("physical")
 	var hp_before := ally.current_hp
 	var execution := ability_pipeline.execute_ability(
 		handler,
@@ -243,6 +456,12 @@ func _test_round_lifetime_initiative_and_movement() -> void:
 	)
 	assert(execution.was_committed(), execution.message)
 	assert(ally.current_hp == hp_before - 1)
+	assert(ally.active_defenses.has("physical"))
+	assert(execution.get_impact_results()[0].impact.magnitude == -1)
+	assert(
+		execution.get_impact_results()[0].impact.interaction_type
+		== Impact.InteractionType.HEALING
+	)
 	var driven := ally.get_active_effect(&"status.whip_driven")
 	assert(driven != null)
 	assert(driven.remaining_duration == 1)
@@ -293,9 +512,15 @@ func _test_round_lifetime_initiative_and_movement() -> void:
 	assert(ally.movement_points_remaining == ally.data.movement)
 
 	var event_log := bundle["combat_event_log"] as CombatEventLog
-	assert(event_log.history.size() == 2)
-	assert(event_log.history[0].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(event_log.history[1].kind == CombatEvent.Kind.EFFECT_APPLIED)
+	assert(event_log.history.size() == 3)
+	assert(event_log.history[0].kind == CombatEvent.Kind.HEALING_APPLIED)
+	assert(
+		event_log.history[0].interaction_type
+		== Impact.InteractionType.HEALING
+	)
+	assert(event_log.history[0].hp_delta == -1)
+	assert(event_log.history[1].kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(event_log.history[2].kind == CombatEvent.Kind.EFFECT_APPLIED)
 
 	_free_pipeline_bundle(bundle)
 
@@ -364,14 +589,15 @@ func _test_last_stand_prevents_one_death_before_last_step() -> void:
 	assert(battle_state.pending_decision == null)
 
 	var event_log := bundle["combat_event_log"] as CombatEventLog
-	assert(event_log.history.size() == 4)
-	assert(event_log.history[2].kind == CombatEvent.Kind.DAMAGE_APPLIED)
-	assert(event_log.history[3].kind == CombatEvent.Kind.DEATH_PREVENTED)
-	assert(event_log.history[3].source_unit == handler)
-	assert(event_log.history[3].target_unit == penitent)
-	assert(event_log.history[3].effect_id == &"status.whip_driven")
-	assert(event_log.history[3].applied_amount == 1)
-	assert(event_log.history[3].cause_event_id == event_log.history[2].event_id)
+	assert(event_log.history.size() == 6)
+	assert(event_log.history[3].kind == CombatEvent.Kind.DAMAGE_APPLIED)
+	assert(event_log.history[4].kind == CombatEvent.Kind.HEALTH_LOST)
+	assert(event_log.history[5].kind == CombatEvent.Kind.DEATH_PREVENTED)
+	assert(event_log.history[5].source_unit == handler)
+	assert(event_log.history[5].target_unit == penitent)
+	assert(event_log.history[5].effect_id == &"status.whip_driven")
+	assert(event_log.history[5].applied_amount == 1)
+	assert(event_log.history[5].cause_event_id == event_log.history[3].event_id)
 	assert(not _has_event_kind(event_log, CombatEvent.Kind.DEATH_CONFIRMED))
 
 	var second_lethal := _execute_damage_plan(

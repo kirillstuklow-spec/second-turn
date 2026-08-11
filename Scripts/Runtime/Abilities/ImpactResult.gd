@@ -17,7 +17,9 @@ enum Outcome {
 	SKIPPED_CONDITION,
 	BLOCKED_PASSIVE_RULE,
 	INVALID_EFFECT,
-	SUMMON_FAILED
+	SUMMON_FAILED,
+	MOVE_FAILED,
+	OBJECT_CREATION_FAILED
 }
 
 
@@ -30,6 +32,14 @@ var effect_application_result : EffectApplicationResult = null
 var blocking_effect_runtime : EffectRuntime = null
 
 var summoned_unit : UnitRuntime = null
+
+var created_battlefield_object : BattlefieldObjectRuntime = null
+
+var object_covered_cells : Array[CellRuntime] = []
+
+var movement_from_cell : CellRuntime = null
+
+var movement_to_cell : CellRuntime = null
 
 var outcome : Outcome = Outcome.INVALID_TARGET
 
@@ -122,5 +132,11 @@ func get_outcome_id() -> StringName:
 
 		Outcome.SUMMON_FAILED:
 			return &"summon_failed"
+
+		Outcome.MOVE_FAILED:
+			return &"move_failed"
+
+		Outcome.OBJECT_CREATION_FAILED:
+			return &"object_creation_failed"
 
 	return &"unknown"

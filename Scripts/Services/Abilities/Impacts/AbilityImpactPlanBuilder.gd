@@ -19,6 +19,7 @@ const PARAM_ARMOR_PENETRATION : StringName = (
 	AbilityAlgorithmRegistry.PARAM_ARMOR_PENETRATION
 )
 const PARAM_KEYWORD : StringName = AbilityAlgorithmRegistry.PARAM_KEYWORD
+const PARAM_RADIUS : StringName = AbilityAlgorithmRegistry.PARAM_RADIUS
 
 
 func build(
@@ -48,7 +49,8 @@ func build(
 			execution_id,
 			source_unit,
 			ability_runtime,
-			targeting_result
+			targeting_result,
+			resolved_parameters
 		)
 
 	return _build_legacy_algorithm(
@@ -78,6 +80,9 @@ func build_triggered(
 		return result.reject(
 			"ImpactPlanBuilder: reaction plan data is missing"
 		)
+
+	if task.source_battlefield_object != null:
+		return _build_battlefield_object_triggered(task)
 
 	var plan_issues := ImpactPlanDataValidator.validate(
 		task.response_plan_data
@@ -121,9 +126,75 @@ func build_triggered(
 		"reaction_depth": task.reaction_depth,
 		"origin_effect_runtime_id": task.source_effect_runtime_id,
 		"target_key": target_key,
-		"is_primary": false
+		"is_primary": false,
+		"resolved_parameters": {}
 	}
 	var contexts : Array[Dictionary] = [context]
+
+	return _build_from_plan_data(
+		task.execution_id,
+		task.response_plan_data,
+		contexts
+	)
+
+
+func _build_battlefield_object_triggered(
+	task : ReactionTask
+) -> ImpactPlanBuildResult:
+	var result := ImpactPlanBuildResult.new()
+	var object_runtime := task.source_battlefield_object
+
+	if task.trigger_event == null:
+		return result.reject(
+			"ImpactPlanBuilder: object reaction has no event"
+		)
+
+	if object_runtime.data == null or object_runtime.source_unit == null:
+		return result.reject(
+			"ImpactPlanBuilder: object reaction source is incomplete"
+		)
+
+	var plan_issues := ImpactPlanDataValidator.validate(
+		task.response_plan_data
+	)
+
+	if not plan_issues.is_empty():
+		return result.reject(
+			"ImpactPlanBuilder: invalid object reaction plan: "
+			+ " | ".join(plan_issues)
+		)
+
+	var contexts : Array[Dictionary] = []
+
+	for target_index in range(task.selected_targets.size()):
+		var selected_target := task.selected_targets[target_index]
+
+		if selected_target == null:
+			continue
+
+		contexts.append({
+			"ability_source": object_runtime.source_unit,
+			"selected_target": selected_target,
+			"selected_cell": selected_target.cell,
+			"event": task.trigger_event,
+			"effect_runtime": null,
+			"source_object": object_runtime,
+			"battlefield_object_runtime": object_runtime,
+			"effect_source": null,
+			"effect_carrier": null,
+			"source_ability_data": object_runtime.source_ability_data,
+			"root_execution_id": task.root_execution_id,
+			"reaction_depth": task.reaction_depth,
+			"origin_effect_runtime_id": &"",
+			"target_key": "object_target_%03d" % (target_index + 1),
+			"is_primary": false,
+			"resolved_parameters": {}
+		})
+
+	if contexts.is_empty():
+		return result.reject(
+			"ImpactPlanBuilder: object reaction has no living targets"
+		)
 
 	return _build_from_plan_data(
 		task.execution_id,
@@ -136,7 +207,8 @@ func _build_declarative_ability(
 	execution_id : StringName,
 	source_unit : UnitRuntime,
 	ability_runtime : UnitAbilityRuntime,
-	targeting_result : TargetingResult
+	targeting_result : TargetingResult,
+	resolved_parameters : Dictionary
 ) -> ImpactPlanBuildResult:
 	var result := ImpactPlanBuildResult.new()
 	var plan_data := ability_runtime.data.impact_plan_data
@@ -175,7 +247,8 @@ func _build_declarative_ability(
 			"reaction_depth": 0,
 			"origin_effect_runtime_id": &"",
 			"target_key": target_snapshot.get_stable_key(),
-			"is_primary": true
+			"is_primary": true,
+			"resolved_parameters": resolved_parameters.duplicate(true)
 		})
 
 	if contexts.is_empty() and targeting_result.selected_cell_snapshot != null:
@@ -194,7 +267,8 @@ func _build_declarative_ability(
 			"target_key": (
 				targeting_result.selected_cell_snapshot.get_stable_key()
 			),
-			"is_primary": true
+			"is_primary": true,
+			"resolved_parameters": resolved_parameters.duplicate(true)
 		})
 
 	if contexts.is_empty():
@@ -273,7 +347,14 @@ func _append_context_nodes(
 				% node.node_id
 			)
 
-		if target_unit == null and node.operation != Impact.Operation.SUMMON:
+		if (
+			target_unit == null
+			and node.operation not in [
+				Impact.Operation.SUMMON,
+				Impact.Operation.CREATE_OBJECT,
+				Impact.Operation.AFFECT_CELL
+			]
+		):
 			return (
 				"ImpactPlanBuilder: target for node '%s' is unavailable"
 				% node.node_id
@@ -295,7 +376,7 @@ func _append_context_nodes(
 
 		var target_cell : CellRuntime = context.get("selected_cell", null)
 
-		if target_unit != null:
+		if target_unit != null and node.operation != Impact.Operation.MOVE:
 			target_cell = target_unit.cell
 
 		var impact := Impact.create(
@@ -327,6 +408,17 @@ func _append_context_nodes(
 		impact.healing_kind = node.healing_kind
 		impact.effect_data = node.effect_data
 		impact.summon_unit_data = node.summon_unit_data
+		impact.battlefield_object_data = node.battlefield_object_data
+
+		if node.operation == Impact.Operation.MOVE:
+			var context_parameters : Dictionary = context.get(
+				"resolved_parameters",
+				{}
+			)
+			impact.movement_max_distance = int(
+				context_parameters.get(PARAM_RADIUS, 1)
+			)
+
 		impact.transition_condition = node.transition_condition
 		impact.order_index = order_offset + node_index
 		impact.metadata = node.metadata.duplicate(true)
@@ -408,6 +500,17 @@ func _resolve_source_unit(
 		ImpactNodeData.SourceReference.EFFECT_CARRIER:
 			return context.get("effect_carrier", null) as UnitRuntime
 
+		ImpactNodeData.SourceReference.BATTLEFIELD_OBJECT_SOURCE:
+			var object_runtime := context.get(
+				"battlefield_object_runtime",
+				null
+			) as BattlefieldObjectRuntime
+			return (
+				object_runtime.source_unit
+				if object_runtime != null
+				else null
+			)
+
 	return null
 
 
@@ -424,6 +527,12 @@ func _resolve_source_object(
 
 		if effect_source_object != null:
 			return effect_source_object
+
+	if (
+		node.source_reference
+		== ImpactNodeData.SourceReference.BATTLEFIELD_OBJECT_SOURCE
+	):
+		return context.get("battlefield_object_runtime", null)
 
 	return source_unit
 

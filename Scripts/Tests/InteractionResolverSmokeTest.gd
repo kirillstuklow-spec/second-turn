@@ -9,13 +9,13 @@ func _initialize() -> void:
 
 
 func _run_test() -> void:
-	_test_all_six_interaction_types()
+	_test_all_seven_interaction_types()
 	_test_hierarchy_and_defense_consumption()
 	_test_armor_scope_and_penetration()
 	_test_healing_source_reaches_impact_plan()
 
 	print(
-		"InteractionResolverSmokeTest: PASS — six interaction types, "
+		"InteractionResolverSmokeTest: PASS — seven interaction types, "
 		+ "immunity > defense > armor, type > source and penetration -5...5"
 	)
 
@@ -23,10 +23,10 @@ func _run_test() -> void:
 
 
 # ============================================================
-# ШЕСТЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
+# СЕМЬ ТИПОВ ВЗАИМОДЕЙСТВИЯ
 # ============================================================
 
-func _test_all_six_interaction_types() -> void:
+func _test_all_seven_interaction_types() -> void:
 	_assert_type_defense(
 		Impact.InteractionType.MELEE,
 		Impact.Operation.DAMAGE
@@ -50,6 +50,10 @@ func _test_all_six_interaction_types() -> void:
 	_assert_type_defense(
 		Impact.InteractionType.EFFECT,
 		Impact.Operation.DAMAGE
+	)
+	_assert_type_defense(
+		Impact.InteractionType.MOVEMENT,
+		Impact.Operation.MOVE
 	)
 
 
@@ -384,6 +388,10 @@ func _test_armor_scope_and_penetration() -> void:
 		Impact.InteractionType.EFFECT,
 		Impact.Operation.DAMAGE
 	)
+	_assert_armor_is_ignored(
+		Impact.InteractionType.MOVEMENT,
+		Impact.Operation.MOVE
+	)
 	_test_negative_penetration_increases_effective_armor()
 	_test_positive_penetration_reduces_effective_armor()
 	_test_out_of_range_penetration_is_rejected()
@@ -419,7 +427,10 @@ func _assert_armor_is_ignored(
 ) -> void:
 	var armor_penetration := -5
 
-	if interaction_type == Impact.InteractionType.EFFECT:
+	if interaction_type in [
+		Impact.InteractionType.EFFECT,
+		Impact.InteractionType.MOVEMENT
+	]:
 		armor_penetration = 0
 
 	var bundle := _make_resolution_bundle(

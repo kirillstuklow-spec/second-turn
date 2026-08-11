@@ -17,6 +17,9 @@
 [ext_resource type="PackedScene" uid="uid://b6ivyyflbw7jm" path="res://Scense/UI/battle_hud.tscn" id="14_u4a4q"]
 [ext_resource type="Resource" path="res://Resources/Unit/PenitentHandlerData.tres" id="15_handler"]
 [ext_resource type="Script" uid="uid://cidabr5ydm5hw" path="res://Scripts/UI/BattleHUD..gd" id="16_mwncx"]
+[ext_resource type="Resource" path="res://Resources/Unit/GhoulData.tres" id="17_ghoul"]
+[ext_resource type="Resource" path="res://Resources/Unit/AshHeraldData.tres" id="18_ash_herald"]
+[ext_resource type="Resource" path="res://Resources/Unit/FirestarterData.tres" id="19_firestarter"]
 
 [node name="BattleScene" type="Node2D" unique_id=1100306930]
 script = ExtResource("1_moh7n")
@@ -24,8 +27,8 @@ script = ExtResource("1_moh7n")
 [node name="BattleEngine" type="Node" parent="." unique_id=1570476950]
 script = ExtResource("1_rq7d2")
 arena_data = ExtResource("5_test_arena")
-player_1_units = Array[ExtResource("2_unit_data")]([ExtResource("15_handler")])
-player_2_units = Array[ExtResource("2_unit_data")]([ExtResource("3_white_brother")])
+player_1_units = Array[ExtResource("2_unit_data")]([ExtResource("15_handler"), ExtResource("18_ash_herald")])
+player_2_units = Array[ExtResource("2_unit_data")]([ExtResource("3_white_brother"), ExtResource("17_ghoul"), ExtResource("19_firestarter")])
 
 [node name="BattleInitializer" type="Node" parent="BattleEngine" unique_id=1595228986]
 script = ExtResource("6_no0xc")

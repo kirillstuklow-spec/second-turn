@@ -42,6 +42,10 @@ var zone: int = CellZone.NEUTRAL
 
 var occupying_unit : UnitRuntime = null
 
+# Пространственные объекты не занимают клетку и не влияют на is_occupied().
+# Клетка хранит только ссылки; геометрией и жизненным циклом владеет объект.
+var covering_objects : Array[BattlefieldObjectRuntime] = []
+
 
 # -----------------------
 # Инициализация
@@ -58,6 +62,7 @@ func setup(
 	zone = cell_zone
 	visual_data = cell_visual_data
 	occupying_unit = null
+	covering_objects.clear()
 
 
 # -----------------------
@@ -94,5 +99,19 @@ func remove_unit() -> void:
 		occupying_unit.cell = null
 
 	occupying_unit = null
-	
-	
+
+
+func add_covering_object(
+	object_runtime : BattlefieldObjectRuntime
+) -> bool:
+	if object_runtime == null or covering_objects.has(object_runtime):
+		return false
+
+	covering_objects.append(object_runtime)
+	return true
+
+
+func remove_covering_object(
+	object_runtime : BattlefieldObjectRuntime
+) -> void:
+	covering_objects.erase(object_runtime)

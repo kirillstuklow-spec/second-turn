@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BattlefieldObjectVisualData" format=3]
+
+[ext_resource type="Script" path="res://Resources/BattlefieldObjects/BattlefieldObjectVisualData.gd" id="1_visual"]
+
+[resource]
+script = ExtResource("1_visual")
+covered_cell_color = Color(0.55, 0.72, 0.12, 0.24)
+anchor_cell_color = Color(0.78, 0.88, 0.18, 0.38)
+anchor_label = "СЕРА"
+label_color = Color(0.95, 1, 0.55, 1)

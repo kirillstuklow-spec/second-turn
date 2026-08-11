@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Triggered Self Healing"
+technical_description = "Executes a declarative HEALING plan on its owner after a matching combat event."
+activation_mode = 2
+action_type = 1
+targeting_form = 0
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_any_ally"

@@ -65,6 +65,15 @@ var cells : Array[CellRuntime] = []
 
 
 # ============================================================
+# ОБЪЕКТЫ ПОЛЯ БОЯ
+# ============================================================
+
+var battlefield_objects : Array[BattlefieldObjectRuntime] = []
+
+var _next_battlefield_object_sequence : int = 1
+
+
+# ============================================================
 # ЮНИТЫ В БОЮ
 # ============================================================
 
@@ -102,6 +111,8 @@ var pending_decision : PendingDecision = null
 # ============================================================
 
 func clear() -> void:
+	_clear_battlefield_objects()
+
 	for cell in cells:
 		if cell == null:
 			continue
@@ -111,6 +122,7 @@ func clear() -> void:
 
 	cells.clear()
 	units.clear()
+	_next_battlefield_object_sequence = 1
 
 	turn_state.clear()
 
@@ -199,6 +211,7 @@ func clear_pending_decision() -> void:
 func generate_battlefield(
 	new_arena_data: ArenaData = null
 ) -> void:
+	_clear_battlefield_objects()
 	cells.clear()
 
 	arena_data = new_arena_data
@@ -217,7 +230,7 @@ func generate_battlefield(
 			var visual_data: CellVisualData = null
 
 			if arena_data != null:
-				zone = arena_data.get_zone_at(x, y)
+				zone = int(arena_data.get_zone_at(x, y))
 				visual_data = arena_data.get_cell_visual_at(x, y)
 
 			cell.setup(
@@ -374,10 +387,161 @@ func get_unit_on_cell(cell : CellRuntime) -> UnitRuntime:
 
 
 # ============================================================
+# ОБЪЕКТЫ ПОЛЯ БОЯ
+# ============================================================
+
+func get_battlefield_object_coverage(
+	object_data : BattlefieldObjectData,
+	anchor_cell : CellRuntime
+) -> Array[CellRuntime]:
+	var covered_cells : Array[CellRuntime] = []
+
+	if (
+		object_data == null
+		or anchor_cell == null
+		or not cells.has(anchor_cell)
+	):
+		return covered_cells
+
+	for offset in object_data.coverage_offsets:
+		var covered_cell := get_cell_at(
+			anchor_cell.x + offset.x,
+			anchor_cell.y + offset.y
+		)
+
+		# Первый контракт объектов требует всю форму целиком. Размещение у края
+		# не превращает квадрат в обрезанную произвольную область.
+		if covered_cell == null:
+			covered_cells.clear()
+			return covered_cells
+
+		if not covered_cells.has(covered_cell):
+			covered_cells.append(covered_cell)
+
+	return covered_cells
+
+
+func create_battlefield_object(
+	object_data : BattlefieldObjectData,
+	source_unit : UnitRuntime,
+	source_ability_data : UnitAbilityData,
+	execution_id : StringName,
+	anchor_cell : CellRuntime
+) -> BattlefieldObjectRuntime:
+	if is_battle_over:
+		push_error("BattleState: cannot create object after battle end")
+		return null
+
+	if object_data == null or not object_data.get_validation_issues().is_empty():
+		push_error("BattleState: cannot create invalid BattlefieldObjectData")
+		return null
+
+	if source_unit == null or not units.has(source_unit):
+		push_error("BattleState: object source is absent from battle")
+		return null
+
+	if source_ability_data == null or execution_id == &"":
+		push_error("BattleState: object origin is incomplete")
+		return null
+
+	var covered_cells := get_battlefield_object_coverage(
+		object_data,
+		anchor_cell
+	)
+
+	if covered_cells.size() != object_data.coverage_offsets.size():
+		push_error("BattleState: object coverage is outside battlefield")
+		return null
+
+	var runtime := BattlefieldObjectRuntime.new()
+	var runtime_id := StringName(
+		"battlefield_object_%06d" % _next_battlefield_object_sequence
+	)
+	runtime.setup(
+		runtime_id,
+		object_data,
+		source_unit,
+		source_ability_data,
+		execution_id,
+		anchor_cell,
+		covered_cells,
+		round_number
+	)
+
+	for covered_cell in covered_cells:
+		if not covered_cell.add_covering_object(runtime):
+			for rollback_cell in covered_cells:
+				rollback_cell.remove_covering_object(runtime)
+			push_error("BattleState: object coverage could not be registered")
+			return null
+
+	battlefield_objects.append(runtime)
+	_next_battlefield_object_sequence += 1
+
+	print(
+		"BATTLEFIELD_OBJECT_CREATED | runtime: ",
+		runtime.runtime_id,
+		" | object_id: ",
+		runtime.get_object_id(),
+		" | anchor: ",
+		anchor_cell.x,
+		",",
+		anchor_cell.y,
+		" | cells: ",
+		covered_cells.size()
+	)
+	return runtime
+
+
+func remove_battlefield_object(
+	object_runtime : BattlefieldObjectRuntime
+) -> bool:
+	if (
+		object_runtime == null
+		or not battlefield_objects.has(object_runtime)
+	):
+		return false
+
+	for covered_cell in object_runtime.covered_cells:
+		if covered_cell != null:
+			covered_cell.remove_covering_object(object_runtime)
+
+	battlefield_objects.erase(object_runtime)
+	object_runtime.deactivate()
+	return true
+
+
+func get_battlefield_objects_covering_cell(
+	cell : CellRuntime
+) -> Array[BattlefieldObjectRuntime]:
+	var result : Array[BattlefieldObjectRuntime] = []
+
+	if cell == null or not cells.has(cell):
+		return result
+
+	for object_runtime in cell.covering_objects:
+		if object_runtime != null and object_runtime.is_active:
+			result.append(object_runtime)
+
+	return result
+
+
+func _clear_battlefield_objects() -> void:
+	for object_runtime in battlefield_objects.duplicate():
+		remove_battlefield_object(object_runtime)
+
+	battlefield_objects.clear()
+
+
+# ============================================================
 # ДВИЖЕНИЕ
 # ============================================================
 
-func can_unit_move_to(unit : UnitRuntime, target_cell : CellRuntime) -> bool:
+func can_unit_move_to(
+	unit : UnitRuntime,
+	target_cell : CellRuntime,
+	max_distance : int = 1
+) -> bool:
 	if unit == null:
 		push_error("BattleState: cannot move null unit")
 		return false
@@ -390,6 +554,14 @@ func can_unit_move_to(unit : UnitRuntime, target_cell : CellRuntime) -> bool:
 		push_error("BattleState: cannot move to null cell")
 		return false
 
+	if not cells.has(target_cell):
+		push_error("BattleState: target cell is absent from battle")
+		return false
+
+	if max_distance <= 0:
+		push_error("BattleState: movement distance must be positive")
+		return false
+
 	if not unit.is_alive:
 		print("BattleState: cannot move dead unit")
 		return false
@@ -398,15 +570,21 @@ func can_unit_move_to(unit : UnitRuntime, target_cell : CellRuntime) -> bool:
 		print("BattleState: cannot move to occupied cell")
 		return false
 
-	if not _is_adjacent_orthogonal(unit.cell, target_cell):
-		print("BattleState: target cell is not adjacent")
+	var distance := _get_orthogonal_distance(unit.cell, target_cell)
+
+	if distance <= 0 or distance > max_distance:
+		print("BattleState: target cell is outside movement distance")
 		return false
 
 	return true
 
 
-func move_unit(unit : UnitRuntime, target_cell : CellRuntime) -> bool:
-	if not can_unit_move_to(unit, target_cell):
+func move_unit(
+	unit : UnitRuntime,
+	target_cell : CellRuntime,
+	max_distance : int = 1
+) -> bool:
+	if not can_unit_move_to(unit, target_cell, max_distance):
 		return false
 
 	var old_cell : CellRuntime = unit.cell
@@ -433,13 +611,20 @@ func move_unit(unit : UnitRuntime, target_cell : CellRuntime) -> bool:
 
 
 func _is_adjacent_orthogonal(from_cell : CellRuntime, to_cell : CellRuntime) -> bool:
+	return _get_orthogonal_distance(from_cell, to_cell) == 1
+
+
+func _get_orthogonal_distance(
+	from_cell : CellRuntime,
+	to_cell : CellRuntime
+) -> int:
 	if from_cell == null or to_cell == null:
-		return false
+		return -1
 
 	var dx : int = abs(from_cell.x - to_cell.x)
 	var dy : int = abs(from_cell.y - to_cell.y)
 
-	return dx + dy == 1
+	return dx + dy
 
 
 # ============================================================

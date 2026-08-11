@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3 uid="uid://cg1vjsff17hr2"]
+
+[ext_resource type="Script" uid="uid://dlvynt075pr8p" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" uid="uid://bvbgefwste3of" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+[ext_resource type="Script" uid="uid://c3sfouevn7w5s" path="res://Resources/Abilities/ImpactPlanData/ImpactConditionData.gd" id="3_condition"]
+[ext_resource type="Resource" uid="uid://btkmrs7xynf0i" path="res://Resources/Effects/Decay.tres" id="4_decay"]
+
+[sub_resource type="Resource" id="Resource_bite_damage"]
+script = ExtResource("2_node")
+node_id = "bite_damage"
+source_type = "decay"
+magnitude = 2
+
+[sub_resource type="Resource" id="Resource_damage_applied"]
+script = ExtResource("3_condition")
+condition_type = 2
+
+[sub_resource type="Resource" id="Resource_apply_decay"]
+script = ExtResource("2_node")
+node_id = "bite_apply_decay"
+parent_node_id = "bite_damage"
+operation = 3
+interaction_type = 5
+source_type = "decay"
+effect_data = ExtResource("4_decay")
+transition_condition = SubResource("Resource_damage_applied")
+
+[resource]
+script = ExtResource("1_plan")
+plan_id = "ability.ghoul_bite"
+nodes = Array[ExtResource("2_node")]([SubResource("Resource_bite_damage"), SubResource("Resource_apply_decay")])

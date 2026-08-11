@@ -7,7 +7,8 @@ enum SourceReference {
 	ABILITY_SOURCE,
 	EFFECT_SOURCE,
 	EVENT_SOURCE,
-	EFFECT_CARRIER
+	EFFECT_CARRIER,
+	BATTLEFIELD_OBJECT_SOURCE
 }
 
 
@@ -52,7 +53,9 @@ enum MagnitudeRounding {
 
 @export var source_type : String = ""
 
-@export_range(0, 999, 1) var magnitude : int = 0
+# HEAL допускает отрицательную величину: это изменение HP через HEALING,
+# а не Damage. Остальные операции проверяют собственные диапазоны.
+@export_range(-999, 999, 1) var magnitude : int = 0
 
 # FIXED использует magnitude. EVENT_APPLIED_AMOUNT берёт фактически
 # применённую величину события и масштабирует её рациональным коэффициентом.
@@ -73,6 +76,9 @@ enum MagnitudeRounding {
 # Один SUMMON-узел создаёт один новый UnitRuntime из этого неизменяемого
 # профиля. Команда призыва наследуется от источника Impact.
 @export var summon_unit_data : UnitData = null
+
+# Один CREATE_OBJECT-узел создаёт один runtime-экземпляр объекта поля.
+@export var battlefield_object_data : BattlefieldObjectData = null
 
 @export var transition_condition : ImpactConditionData = null
 

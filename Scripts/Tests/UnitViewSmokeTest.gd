@@ -33,8 +33,8 @@ func _run_test() -> void:
 	assert(battle_engine != null)
 	assert(battle_engine.battle_state != null)
 	assert(battlefield_view != null)
-	assert(battle_engine.battle_state.units.size() == 2)
-	assert(battlefield_view._unit_views_by_id.size() == 2)
+	assert(battle_engine.battle_state.units.size() == 5)
+	assert(battlefield_view._unit_views_by_id.size() == 5)
 
 	var test_unit := battle_engine.battle_state.units[0]
 	var test_unit_id := test_unit.get_instance_id()

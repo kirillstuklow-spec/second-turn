@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ImpactPlanData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
+[ext_resource type="Script" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
+
+[sub_resource type="Resource" id="Resource_periodic_damage"]
+script = ExtResource("2_node")
+node_id = "sulfur_periodic_damage"
+source_reference = 4
+target_reference = 0
+operation = 0
+interaction_type = 5
+source_type = "decay"
+magnitude = 1
+
+[resource]
+script = ExtResource("1_plan")
+plan_id = "object.sulfur_cloud.activation_end"
+topology = 0
+nodes = Array[ExtResource("2_node")]([SubResource("Resource_periodic_damage")])

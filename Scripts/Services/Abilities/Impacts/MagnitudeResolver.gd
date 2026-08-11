@@ -15,7 +15,18 @@ static func resolve_node_magnitude(
 
 	match node.magnitude_source:
 		ImpactNodeData.MagnitudeSource.FIXED:
-			if node.magnitude <= 0:
+			if (
+				node.operation == Impact.Operation.HEAL
+				and node.magnitude == 0
+			):
+				return _reject(
+					"MagnitudeResolver: healing magnitude must be non-zero"
+				)
+
+			if (
+				node.operation != Impact.Operation.HEAL
+				and node.magnitude <= 0
+			):
 				return _reject(
 					"MagnitudeResolver: fixed magnitude must be positive"
 				)

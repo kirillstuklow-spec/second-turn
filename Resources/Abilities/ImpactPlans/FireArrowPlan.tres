@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dlvynt075pr8p" path="res://Resources/Abilities/ImpactPlanData/ImpactPlanData.gd" id="1_plan"]
 [ext_resource type="Script" uid="uid://bvbgefwste3of" path="res://Resources/Abilities/ImpactPlanData/ImpactNodeData.gd" id="2_node"]
 [ext_resource type="Script" uid="uid://c3sfouevn7w5s" path="res://Resources/Abilities/ImpactPlanData/ImpactConditionData.gd" id="3_condition"]
-[ext_resource type="Resource" uid="uid://l18hp82tc3h" path="res://Resources/Effects/Burning.tres" id="4_burning"]
+[ext_resource type="Resource" uid="uid://nty0lacauv7l" path="res://Resources/Effects/Burning.tres" id="4_burning"]
 [ext_resource type="Resource" uid="uid://djyuojt1nhclf" path="res://Resources/Effects/RegenerationBlocked.tres" id="5_regen_block"]
 
 [sub_resource type="Resource" id="Resource_damage"]

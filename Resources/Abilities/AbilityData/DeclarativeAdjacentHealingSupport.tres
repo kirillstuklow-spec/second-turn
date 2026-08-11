@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3]
+
+[ext_resource type="Script" path="res://Resources/Abilities/AbilityData/AbilityData.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+mechanism_name = "Declarative Adjacent Healing Support"
+technical_description = "Executes an active declarative HEALING ImpactPlan against one adjacent living ally. The healing magnitude may be negative."
+activation_mode = 0
+action_type = 1
+targeting_form = 0
+algorithm_id = "execute_impact_plan"
+target_rule_id = "single_adjacent_ally"
+default_conditions = Array[String](["target_must_be_alive", "target_must_be_ally"])
